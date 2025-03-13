@@ -35,3 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# 環境変数ファイル（Gitに含めない）
+.env
+.env.local
+.env.production
+.env.development
