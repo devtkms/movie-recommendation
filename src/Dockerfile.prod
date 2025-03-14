@@ -14,15 +14,14 @@ COPY gradle ./gradle
 # プロジェクトのGradle設定ファイルをコピー（キャッシュを利用するため）
 COPY build.gradle settings.gradle ./
 
-# 依存関係の解決（キャッシュを利用）
-RUN ./gradlew dependencies --refresh-dependencies --no-daemon
+# 依存関係を事前に解決し、キャッシュを利用可能にする
+RUN ./gradlew build -x test --no-daemon
 
-# ソースコードをコピー（最適な順番にする）
-COPY src ./src
+# ソースコードをコピー（頻繁に変更される部分を後にすることでキャッシュ最適化）
 COPY . .
 
 # アプリケーションのビルド（テストをスキップ）
-RUN ./gradlew clean build --refresh-dependencies -x test --no-daemon
+RUN ./gradlew build -x test --no-daemon
 
 # 実行ステージ
 FROM eclipse-temurin:21-jre
