@@ -23,7 +23,6 @@
     <div v-if="loading">ロード中...</div>
 
     <div v-if="movies.length > 0" class="movie-list">
-      <h2>おすすめの映画</h2>
       <ul>
         <li v-for="movie in movies" :key="movie.id">
           <h3>{{ movie.title }}</h3>
