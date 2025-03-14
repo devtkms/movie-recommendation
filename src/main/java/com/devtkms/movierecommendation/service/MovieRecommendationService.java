@@ -19,7 +19,7 @@ public class MovieRecommendationService {
 //    ローカル
 //    @Value("${TMDB_API_KEY}")
     // 本番
-    @Value("${TMDB.API.KEY}")
+    @Value("${TMDB_API_KEY}")
     private String apiKey;
 
     private static final String TMDB_BASE_URL = "https://api.themoviedb.org/3";
