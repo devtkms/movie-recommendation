@@ -16,7 +16,10 @@ import java.util.List;
 @Service
 public class MovieRecommendationService {
 
-    @Value("${TMDB_API_KEY}")
+//    ローカル
+//    @Value("${TMDB_API_KEY}")
+    // 本番
+    @Value("${TMDB.API.KEY}")
     private String apiKey;
 
     private static final String TMDB_BASE_URL = "https://api.themoviedb.org/3";
