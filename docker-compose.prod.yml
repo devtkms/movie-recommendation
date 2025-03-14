@@ -1,0 +1,32 @@
+services:
+  app:
+    container_name: movie-recommendation-sb-container
+    image: movie-recommendation-sb-image:dev
+    build:
+      context: .
+      dockerfile: src/Dockerfile.prod
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    env_file:
+      - .env
+
+  frontend:
+    container_name: movie-recommendation-nuxt-container
+    image: movie-recommendation-nuxt-image:dev
+    build:
+      context: ./nuxt
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./nuxt:/app
+      - /app/node_modules
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+networks:
+  app-network:
