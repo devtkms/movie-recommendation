@@ -21,6 +21,6 @@ ENV PATH /app/node_modules/.bin:$PATH
 
 # 8️⃣ 本番環境用の起動コマンド（SSR か SPA で異なる）
 # SSR の場合:
-# CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start"]
 # SPA（静的ファイルを配信）の場合:
-CMD ["npx", "serve", "-s", "dist"]
+# CMD ["npx", "serve", "-s", "dist"]
