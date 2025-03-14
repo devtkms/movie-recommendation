@@ -99,6 +99,8 @@ const movies = ref([]);
 const loading = ref(false);
 const errorMessage = ref("");
 
+const config = useRuntimeConfig();
+
 const fetchMovies = async () => {
   if (!selectedOptions.value.genre || !selectedOptions.value.provider || !selectedOptions.value.language) {
     errorMessage.value = "必須の質問に回答してください。";
@@ -110,7 +112,7 @@ const fetchMovies = async () => {
   errorMessage.value = "";
 
   try {
-    const response = await fetch('http://localhost:8080/api/movies', {
+    const response = await fetch(`${config.public.apiBase}/movies`,{
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
