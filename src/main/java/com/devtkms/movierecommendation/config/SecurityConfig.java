@@ -40,7 +40,8 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource apiConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080", "http://localhost:3000","https://pattocinema.onrender.com"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080", "http://localhost:3000"
+                ,"https://pattocinema-api.onrender.com","https://pattocinema.onrender.com"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 必要なメソッドを許可
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type")); // 必要なヘッダーを許可
         configuration.setAllowCredentials(true);
