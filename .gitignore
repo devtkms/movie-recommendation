@@ -1,11 +1,11 @@
-HELP.md
+# Gradle 関連
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### STS ###
+# STS (Spring Tool Suite)
 .apt_generated
 .classpath
 .factorypath
@@ -14,30 +14,44 @@ build/
 .springBeans
 .sts4-cache
 bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+out/
 
-### IntelliJ IDEA ###
+# IntelliJ IDEA
 .idea
 *.iws
 *.iml
 *.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# VS Code
 .vscode/
 
 # 環境変数ファイル（Gitに含めない）
 .env
-.env.local
-.env.production
-.env.development
+.env.*
+!.env.example
+
+# Nuxt 開発・ビルド成果物
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node.js 依存関係
+node_modules
+
+# ログファイル
+logs
+*.log
+
+# macOS / JetBrains 関連
+.DS_Store
+.fleet

@@ -17,7 +17,7 @@ services:
     image: movie-recommendation-nuxt-image:dev
     build:
       context: ./nuxt
-      dockerfile: nuxt/Dockerfile.dev
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     volumes:
