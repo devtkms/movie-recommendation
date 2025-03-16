@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # OIDC認証を利用
+      contents: read
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}  # GitHub Secrets から取得
       FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
