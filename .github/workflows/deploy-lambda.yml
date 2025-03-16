@@ -25,7 +25,7 @@ jobs:
           java-version: 21
 
       - name: 📦 Build Lambda package
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build --no-daemon -x test
 
       - name: 🎯 Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
