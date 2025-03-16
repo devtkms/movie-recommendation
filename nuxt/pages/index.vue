@@ -5,7 +5,7 @@
     <div v-if="movies.length === 0">
       <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
         <label>{{ label }}</label>
-        <div class="button-group" :class="{ 'two-column': ['genre', 'provider', 'language', 'length', 'year'].includes(key) }">
+        <div class="button-group" :class="{ 'two-column': ['genre', 'provider', 'language'].includes(key) }">
           <button
               v-for="option in options[key]"
               :key="option.value"
@@ -16,7 +16,10 @@
         </div>
       </div>
 
+      <!-- メッセージエリア -->
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+      <p v-if="isSearchExhausted" class="exhausted-message">この条件での検索結果はすべて表示されました。</p>
+
       <button @click="fetchMovies" :disabled="loading">映画を探す</button>
     </div>
 
@@ -35,7 +38,7 @@
 
     <!-- TMDbクレジット表記 -->
     <footer class="tmdb-credit">
-      <img src="/images/tmdb-logo.png" alt="TMDb Logo" width="100" />
+      <img src="/images/tmdb-logo.png" alt="TMDb Logo" width="100"/>
       <p>
         このアプリは TMDb API を使用していますが、TMDb によって承認、認定、またはその他の承認は受けていません。
       </p>
@@ -45,61 +48,50 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
 const searchOptions = {
   genre: '今の気分を教えてください',
   provider: '配信サービスを選んでください',
   language: '洋画・邦画を選んでください',
-  length: '長さはどれくらいがいいですか？（任意）',
-  year: '年代を選んでください（任意）'
 };
 
 const options = {
   genre: [
-    { value: '35', label: '笑いたい' },
-    { value: '18', label: '泣きたい' },
-    { value: '53', label: 'ハラハラしたい' },
-    { value: '10749', label: 'キュンキュンしたい' }
+    {value: '35', label: '笑いたい'},
+    {value: '18', label: '泣きたい'},
+    {value: '53', label: 'ハラハラしたい'},
+    {value: '10749', label: 'キュンキュンしたい'}
   ],
   provider: [
-    { value: '8', label: 'Netflix' },
-    { value: '9', label: 'Amazonプライム' },
-    { value: '337', label: 'ディズニープラス' },
-    { value: '15', label: 'Hulu' }
+    {value: '8', label: 'Netflix'},
+    {value: '9', label: 'Amazonプライム'},
+    {value: '337', label: 'ディズニープラス'},
+    {value: '15', label: 'Hulu'}
   ],
   language: [
-    { value: 'en', label: '洋画' },
-    { value: 'ja', label: '邦画' },
-    { value: 'ko', label: '韓国映画' }
-  ],
-  length: [
-    { value: 'short', label: '短め (90分以下)' },
-    { value: 'standard', label: '標準 (90〜150分)' },
-    { value: 'long', label: '長編 (150分以上)' }
-  ],
-  year: [
-    { value: '1990', label: '90年代' },
-    { value: '2000', label: '2000年代' },
-    { value: '2010', label: '2010年代' },
-    { value: '2020', label: '2020年以降' }
+    {value: 'en', label: '洋画'},
+    {value: 'ja', label: '邦画'},
+    {value: 'ko', label: '韓国映画'}
   ]
 };
 
 const selectedOptions = ref({
   genre: '',
   provider: '',
-  language: '',
-  length: '',
-  year: ''
+  language: ''
 });
 
 const movies = ref([]);
 const loading = ref(false);
 const errorMessage = ref("");
+const isSearchExhausted = ref(false);
 
-const config = useRuntimeConfig();
+const generateStorageKey = () => {
+  return `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
+};
 
+// 検索時にローカルストレージをチェックし、なければAPIから取得
 const fetchMovies = async () => {
   if (!selectedOptions.value.genre || !selectedOptions.value.provider || !selectedOptions.value.language) {
     errorMessage.value = "必須の質問に回答してください。";
@@ -109,30 +101,63 @@ const fetchMovies = async () => {
   loading.value = true;
   movies.value = [];
   errorMessage.value = "";
+  isSearchExhausted.value = false;
 
-  try {
-    // const response = await fetch(`${config.public.apiBase}/movies`,{
-    // const response = await fetch(`http://localhost:8080/api/movies`,{
-    const response = await fetch(`https://pattocinema-api.onrender.com/api/movies`,{
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(selectedOptions.value),
-    });
+  const storageKey = generateStorageKey();
+  let storedMovies = JSON.parse(localStorage.getItem(storageKey) || '[]');
 
-    if (!response.ok) {
-      throw new Error("映画データの取得に失敗しました");
+  if (storedMovies.length > 0) {
+    // ローカルストレージから3件取得し、残りを保存
+    movies.value = storedMovies.splice(0, 3);
+    localStorage.setItem(storageKey, JSON.stringify(storedMovies));
+
+    // すべて消費した場合のメッセージ処理
+    if (storedMovies.length === 0) {
+      isSearchExhausted.value = true;
+      movies.value = [];
     }
+  } else {
+    try {
+      // const response = await fetch(`${config.public.apiBase}/movies`,{
+      // const response = await fetch(`http://localhost:8080/api/movies`,{
+      const response = await fetch(`https://pattocinema-api.onrender.com/api/movies`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(selectedOptions.value),
+      });
 
-    const data = await response.json();
-    movies.value = data;
-  } catch (error) {
-    errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。";
-  } finally {
-    loading.value = false;
+      if (!response.ok) {
+        throw new Error("映画データの取得に失敗しました");
+      }
+
+      const data = await response.json();
+
+      if (data.length === 0) {
+        errorMessage.value = "検索結果がありませんでした。";
+      } else {
+        // 取得した30件から3件表示、残りを保存
+        movies.value = data.slice(0, 3);
+        localStorage.setItem(storageKey, JSON.stringify(data.slice(3)));
+      }
+
+    } catch (error) {
+      errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。"
+    }
   }
+  loading.value = false;
 };
+
+// 初回マウント時にローカルストレージのデータを適用
+onMounted(() => {
+  const storageKey = generateStorageKey();
+  const storedMovies = JSON.parse(localStorage.getItem(storageKey) || '[]');
+  if (storedMovies.length > 0) {
+    movies.value = storedMovies.splice(0, 3);
+    localStorage.setItem(storageKey, JSON.stringify(storedMovies));
+  }
+});
 
 const resetSearch = () => {
   movies.value = [];

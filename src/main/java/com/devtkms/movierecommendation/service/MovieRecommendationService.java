@@ -41,16 +41,14 @@ public class MovieRecommendationService {
                 .queryParam("with_original_language", requestDto.getLanguage())
                 .queryParam("sort_by", "popularity.desc")
                 .queryParam("language", "ja-JP")
-                .queryParam("year", requestDto.getYear() != null ? requestDto.getYear() : "")
                 .queryParam("page", page) // ページネーション追加
-                .queryParam("size", Math.min(size, 20)) // 1回の取得量を最大20件までに制限
+                .queryParam("size", Math.min(size, 30)) // ✅ 30件取得するように変更
                 .toUriString();
 
         // TMDb APIからデータを取得
         TmdbResponse response = restTemplate.getForObject(url, TmdbResponse.class);
 
-        // DTOに変換して3本だけ返す（既存の仕様は維持）
-        List<MovieRecommendationResponseDto> movies = response != null ? response.toMovieDtoList() : List.of();
-        return movies.subList(0, Math.min(3, movies.size()));
+        // DTOに変換して返す（30件取得する）
+        return response != null ? response.toMovieDtoList() : List.of();
     }
 }

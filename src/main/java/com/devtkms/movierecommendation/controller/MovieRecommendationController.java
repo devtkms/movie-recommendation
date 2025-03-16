@@ -21,7 +21,7 @@ public class MovieRecommendationController {
     public List<MovieRecommendationResponseDto> recommendMovies(
             @RequestBody MovieRecommendationRequestDto requestDto,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "3") int size) { // デフォルトで3件取得
+            @RequestParam(defaultValue = "30") int size) { // ✅ 30件取得に変更
         return movieRecommendationService.getMovies(requestDto, page, size);
     }
 }
