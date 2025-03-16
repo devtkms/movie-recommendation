@@ -1,3 +1,5 @@
+import org.springframework.boot.gradle.tasks.bundling.BootJar
+
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.3'
@@ -17,53 +19,62 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-json'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+	// ✅ Spring Boot 関連
+	implementation 'org.springframework.boot:spring-boot-starter-security'  // セキュリティ
+	implementation 'org.springframework.boot:spring-boot-starter-web'       // Web アプリ
+	implementation 'org.springframework.boot:spring-boot-starter-json'      // JSON パース
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0' // OpenAPI UI
+
+	// ✅ バリデーション
 	implementation 'jakarta.validation:jakarta.validation-api:3.1.1'
-	implementation 'org.apache.httpcomponents.client5:httpclient5:5.4.2'
-	implementation 'org.apache.httpcomponents.core5:httpcore5:5.3.3'
-	implementation 'org.apache.httpcomponents:fluent-hc:4.5.14'
-	implementation 'io.github.cdimascio:java-dotenv:5.2.2'
-	implementation 'com.amazonaws:aws-lambda-java-core:1.2.3'
-	implementation 'com.amazonaws:aws-lambda-java-events:3.15.0'
-	implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.1.2'
+
+	// ✅ HTTP クライアント
+	implementation 'org.apache.httpcomponents.client5:httpclient5:5.4.2'  // HTTP クライアント
+	implementation 'org.apache.httpcomponents.core5:httpcore5:5.3.3'      // HTTP コア
+	implementation 'org.apache.httpcomponents:fluent-hc:4.5.14'           // Fluent API
+
+	// ✅ 環境変数管理
+	implementation 'io.github.cdimascio:java-dotenv:5.2.2' // `.env` ファイルの管理
+
+	// ✅ AWS Lambda 関連
+	implementation 'com.amazonaws:aws-lambda-java-core:1.2.3'    // AWS Lambda コア
+	implementation 'com.amazonaws:aws-lambda-java-events:3.15.0' // AWS Lambda イベント
+	implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.1.2' // Spring Boot 3 用 AWS Lambda コンテナ
+	runtimeOnly 'com.amazonaws:aws-lambda-java-log4j2:1.6.0'
+
+	// ✅ Lombok（アノテーションでボイラープレート削減）
 	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// ✅ 開発支援
+	developmentOnly 'org.springframework.boot:spring-boot-devtools' // 開発用ツール
+
+	// ✅ テスト関連
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'  // Spring Boot のテストフレームワーク
+	testImplementation 'org.springframework.security:spring-security-test'  // Spring Security テスト
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher' // JUnit テスト実行用
 }
 
-tasks.named('test') {
-	useJUnitPlatform()
+// ✅ `bootJar` を正しく設定（Spring Boot の JAR を作成）
+tasks.withType(BootJar).configureEach { bootJar ->
+	bootJar.archiveFileName.set("lambda.jar") // JAR の名前を設定
+	bootJar.manifest.attributes(
+			"Main-Class": "com.devtkms.movierecommendation.handler.MovieRecommendationHandler" // Lambda のエントリーポイント
+	)
 }
 
-tasks.named('bootJar').configure {
-	enabled = true
-	archiveFileName.set("lambda.jar") // ✅ `set()` を使用
-	manifest {
-		attributes 'Main-Class': 'com.devtkms.movierecommendation.handler.MovieRecommendationHandler'
-	}
-}
-
-// ✅ `jar` タスクを無効化（Spring Boot の JAR のみを使用）
-tasks.named('jar').configure {
-	enabled = false
+// ✅ `jar` タスクは不要なので無効化
+tasks.named("jar").configure { jar ->
+	jar.enabled = false
 }
 
 // ✅ Lambda 用 ZIP を作成
-tasks.register('buildZip', Zip) {
-	dependsOn bootJar
-	from bootJar.archiveFile.get().asFile
-	into('lib') {
-		from configurations.runtimeClasspath
-	}
-}
+tasks.register("buildZip", Zip) {
+	dependsOn tasks.named("bootJar") // bootJar の生成を依存関係に追加
 
-// ✅ `buildZip` を `build` の依存タスクとして追加
-tasks.named('build') {
-	dependsOn buildZip
+	from(tasks.named("bootJar", BootJar).map { it.archiveFile.get().asFile }) // ✅ `BootJar` を明示的に指定
+
+	into("lib") {
+		from configurations.runtimeClasspath // 依存関係も ZIP に含める
+	}
 }
