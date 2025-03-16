@@ -1,0 +1,39 @@
+name: Deploy AWS Lambda
+
+on:
+  push:
+    branches:
+      - main  # `main` ブランチにプッシュされたら実行
+
+jobs:
+  deploy-aws-lambda:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # OIDC認証を利用
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # GitHub Secrets から取得
+      FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: 📦 Build Lambda package
+        run: mvn clean package -DskipTests
+
+      - name: 🎯 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🚀 Deploy to AWS Lambda
+        run: |
+          JAR_FILE=$(find target -name "*.jar" | head -n 1)
+          if [[ -z "$JAR_FILE" ]]; then
+            echo "Error: JAR file not found!"
+            exit 1
+          fi
+          aws lambda update-function-code --function-name "$FUNCTION_NAME" --zip-file "fileb://$JAR_FILE"
