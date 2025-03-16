@@ -1,21 +1,27 @@
 package com.devtkms.movierecommendation.handler;
 
+import com.amazonaws.serverless.proxy.model.AwsProxyRequest;
+import com.amazonaws.serverless.proxy.model.AwsProxyResponse;
+import com.amazonaws.serverless.proxy.spring.SpringBootLambdaContainerHandler;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import java.util.HashMap;
-import java.util.Map;
+import com.devtkms.movierecommendation.MovieRecommendationApplication;
 
-public class MovieRecommendationHandler implements RequestHandler<Map<String, String>, Map<String, String>> {
+public class MovieRecommendationHandler implements RequestHandler<AwsProxyRequest, AwsProxyResponse> {
+
+    private static final SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
+
+    static {
+        try {
+            // ✅ `SpringBootLambdaContainerHandler` を使用
+            handler = SpringBootLambdaContainerHandler.getAwsProxyHandler(MovieRecommendationApplication.class);
+        } catch (Exception e) {
+            throw new IllegalStateException("Lambda ハンドラーの初期化に失敗しました", e);
+        }
+    }
 
     @Override
-    public Map<String, String> handleRequest(Map<String, String> input, Context context) {
-        context.getLogger().log("Received input: " + input);
-
-        // 仮のレスポンス
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "映画のおすすめを取得しました！");
-        response.put("status", "success");
-
-        return response;
+    public AwsProxyResponse handleRequest(AwsProxyRequest awsProxyRequest, Context context) {
+        return handler.proxy(awsProxyRequest, context);
     }
 }
