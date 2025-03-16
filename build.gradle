@@ -41,20 +41,23 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-// ✅ `bootJar` を有効化し、Lambda 用 JAR 名を設定
-tasks.named('bootJar') {
+tasks.named('bootJar').configure {
 	enabled = true
-	archiveFileName = "lambda.jar"
+	archiveFileName.set("lambda.jar") // ✅ `set()` を使用
+	manifest {
+		attributes 'Main-Class': 'com.devtkms.movierecommendation.handler.MovieRecommendationHandler'
+	}
 }
 
-// ✅ `jar` は不要なので無効化
-tasks.named('jar') {
+// ✅ `jar` タスクを無効化（Spring Boot の JAR のみを使用）
+tasks.named('jar').configure {
 	enabled = false
 }
 
 // ✅ Lambda 用 ZIP を作成
-task buildZip(type: Zip) {
-	from(tasks.named('bootJar')) // ✅ `bootJar` タスクを ZIP に含める
+tasks.register('buildZip', Zip) {
+	dependsOn bootJar
+	from bootJar.archiveFile.get().asFile
 	into('lib') {
 		from configurations.runtimeClasspath
 	}
