@@ -41,22 +41,26 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-// ✅ JAR を作成（Spring Boot のような組み込み Tomcat は不要）
+// ✅ `bootJar` を有効化し、Lambda 用 JAR 名を設定
+tasks.named('bootJar') {
+	enabled = true
+	archiveFileName = "lambda.jar"
+}
+
+// ✅ `jar` は不要なので無効化
 tasks.named('jar') {
-	manifest {
-		attributes 'Main-Class': 'com.devtkms.movierecommendation.handler.MovieRecommendationHandler'
-	}
+	enabled = false
 }
 
 // ✅ Lambda 用 ZIP を作成
 task buildZip(type: Zip) {
-	from compileJava
-	from processResources
-	from jar
+	from(tasks.named('bootJar')) // ✅ `bootJar` タスクを ZIP に含める
 	into('lib') {
 		from configurations.runtimeClasspath
 	}
 }
 
 // ✅ `buildZip` を `build` の依存タスクとして追加
-build.dependsOn buildZip
+tasks.named('build') {
+	dependsOn buildZip
+}
