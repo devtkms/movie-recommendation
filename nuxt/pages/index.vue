@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <h1 class="title">パッとシネマ</h1>
+    <h1 class="title">MoviReco</h1>
 
     <div v-if="movies.length === 0">
       <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
