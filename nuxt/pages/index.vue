@@ -5,22 +5,28 @@
     <div v-if="movies.length === 0">
       <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
         <label>{{ label }}</label>
-        <div class="button-group" :class="{ 'two-column': ['genre', 'provider', 'language'].includes(key) }">
+        <div class="button-group">
           <button
               v-for="option in options[key]"
               :key="option.value"
-              :class="{ selected: selectedOptions[key] === option.value }"
-              @click="selectedOptions[key] = option.value">
+              :class="[
+                'button', // 統一デザイン
+                key === 'genre' ? getGenreClass(option.value) : '',
+                key === 'provider' ? getProviderClass(option.value) : '',
+                key === 'language' ? getLanguageClass(option.value) : '',
+                { selected: selectedOptions[key] === option.value }
+              ]"
+              @click="selectedOptions[key] = option.value"
+          >
             {{ option.label }}
           </button>
         </div>
       </div>
 
-      <!-- メッセージエリア -->
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
       <p v-if="isSearchExhausted" class="exhausted-message">この条件での検索結果はすべて表示されました。</p>
 
-      <button @click="fetchMovies" :disabled="loading">映画を探す</button>
+      <button @click="fetchMovies" :disabled="loading" class="search-button">映画を探す</button>
     </div>
 
     <div v-if="loading">ロード中...</div>
@@ -33,22 +39,17 @@
           <p>{{ movie.overview }}</p>
         </li>
       </ul>
-      <button @click="resetSearch">検索画面に戻る</button>
+      <button @click="resetSearch" class="search-button">検索画面に戻る</button>
     </div>
 
-    <!-- TMDbクレジット表記 -->
     <footer class="tmdb-credit">
       <img src="/images/tmdb-logo.png" alt="TMDb Logo" width="100"/>
-      <p>
-        このアプリは TMDb API を使用していますが、TMDb によって承認、認定、またはその他の承認は受けていません。
-      </p>
-      <p>
-        <NuxtLink to="/privacy">プライバシーポリシー</NuxtLink>
-      </p>
+      <p>このアプリは TMDb API を使用していますが、TMDb によって承認、認定、またはその他の承認は受けていません。</p>
+      <p><NuxtLink to="/privacy">プライバシーポリシー</NuxtLink></p>
     </footer>
-
   </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from 'vue';
@@ -90,6 +91,35 @@ const loading = ref(false);
 const errorMessage = ref("");
 const isSearchExhausted = ref(false);
 
+const getProviderClass = (provider) => {
+  switch (provider) {
+    case '8': return 'netflix';
+    case '9': return 'amazon';
+    case '337': return 'disney';
+    case '15': return 'hulu';
+    default: return '';
+  }
+};
+
+const getGenreClass = (genre) => {
+  switch (genre) {
+    case '35': return 'laugh';
+    case '18': return 'cry';
+    case '53': return 'thrill';
+    case '10749': return 'romance';
+    default: return '';
+  }
+};
+
+const getLanguageClass = (language) => {
+  switch (language) {
+    case 'en': return 'western';
+    case 'ja': return 'japanese';
+    case 'ko': return 'korean';
+    default: return '';
+  }
+};
+
 const generateStorageKey = () => {
   return `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
 };
@@ -122,8 +152,8 @@ const fetchMovies = async () => {
   } else {
     try {
       // const response = await fetch(`${config.public.apiBase}/movies`,{
-      // const response = await fetch(`http://localhost:8080/api/movies`,{
-      const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
+      const response = await fetch(`http://localhost:8080/api/movies`,{
+      // const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -179,8 +209,9 @@ const getMoviePoster = (path) => {
 }
 
 .title {
-  font-size: 24px;
+  font-size: 28px;
   margin-bottom: 20px;
+  font-weight: bold;
 }
 
 .form-group {
@@ -189,7 +220,8 @@ const getMoviePoster = (path) => {
 
 label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  font-weight: bold;
 }
 
 .button-group {
@@ -199,25 +231,44 @@ label {
   justify-content: center;
 }
 
-button {
+.button {
   padding: 8px 12px;
-  background-color: #007bff;
   color: white;
   border: none;
   cursor: pointer;
   margin-top: 5px;
-  border-radius: 5px;
+  border-radius: 8px;
   min-width: 140px;
   text-align: center;
 }
 
+.netflix { background-color: #E50914; }
+.amazon { background-color: #00A8E1; }
+.disney { background-color: #113CCF; }
+.hulu { background-color: #1CE783; }
+
+.laugh { background-color: #E50914; }
+.cry { background-color: #1E90FF; }
+.thrill { background-color: #FF4500; }
+.romance { background-color: #FF1493; }
+
+.western { background-color: #DAA520; }
+.japanese { background-color: #C70039; }
+.korean { background-color: #003366; }
+
 button.selected {
-  background-color: #0056b3;
+  background-color: grey;
   font-weight: bold;
+  opacity: 0.9;
+}
+
+.button:hover {
+  opacity: 0.85;
 }
 
 button:disabled {
   background-color: #ccc;
+  cursor: not-allowed;
 }
 
 .movie-list {
@@ -245,18 +296,36 @@ button:disabled {
 
 .tmdb-credit {
   text-align: center;
-  font-size: 11px; /* 少し大きくして可読性向上 */
-  padding: 15px 0; /* 余白を少し増やす */
+  font-size: 11px;
+  padding: 15px 0;
   margin-top: 25px;
-  line-height: 1.6; /* 行間を広げて読みやすく */
+  line-height: 1.6;
 }
 
 .tmdb-logo {
-  width: 160px; /* 少し大きく */
+  width: 160px;
   display: block;
-  margin: 15px auto; /* 上下の余白を調整 */
-  filter: brightness(1.4); /* ロゴを少し明るくして視認性UP */
+  margin: 15px auto;
 }
 
+.search-button {
+  background-color: #333333;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
 
+.search-button:hover {
+  background-color: #555555;
+}
+
+.search-button:disabled {
+  background-color: #999999;
+  cursor: not-allowed;
+}
 </style>
