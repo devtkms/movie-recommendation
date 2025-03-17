@@ -6,6 +6,7 @@ import com.devtkms.movierecommendation.service.MovieRecommendationService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map; // ← 追加
 
 @RestController
 @RequestMapping("/api/movies")
@@ -18,10 +19,8 @@ public class MovieRecommendationController {
     }
 
     @PostMapping
-    public List<MovieRecommendationResponseDto> recommendMovies(
-            @RequestBody MovieRecommendationRequestDto requestDto,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "30") int size) { // ✅ 30件取得に変更
-        return movieRecommendationService.getMovies(requestDto, page, size);
+    public Map<String, List<MovieRecommendationResponseDto>> recommendMovies(
+            @RequestBody MovieRecommendationRequestDto requestDto) {
+        return movieRecommendationService.getMovies(requestDto);
     }
 }

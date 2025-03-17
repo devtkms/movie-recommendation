@@ -2,7 +2,7 @@
   <div class="container">
     <h1 class="title">MoviReco</h1>
 
-    <div v-if="movies.length === 0">
+    <div v-if="movies.trend.length === 0 && movies.toprated.length === 0">
       <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
         <label>{{ label }}</label>
         <div class="button-group">
@@ -10,12 +10,12 @@
               v-for="option in options[key]"
               :key="option.value"
               :class="[
-                'button', // 統一デザイン
-                key === 'genre' ? getGenreClass(option.value) : '',
-                key === 'provider' ? getProviderClass(option.value) : '',
-                key === 'language' ? getLanguageClass(option.value) : '',
-                { selected: selectedOptions[key] === option.value }
-              ]"
+              'button',
+              key === 'genre' ? getGenreClass(option.value) : '',
+              key === 'provider' ? getProviderClass(option.value) : '',
+              key === 'language' ? getLanguageClass(option.value) : '',
+              { selected: selectedOptions[key] === option.value }
+            ]"
               @click="selectedOptions[key] = option.value"
           >
             {{ option.label }}
@@ -31,28 +31,42 @@
 
     <div v-if="loading">ロード中...</div>
 
-    <div v-if="movies.length > 0" class="movie-list">
+    <div v-if="movies.trend.length > 0 || movies.toprated.length > 0" class="movie-list">
+      <h2 class="category-title">📈 今話題の映画</h2>
       <ul>
-        <li v-for="movie in movies" :key="movie.id">
-          <h3>{{ movie.title }}</h3>
-          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター">
-          <p>{{ movie.overview }}</p>
+        <li v-if="movies.trend.length > 0">
+          <h3>{{ movies.trend[0].title }}</h3>
+          <img :src="getMoviePoster(movies.trend[0].posterPath)" alt="映画ポスター">
+          <p>{{ movies.trend[0].overview }}</p>
         </li>
       </ul>
+
+      <h2 class="category-title">🏆 名作</h2>
+      <ul>
+        <li v-if="movies.toprated.length > 0">
+          <h3>{{ movies.toprated[0].title }}</h3>
+          <img :src="getMoviePoster(movies.toprated[0].posterPath)" alt="映画ポスター">
+          <p>{{ movies.toprated[0].overview }}</p>
+        </li>
+        <li v-if="movies.toprated.length > 1">
+          <h3>{{ movies.toprated[1].title }}</h3>
+          <img :src="getMoviePoster(movies.toprated[1].posterPath)" alt="映画ポスター">
+          <p>{{ movies.toprated[1].overview }}</p>
+        </li>
+      </ul>
+
       <button @click="resetSearch" class="search-button">検索画面に戻る</button>
     </div>
 
     <footer class="tmdb-credit">
       <img src="/images/tmdb-logo.png" alt="TMDb Logo" width="100"/>
       <p>このアプリは TMDb API を使用していますが、TMDb によって承認、認定、またはその他の承認は受けていません。</p>
-      <p><NuxtLink to="/privacy">プライバシーポリシー</NuxtLink></p>
     </footer>
   </div>
 </template>
 
-
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 
 const searchOptions = {
   genre: '今の気分を教えてください',
@@ -62,22 +76,27 @@ const searchOptions = {
 
 const options = {
   genre: [
-    {value: '35', label: '笑いたい'},
-    {value: '18', label: '泣きたい'},
-    {value: '53', label: 'ハラハラしたい'},
-    {value: '10749', label: 'キュンキュンしたい'}
+    { value: '35', label: '笑いたい' },
+    { value: '18', label: '泣きたい' },
+    { value: '53', label: 'ハラハラしたい' },
+    { value: '10749', label: 'キュンキュンしたい' }
   ],
   provider: [
-    {value: '8', label: 'Netflix'},
-    {value: '9', label: 'Amazonプライム'},
-    {value: '337', label: 'ディズニープラス'},
-    {value: '15', label: 'Hulu'}
+    { value: '8', label: 'Netflix' },
+    { value: '9', label: 'Amazonプライム' },
+    { value: '337', label: 'ディズニープラス' },
+    { value: '15', label: 'Hulu' }
   ],
   language: [
-    {value: 'en', label: '洋画'},
-    {value: 'ja', label: '邦画'},
-    {value: 'ko', label: '韓国映画'}
+    { value: 'en', label: '洋画' },
+    { value: 'ja', label: '邦画' },
+    { value: 'ko', label: '韓国映画' }
   ]
+};
+
+const categoryTitles = {
+  trend: "📈 今話題の映画",
+  toprated: "🏆 名作"
 };
 
 const selectedOptions = ref({
@@ -86,45 +105,45 @@ const selectedOptions = ref({
   language: ''
 });
 
-const movies = ref([]);
+const movies = ref({
+  trend: [],
+  toprated: []
+});
+
 const loading = ref(false);
 const errorMessage = ref("");
 const isSearchExhausted = ref(false);
 
 const getProviderClass = (provider) => {
-  switch (provider) {
-    case '8': return 'netflix';
-    case '9': return 'amazon';
-    case '337': return 'disney';
-    case '15': return 'hulu';
-    default: return '';
-  }
+  return {
+    '8': 'netflix',
+    '9': 'amazon',
+    '337': 'disney',
+    '15': 'hulu'
+  }[provider] || '';
 };
 
 const getGenreClass = (genre) => {
-  switch (genre) {
-    case '35': return 'laugh';
-    case '18': return 'cry';
-    case '53': return 'thrill';
-    case '10749': return 'romance';
-    default: return '';
-  }
+  return {
+    '35': 'laugh',
+    '18': 'cry',
+    '53': 'thrill',
+    '10749': 'romance'
+  }[genre] || '';
 };
 
 const getLanguageClass = (language) => {
-  switch (language) {
-    case 'en': return 'western';
-    case 'ja': return 'japanese';
-    case 'ko': return 'korean';
-    default: return '';
-  }
+  return {
+    'en': 'western',
+    'ja': 'japanese',
+    'ko': 'korean'
+  }[language] || '';
 };
 
 const generateStorageKey = () => {
   return `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
 };
 
-// 検索時にローカルストレージをチェックし、なければAPIから取得
 const fetchMovies = async () => {
   if (!selectedOptions.value.genre || !selectedOptions.value.provider || !selectedOptions.value.language) {
     errorMessage.value = "必須の質問に回答してください。";
@@ -132,68 +151,61 @@ const fetchMovies = async () => {
   }
 
   loading.value = true;
-  movies.value = [];
+  movies.value = { trend: [], toprated: [] };
   errorMessage.value = "";
   isSearchExhausted.value = false;
 
   const storageKey = generateStorageKey();
-  let storedMovies = JSON.parse(localStorage.getItem(storageKey) || '[]');
+  let storedMovies = JSON.parse(localStorage.getItem(storageKey) || '{}');
 
-  if (storedMovies.length > 0) {
-    // ローカルストレージから3件取得し、残りを保存
-    movies.value = storedMovies.splice(0, 3);
+  // 🔥 キャッシュがある場合はそれを使用
+  if (storedMovies.trend && storedMovies.toprated) {
+    movies.value = {
+      trend: storedMovies.trend.length > 0 ? [storedMovies.trend.shift()] : [],
+      toprated: storedMovies.toprated.length > 1 ? [storedMovies.toprated.shift(), storedMovies.toprated.shift()] : []
+    };
+
     localStorage.setItem(storageKey, JSON.stringify(storedMovies));
 
-    // すべて消費した場合のメッセージ処理
-    if (storedMovies.length === 0) {
+    if (!storedMovies.trend.length && !storedMovies.toprated.length) {
       isSearchExhausted.value = true;
-      movies.value = [];
+      movies.value = { trend: [], toprated: [] };
     }
-  } else {
-    try {
-      // const response = await fetch(`${config.public.apiBase}/movies`,{
-      const response = await fetch(`http://localhost:8080/api/movies`,{
-      // const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(selectedOptions.value),
-      });
+    loading.value = false;
+    return;  // 🔥 ここで処理を終了し、APIリクエストを送らない
+  }
 
-      if (!response.ok) {
-        throw new Error("映画データの取得に失敗しました");
-      }
+  // 🔥 キャッシュがない場合はAPIリクエスト
+  try {
+    const response = await fetch(`http://localhost:8080/api/movies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(selectedOptions.value),
+    });
 
-      const data = await response.json();
+    if (!response.ok) throw new Error("API リクエストが失敗しました");
 
-      if (data.length === 0) {
-        errorMessage.value = "検索結果がありませんでした。";
-      } else {
-        // 取得した30件から3件表示、残りを保存
-        movies.value = data.slice(0, 3);
-        localStorage.setItem(storageKey, JSON.stringify(data.slice(3)));
-      }
+    const data = await response.json();
 
-    } catch (error) {
-      errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。"
+    if (!data.trend.length && !data.toprated.length) {
+      errorMessage.value = "検索結果がありませんでした。";
+    } else {
+      movies.value = {
+        trend: data.trend.length > 0 ? [data.trend[0]] : [],
+        toprated: data.toprated.length > 1 ? [data.toprated[0], data.toprated[1]] : []
+      };
+
+      localStorage.setItem(storageKey, JSON.stringify(data)); // 🔥 キャッシュを保存
     }
+  } catch (error) {
+    console.error("❌ 映画データの取得に失敗:", error);
+    errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。";
   }
   loading.value = false;
 };
 
-// 初回マウント時にローカルストレージのデータを適用
-onMounted(() => {
-  const storageKey = generateStorageKey();
-  const storedMovies = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  if (storedMovies.length > 0) {
-    movies.value = storedMovies.splice(0, 3);
-    localStorage.setItem(storageKey, JSON.stringify(storedMovies));
-  }
-});
-
 const resetSearch = () => {
-  movies.value = [];
+  movies.value = { trend: [], toprated: [] };
 };
 
 const getMoviePoster = (path) => {
