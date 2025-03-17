@@ -177,7 +177,9 @@ const fetchMovies = async () => {
 
   // 🔥 キャッシュがない場合はAPIリクエスト
   try {
-    const response = await fetch(`http://localhost:8080/api/movies`, {
+    // const response = await fetch(`${config.public.apiBase}/movies`,{
+    // const response = await fetch(`http://localhost:8080/api/movies`, {
+      const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(selectedOptions.value),
