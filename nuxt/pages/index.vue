@@ -300,6 +300,9 @@ button:disabled {
   padding: 15px 0;
   margin-top: 25px;
   line-height: 1.6;
+  border-top: 1px solid #ccc; /* 上に1pxの線を追加 */
+  padding-top: 20px;
+  background-color: #f8f9fa; /* 超薄いグレー */
 }
 
 .tmdb-logo {
