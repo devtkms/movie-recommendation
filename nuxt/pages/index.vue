@@ -33,30 +33,32 @@
 
     <div v-if="movies.trend.length > 0 || movies.toprated.length > 0" class="movie-list">
       <h2 class="category-title">📈 今話題の映画</h2>
-      <ul>
-        <li v-for="movie in movies.trend" :key="movie.title">
-          <h3>{{ movie.title }}</h3>
-          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター">
-
-          <p v-if="movie.overview">
-            <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
-          </p>
-          <p v-else class="no-overview">概要なし</p>
-        </li>
-      </ul>
+      <div class="movie-list">
+        <div v-for="movie in movies.trend" :key="movie.title" class="movie-card">
+          <h3 class="movie-title">{{ movie.title }}</h3>
+          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
+          <div class="overview-container">
+            <p v-if="movie.overview">
+              <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
+            </p>
+            <p v-else class="no-overview">概要なし</p>
+          </div>
+        </div>
+      </div>
 
       <h2 class="category-title">🏆 名作</h2>
-      <ul>
-        <li v-for="movie in movies.toprated" :key="movie.title">
-          <h3>{{ movie.title }}</h3>
-          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター">
-
-          <p v-if="movie.overview">
-            <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
-          </p>
-          <p v-else class="no-overview">概要なし</p>
-        </li>
-      </ul>
+      <div class="movie-list">
+        <div v-for="movie in movies.toprated" :key="movie.title" class="movie-card">
+          <h3 class="movie-title">{{ movie.title }}</h3>
+          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
+          <div class="overview-container">
+            <p v-if="movie.overview">
+              <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
+            </p>
+            <p v-else class="no-overview">概要なし</p>
+          </div>
+        </div>
+      </div>
 
       <button @click="resetSearch" class="search-button">検索画面に戻る</button>
     </div>
@@ -304,7 +306,11 @@ button:disabled {
 }
 
 .movie-list {
-  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* カード間のスペース */
+  justify-content: center; /* 🔥 カードを中央に配置 */
+  width: 100%;
 }
 
 .movie-list img {
@@ -316,6 +322,32 @@ button:disabled {
 .movie-list ul {
   list-style-type: none;
   padding: 0;
+}
+
+.movie-title {
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.movie-card {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px; /* 🔥 余白を増やして広げる */
+  text-align: center;
+  width: 280px; /* 🔥 カードの幅を広げる */
+  max-width: 320px; /* 🔥 最大幅を大きくする */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.movie-poster {
+  max-width: 100%; /* 🔥 レスポンシブ対応のまま拡大 */
+  height: auto; /* 🔥 縦横比を維持 */
+  border-radius: 8px;
 }
 
 .error-message {
@@ -388,6 +420,14 @@ button:disabled {
   margin-bottom: 10px;
 }
 
+.overview-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+}
+
 .no-overview {
   color: #777;
   font-style: italic;
@@ -395,7 +435,7 @@ button:disabled {
 }
 
 .overview-button {
-  background-color: #007BFF !important; /* 🔵 青 */
+  background-color: #007BFF;
   color: white;
   font-size: 14px;
   padding: 8px 16px;
@@ -406,6 +446,18 @@ button:disabled {
 }
 
 .overview-button:hover {
-  background-color: #0056b3 !important; /* 🔵 少し濃い青 */
+  background-color: #0056b3;
+}
+
+.category-title {
+  width: 100%; /* 🔥 タイトルがコンテナ内で適切に表示される */
+  text-align: center; /* 🔥 タイトルを中央揃え */
+  font-size: 25px;
+  font-weight: bold;
+  margin-top: 30px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center; /* 🔥 タイトルを中央配置 */
+  align-items: center;
 }
 </style>
