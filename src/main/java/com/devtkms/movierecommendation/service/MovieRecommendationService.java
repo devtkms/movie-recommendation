@@ -11,9 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,10 +31,25 @@ public class MovieRecommendationService {
         Map<String, List<MovieRecommendationResponseDto>> categorizedMovies = new HashMap<>();
 
         // 🔥 トレンド映画を取得（10件）
-        categorizedMovies.put("trend", fetchMoviesFromTmdb("/discover/movie", requestDto, 10, "popularity.desc"));
+        List<MovieRecommendationResponseDto> trendMovies = fetchMoviesFromTmdb("/discover/movie", requestDto, 10, "popularity.desc");
 
-        // 🔥 名作（高評価作品）を取得（20件）
-        categorizedMovies.put("toprated", fetchMoviesFromTmdb("/discover/movie", requestDto, 20, "vote_average.desc"));
+        // 🔥 トレンド映画のIDをSetに格納
+        Set<Long> trendMovieIds = trendMovies.stream()
+                .map(MovieRecommendationResponseDto::getId)
+                .collect(Collectors.toSet());
+
+        // 🔥 名作（高評価作品）を取得（25件）
+        List<MovieRecommendationResponseDto> topRatedMovies = fetchMoviesFromTmdb("/discover/movie", requestDto, 25, "vote_average.desc");
+
+        // 🔥 名作リストからトレンドに含まれる映画を除外
+        List<MovieRecommendationResponseDto> filteredTopRatedMovies = topRatedMovies.stream()
+                .filter(movie -> !trendMovieIds.contains(movie.getId()))
+                .limit(20) // **除外後に20件を確保**
+                .collect(Collectors.toList());
+
+        // 結果を格納
+        categorizedMovies.put("trend", trendMovies);
+        categorizedMovies.put("toprated", filteredTopRatedMovies);
 
         return categorizedMovies;
     }

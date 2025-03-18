@@ -37,7 +37,12 @@
         <li v-if="movies.trend.length > 0">
           <h3>{{ movies.trend[0].title }}</h3>
           <img :src="getMoviePoster(movies.trend[0].posterPath)" alt="映画ポスター">
-          <p>{{ movies.trend[0].overview }}</p>
+
+          <p v-if="movies.trend.length > 0 && movies.trend[0].overview">
+            <button class="overview-button" @click="showOverview(movies.trend[0].overview)">概要を見る</button>
+          </p>
+
+          <p v-else class="no-overview">概要なし</p>
         </li>
       </ul>
 
@@ -46,16 +51,29 @@
         <li v-if="movies.toprated.length > 0">
           <h3>{{ movies.toprated[0].title }}</h3>
           <img :src="getMoviePoster(movies.toprated[0].posterPath)" alt="映画ポスター">
-          <p>{{ movies.toprated[0].overview }}</p>
+          <p v-if="movies.trend[0].overview">
+            <button class="overview-button" @click="showOverview(movies.trend[0].overview)">概要を見る</button>
+          </p>
+          <p v-else class="no-overview">概要なし</p>
         </li>
         <li v-if="movies.toprated.length > 1">
           <h3>{{ movies.toprated[1].title }}</h3>
           <img :src="getMoviePoster(movies.toprated[1].posterPath)" alt="映画ポスター">
-          <p>{{ movies.toprated[1].overview }}</p>
+          <p v-if="movies.trend.length > 0 && movies.trend[0].overview">
+            <button class="overview-button" @click="showOverview(movies.trend[0].overview)">概要を見る</button>
+          </p>
+          <p v-else class="no-overview">概要なし</p>
         </li>
       </ul>
 
       <button @click="resetSearch" class="search-button">検索画面に戻る</button>
+    </div>
+
+    <div v-if="showModal" class="modal">
+      <div class="modal-content">
+        <p>{{ modalContent }}</p>
+        <button @click="closeModal">閉じる</button>
+      </div>
     </div>
 
     <footer class="tmdb-credit">
@@ -64,6 +82,8 @@
     </footer>
   </div>
 </template>
+
+
 
 <script setup>
 import { ref } from 'vue';
@@ -94,11 +114,6 @@ const options = {
   ]
 };
 
-const categoryTitles = {
-  trend: "📈 今話題の映画",
-  toprated: "🏆 名作"
-};
-
 const selectedOptions = ref({
   genre: '',
   provider: '',
@@ -113,6 +128,17 @@ const movies = ref({
 const loading = ref(false);
 const errorMessage = ref("");
 const isSearchExhausted = ref(false);
+const showModal = ref(false);
+const modalContent = ref("");
+
+const showOverview = (overview) => {
+  modalContent.value = overview;
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+};
 
 const getProviderClass = (provider) => {
   return {
@@ -344,5 +370,50 @@ button:disabled {
 .search-button:disabled {
   background-color: #999999;
   cursor: not-allowed;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 400px;
+}
+
+.modal-content p {
+  margin-bottom: 10px;
+}
+
+.no-overview {
+  color: #777;
+  font-style: italic;
+  margin-top: 5px;
+}
+
+.overview-button {
+  background-color: #007BFF !important; /* 🔵 青 */
+  color: white;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.overview-button:hover {
+  background-color: #0056b3 !important; /* 🔵 少し濃い青 */
 }
 </style>
