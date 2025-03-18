@@ -88,7 +88,7 @@ import { ref } from 'vue';
 const searchOptions = {
   genre: '今の気分を教えてください',
   provider: '配信サービスを選んでください',
-  language: '洋画・邦画を選んでください',
+  language: '洋画・邦画・韓国映画を選んでください',
 };
 
 const options = {
