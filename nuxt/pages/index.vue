@@ -34,33 +34,25 @@
     <div v-if="movies.trend.length > 0 || movies.toprated.length > 0" class="movie-list">
       <h2 class="category-title">📈 今話題の映画</h2>
       <ul>
-        <li v-if="movies.trend.length > 0">
-          <h3>{{ movies.trend[0].title }}</h3>
-          <img :src="getMoviePoster(movies.trend[0].posterPath)" alt="映画ポスター">
+        <li v-for="movie in movies.trend" :key="movie.title">
+          <h3>{{ movie.title }}</h3>
+          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター">
 
-          <p v-if="movies.trend.length > 0 && movies.trend[0].overview">
-            <button class="overview-button" @click="showOverview(movies.trend[0].overview)">概要を見る</button>
+          <p v-if="movie.overview">
+            <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
           </p>
-
           <p v-else class="no-overview">概要なし</p>
         </li>
       </ul>
 
       <h2 class="category-title">🏆 名作</h2>
       <ul>
-        <li v-if="movies.toprated.length > 0">
-          <h3>{{ movies.toprated[0].title }}</h3>
-          <img :src="getMoviePoster(movies.toprated[0].posterPath)" alt="映画ポスター">
-          <p v-if="movies.trend[0].overview">
-            <button class="overview-button" @click="showOverview(movies.trend[0].overview)">概要を見る</button>
-          </p>
-          <p v-else class="no-overview">概要なし</p>
-        </li>
-        <li v-if="movies.toprated.length > 1">
-          <h3>{{ movies.toprated[1].title }}</h3>
-          <img :src="getMoviePoster(movies.toprated[1].posterPath)" alt="映画ポスター">
-          <p v-if="movies.trend.length > 0 && movies.trend[0].overview">
-            <button class="overview-button" @click="showOverview(movies.trend[0].overview)">概要を見る</button>
+        <li v-for="movie in movies.toprated" :key="movie.title">
+          <h3>{{ movie.title }}</h3>
+          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター">
+
+          <p v-if="movie.overview">
+            <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
           </p>
           <p v-else class="no-overview">概要なし</p>
         </li>
