@@ -32,7 +32,7 @@
     <div v-if="loading">ロード中...</div>
 
     <div v-if="movies.trend.length > 0 || movies.toprated.length > 0" class="movie-list">
-      <div class="category-card">
+
         <h2 class="category-title">📈 今話題の映画</h2>
         <div class="movie-list">
           <div v-for="movie in movies.trend" :key="movie.title" class="movie-card">
@@ -59,10 +59,11 @@
               <p v-else class="no-overview">概要なし</p>
             </div>
           </div>
-        </div>
-      </div>
 
-      <button @click="resetSearch" class="search-button">検索画面に戻る</button>
+
+
+        <button @click="resetSearch" class="search-button">検索画面に戻る</button>
+      </div>
     </div>
 
     <div v-if="showModal" class="modal">
@@ -75,15 +76,16 @@
     <footer class="tmdb-credit">
       <img src="/images/tmdb-logo.png" alt="TMDb Logo" width="100"/>
       <p>このアプリは TMDb API を使用していますが、TMDb によって承認、認定、またはその他の承認は受けていません。</p>
-      <p><NuxtLink to="/privacy">プライバシーポリシー</NuxtLink></p>
+      <p>
+        <NuxtLink to="/privacy">プライバシーポリシー</NuxtLink>
+      </p>
     </footer>
   </div>
 </template>
 
 
-
 <script setup>
-import { ref } from 'vue';
+import {ref} from 'vue';
 
 const searchOptions = {
   genre: '今の気分を教えてください',
@@ -93,21 +95,21 @@ const searchOptions = {
 
 const options = {
   genre: [
-    { value: '35', label: '笑いたい' },
-    { value: '18', label: '泣きたい' },
-    { value: '53', label: 'ハラハラしたい' },
-    { value: '10749', label: 'キュンキュンしたい' }
+    {value: '35', label: '笑いたい'},
+    {value: '18', label: '泣きたい'},
+    {value: '53', label: 'ハラハラしたい'},
+    {value: '10749', label: 'キュンキュンしたい'}
   ],
   provider: [
-    { value: '8', label: 'Netflix' },
-    { value: '9', label: 'Amazonプライム' },
-    { value: '337', label: 'ディズニープラス' },
-    { value: '15', label: 'Hulu' }
+    {value: '8', label: 'Netflix'},
+    {value: '9', label: 'Amazonプライム'},
+    {value: '337', label: 'ディズニープラス'},
+    {value: '15', label: 'Hulu'}
   ],
   language: [
-    { value: 'en', label: '洋画' },
-    { value: 'ja', label: '邦画' },
-    { value: 'ko', label: '韓国映画' }
+    {value: 'en', label: '洋画'},
+    {value: 'ja', label: '邦画'},
+    {value: 'ko', label: '韓国映画'}
   ]
 };
 
@@ -174,7 +176,7 @@ const fetchMovies = async () => {
   }
 
   loading.value = true;
-  movies.value = { trend: [], toprated: [] };
+  movies.value = {trend: [], toprated: []};
   errorMessage.value = "";
   isSearchExhausted.value = false;
 
@@ -192,7 +194,7 @@ const fetchMovies = async () => {
 
     if (!storedMovies.trend.length && !storedMovies.toprated.length) {
       isSearchExhausted.value = true;
-      movies.value = { trend: [], toprated: [] };
+      movies.value = {trend: [], toprated: []};
     }
     loading.value = false;
     return;  // 🔥 ここで処理を終了し、APIリクエストを送らない
@@ -202,9 +204,9 @@ const fetchMovies = async () => {
   try {
     // const response = await fetch(`${config.public.apiBase}/movies`,{
     // const response = await fetch(`http://localhost:8080/api/movies`, {
-      const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
+    const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(selectedOptions.value),
     });
 
@@ -230,7 +232,7 @@ const fetchMovies = async () => {
 };
 
 const resetSearch = () => {
-  movies.value = { trend: [], toprated: [] };
+  movies.value = {trend: [], toprated: []};
 };
 
 const getMoviePoster = (path) => {
@@ -279,19 +281,49 @@ label {
   text-align: center;
 }
 
-.netflix { background-color: #E50914; }
-.amazon { background-color: #00A8E1; }
-.disney { background-color: #113CCF; }
-.hulu { background-color: #1CE783; }
+.netflix {
+  background-color: #E50914;
+}
 
-.laugh { background-color: #E50914; }
-.cry { background-color: #1E90FF; }
-.thrill { background-color: #FF4500; }
-.romance { background-color: #FF1493; }
+.amazon {
+  background-color: #00A8E1;
+}
 
-.western { background-color: #DAA520; }
-.japanese { background-color: #C70039; }
-.korean { background-color: #003366; }
+.disney {
+  background-color: #113CCF;
+}
+
+.hulu {
+  background-color: #1CE783;
+}
+
+.laugh {
+  background-color: #E50914;
+}
+
+.cry {
+  background-color: #1E90FF;
+}
+
+.thrill {
+  background-color: #FF4500;
+}
+
+.romance {
+  background-color: #FF1493;
+}
+
+.western {
+  background-color: #DAA520;
+}
+
+.japanese {
+  background-color: #C70039;
+}
+
+.korean {
+  background-color: #003366;
+}
 
 button.selected {
   background-color: grey;
@@ -335,10 +367,10 @@ button:disabled {
 }
 
 .movie-card {
-  background-color: #f8f9fa;
+  background-color: #f8f8ff;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 20px; /* 🔥 余白を増やして広げる */
+  padding: 15px; /* 🔥 余白を増やして広げる */
   text-align: center;
   width: 280px; /* 🔥 カードの幅を広げる */
   max-width: 320px; /* 🔥 最大幅を大きくする */
@@ -383,6 +415,7 @@ button:disabled {
   color: white;
   font-size: 16px;
   font-weight: bold;
+  margin-top: 30px;
   padding: 12px 24px;
   border-radius: 8px;
   border: none;
@@ -464,21 +497,10 @@ button:disabled {
   align-items: center;
 }
 
-.category-card {
-  background-color:#f8f9fa;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  text-align: center;
-  width: 100%;
-  max-width: 600px;
-  margin: 20px auto;
-}
-
 .category-title {
-  font-size: 22px;
+  font-size: 30px;
   font-weight: bold;
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 </style>
