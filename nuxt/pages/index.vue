@@ -31,39 +31,49 @@
 
     <div v-if="loading">ロード中...</div>
 
-    <div v-if="movies.trend.length > 0 || movies.toprated.length > 0" class="movie-list">
+    <div v-if="movies.trend.length > 0 || movies.toprated.length > 0" class="movie-results">
 
-        <h2 class="category-title">📈 今話題の映画</h2>
-        <div class="movie-list">
-          <div v-for="movie in movies.trend" :key="movie.title" class="movie-card">
-            <h3 class="movie-title">{{ movie.title }}</h3>
-            <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
-            <div class="overview-container">
-              <p v-if="movie.overview">
-                <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
-              </p>
-              <p v-else class="no-overview">概要なし</p>
-            </div>
+      <!-- 🔥 選択されたオプションを表示 -->
+      <div class="selected-options">
+        <div class="selected-option" :class="getGenreClass(selectedOptions.genre)">
+          {{ getGenreLabel(selectedOptions.genre) }}
+        </div>
+        <div class="selected-option" :class="getProviderClass(selectedOptions.provider)">
+          {{ getProviderLabel(selectedOptions.provider) }}
+        </div>
+        <div class="selected-option" :class="getLanguageClass(selectedOptions.language)">
+          {{ getLanguageLabel(selectedOptions.language) }}
+        </div>
+      </div>
+
+      <h2 class="category-title">📈 今話題の映画</h2>
+      <div class="movie-list">
+        <div v-for="movie in movies.trend" :key="movie.title" class="movie-card">
+          <h3 class="movie-title">{{ movie.title }}</h3>
+          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
+          <div class="overview-container">
+            <p v-if="movie.overview">
+              <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
+            </p>
+            <p v-else class="no-overview">概要なし</p>
           </div>
         </div>
-
-        <h2 class="category-title">🏆 名作</h2>
-        <div class="movie-list">
-          <div v-for="movie in movies.toprated" :key="movie.title" class="movie-card">
-            <h3 class="movie-title">{{ movie.title }}</h3>
-            <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
-            <div class="overview-container">
-              <p v-if="movie.overview">
-                <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
-              </p>
-              <p v-else class="no-overview">概要なし</p>
-            </div>
-          </div>
-
-
-
-        <button @click="resetSearch" class="search-button">検索画面に戻る</button>
       </div>
+
+      <h2 class="category-title">🏆 名作</h2>
+      <div class="movie-list">
+        <div v-for="movie in movies.toprated" :key="movie.title" class="movie-card">
+          <h3 class="movie-title">{{ movie.title }}</h3>
+          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
+          <div class="overview-container">
+            <p v-if="movie.overview">
+              <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
+            </p>
+            <p v-else class="no-overview">概要なし</p>
+          </div>
+        </div>
+      </div>
+      <button @click="resetSearch" class="search-button">検索画面に戻る</button>
     </div>
 
     <div v-if="showModal" class="modal">
@@ -163,6 +173,19 @@ const getLanguageClass = (language) => {
     'ja': 'japanese',
     'ko': 'korean'
   }[language] || '';
+};
+
+// 選択肢のラベルを取得する関数
+const getGenreLabel = (genre) => {
+  return options.genre.find(opt => opt.value === genre)?.label || "未選択";
+};
+
+const getProviderLabel = (provider) => {
+  return options.provider.find(opt => opt.value === provider)?.label || "未選択";
+};
+
+const getLanguageLabel = (language) => {
+  return options.language.find(opt => opt.value === language)?.label || "未選択";
 };
 
 const generateStorageKey = () => {
@@ -503,4 +526,46 @@ button:disabled {
   text-align: center;
   margin-bottom: 10px;
 }
+
+.selected-options {
+  display: flex;
+  justify-content: space-between; /* 🔥 均等配置 */
+  width: 100%; /* 🔥 横幅いっぱい */
+  max-width: 600px; /* 🔥 コンテナ幅を統一 */
+  margin: 0 auto 15px; /* 🔥 中央配置 */
+}
+
+.selected-option {
+  flex: 1; /* 🔥 各要素を均等幅に */
+  max-width: 200px; /* 🔥 最大幅 */
+  min-width: 100px; /* 🔥 最小幅 */
+  padding: 8px 12px; /* 🔥 ボタンのサイズ統一 */
+  color: white;
+  font-size: 14px; /* 🔽 文字サイズを少し小さくする */
+  font-weight: bold;
+  border-radius: 8px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  opacity: 0.9;
+  border: none;
+  white-space: nowrap; /* 🔥 折り返し防止 */
+}
+
+/* 🎨 各オプションの色（ボタンと統一） */
+.netflix { background-color: #E50914; }
+.amazon { background-color: #00A8E1; }
+.disney { background-color: #113CCF; }
+.hulu { background-color: #1CE783; }
+
+.laugh { background-color: #E50914; }
+.cry { background-color: #1E90FF; }
+.thrill { background-color: #FF4500; }
+.romance { background-color: #FF1493; }
+
+.western { background-color: #DAA520; }
+.japanese { background-color: #C70039; }
+.korean { background-color: #003366; }
 </style>
