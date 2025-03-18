@@ -73,6 +73,7 @@
     <footer class="tmdb-credit">
       <img src="/images/tmdb-logo.png" alt="TMDb Logo" width="100"/>
       <p>このアプリは TMDb API を使用していますが、TMDb によって承認、認定、またはその他の承認は受けていません。</p>
+      <p><NuxtLink to="/privacy">プライバシーポリシー</NuxtLink></p>
     </footer>
   </div>
 </template>
