@@ -32,30 +32,32 @@
     <div v-if="loading">ロード中...</div>
 
     <div v-if="movies.trend.length > 0 || movies.toprated.length > 0" class="movie-list">
-      <h2 class="category-title">📈 今話題の映画</h2>
-      <div class="movie-list">
-        <div v-for="movie in movies.trend" :key="movie.title" class="movie-card">
-          <h3 class="movie-title">{{ movie.title }}</h3>
-          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
-          <div class="overview-container">
-            <p v-if="movie.overview">
-              <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
-            </p>
-            <p v-else class="no-overview">概要なし</p>
+      <div class="category-card">
+        <h2 class="category-title">📈 今話題の映画</h2>
+        <div class="movie-list">
+          <div v-for="movie in movies.trend" :key="movie.title" class="movie-card">
+            <h3 class="movie-title">{{ movie.title }}</h3>
+            <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
+            <div class="overview-container">
+              <p v-if="movie.overview">
+                <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
+              </p>
+              <p v-else class="no-overview">概要なし</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <h2 class="category-title">🏆 名作</h2>
-      <div class="movie-list">
-        <div v-for="movie in movies.toprated" :key="movie.title" class="movie-card">
-          <h3 class="movie-title">{{ movie.title }}</h3>
-          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
-          <div class="overview-container">
-            <p v-if="movie.overview">
-              <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
-            </p>
-            <p v-else class="no-overview">概要なし</p>
+        <h2 class="category-title">🏆 名作</h2>
+        <div class="movie-list">
+          <div v-for="movie in movies.toprated" :key="movie.title" class="movie-card">
+            <h3 class="movie-title">{{ movie.title }}</h3>
+            <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
+            <div class="overview-container">
+              <p v-if="movie.overview">
+                <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
+              </p>
+              <p v-else class="no-overview">概要なし</p>
+            </div>
           </div>
         </div>
       </div>
@@ -460,5 +462,23 @@ button:disabled {
   display: flex;
   justify-content: center; /* 🔥 タイトルを中央配置 */
   align-items: center;
+}
+
+.category-card {
+  background-color:#f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+.category-title {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 15px;
 }
 </style>
