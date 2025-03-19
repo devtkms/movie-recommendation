@@ -278,8 +278,6 @@ const getMoviePoster = (path) => {
 </script>
 
 <style scoped>
-
-/* 🌟 共通スタイル */
 .container {
   max-width: 600px;
   margin: auto;
@@ -288,19 +286,18 @@ const getMoviePoster = (path) => {
 
 .title {
   font-size: 28px;
-  font-weight: bold;
   margin-bottom: 20px;
+  font-weight: bold;
 }
 
-/* 🔹 フォーム関連 */
 .form-group {
   margin-bottom: 15px;
 }
 
 label {
   display: block;
-  font-weight: bold;
   margin-bottom: 8px;
+  font-weight: bold;
 }
 
 .button-group {
@@ -310,7 +307,6 @@ label {
   justify-content: center;
 }
 
-/* 🔥 ボタンスタイル */
 .button {
   padding: 8px 12px;
   color: white;
@@ -320,11 +316,50 @@ label {
   border-radius: 8px;
   min-width: 140px;
   text-align: center;
-  transition: opacity 0.2s;
 }
 
-.button:hover {
-  opacity: 0.85;
+.netflix {
+  background-color: #E50914;
+}
+
+.amazon {
+  background-color: #00A8E1;
+}
+
+.disney {
+  background-color: #113CCF;
+}
+
+.hulu {
+  background-color: #1CE783;
+}
+
+.laugh {
+  background-color: #E50914;
+}
+
+.cry {
+  background-color: #1E90FF;
+}
+
+.thrill {
+  background-color: #FF4500;
+}
+
+.romance {
+  background-color: #FF1493;
+}
+
+.western {
+  background-color: #DAA520;
+}
+
+.japanese {
+  background-color: #C70039;
+}
+
+.korean {
+  background-color: #003366;
 }
 
 button.selected {
@@ -333,29 +368,98 @@ button.selected {
   opacity: 0.9;
 }
 
+.button:hover {
+  opacity: 0.85;
+}
+
 button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
 
-/* 🎨 配信サービス別ボタン */
-.netflix { background-color: #E50914; }
-.amazon { background-color: #00A8E1; }
-.disney { background-color: #113CCF; }
-.hulu { background-color: #1CE783; }
+.movie-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* カード間のスペース */
+  justify-content: center; /* 🔥 カードを中央に配置 */
+  width: 100%;
+}
 
-/* 🎭 ジャンル別ボタン */
-.laugh { background-color: #E50914; }
-.cry { background-color: #1E90FF; }
-.thrill { background-color: #FF4500; }
-.romance { background-color: #FF1493; }
+.movie-list img {
+  max-width: 100px;
+  display: block;
+  margin: auto;
+}
 
-/* 🌍 言語別ボタン */
-.western { background-color: #DAA520; }
-.japanese { background-color: #C70039; }
-.korean { background-color: #003366; }
+.movie-list ul {
+  list-style-type: none;
+  padding: 0;
+}
 
-/* 🔍 検索ボタン */
+.movie-title {
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.movie-results {
+  text-align: center;
+  padding-bottom: 40px; /* 🔥 ボタンの下に余白を増やす */
+}
+
+.movie-card {
+  background-color: #f8f8ff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px; /* 🔥 余白を増やして広げる */
+  text-align: center;
+  width: 280px; /* 🔥 カードの幅を広げる */
+  max-width: 320px; /* 🔥 最大幅を大きくする */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.movie-poster {
+  max-width: 80%; /* 🔥 見やすいバランスに調整 */
+  height: auto; /* 🔥 縦横比を維持 */
+  border-radius: 8px;
+  display: block;
+  margin: auto;
+}
+
+@media (max-width: 600px) {
+  .movie-poster {
+    max-width: 150px;
+  }
+}
+
+
+.error-message {
+  color: red;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.tmdb-credit {
+  text-align: center;
+  font-size: 11px;
+  padding: 15px 0;
+  margin-top: 25px;
+  line-height: 1.6;
+  border-top: 1px solid #ccc; /* 上に1pxの線を追加 */
+  padding-top: 20px;
+  background-color: #f8f9fa; /* 超薄いグレー */
+}
+
+.tmdb-logo {
+  width: 160px;
+  display: block;
+  margin: 15px auto;
+}
+
 .search-button {
   background-color: #333;
   color: white;
@@ -366,6 +470,7 @@ button:disabled {
   border: none;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out;
+  margin-top: 60px; /* 🔥 もっと下に下げる */
 }
 
 .search-button:hover {
@@ -377,50 +482,33 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* 🎬 映画リスト・カード関連 */
-.movie-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-  width: 100%;
-}
 
-.movie-card {
-  background-color: #f8f8ff;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 15px;
-  text-align: center;
-  width: 280px;
-  max-width: 320px;
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
 }
 
-.movie-title {
-  font-size: 16px;
-  font-weight: bold;
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
   text-align: center;
+  max-width: 400px;
+}
+
+.modal-content p {
   margin-bottom: 10px;
 }
 
-.movie-poster {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-}
-
-/* ℹ️ 映画の追加情報 */
-.movie-info {
-  font-size: 14px;
-  color: #333;
-  margin: 5px 0;
-}
-
-/* 📜 概要関連 */
 .overview-container {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -448,31 +536,40 @@ button:disabled {
   background-color: #0056b3;
 }
 
-/* 📢 エラーメッセージ */
-.error-message {
-  color: red;
+.category-title {
+  width: 100%; /* 🔥 タイトルがコンテナ内で適切に表示される */
+  text-align: center; /* 🔥 タイトルを中央揃え */
+  font-size: 25px;
   font-weight: bold;
-  text-align: center;
-  margin-top: 10px;
-  font-size: 14px;
+  margin-top: 30px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center; /* 🔥 タイトルを中央配置 */
+  align-items: center;
 }
 
-/* 📌 選択されたオプション */
+.category-title {
+  font-size: 30px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
 .selected-options {
   display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto 15px;
+  justify-content: space-between; /* 🔥 均等配置 */
+  width: 100%; /* 🔥 横幅いっぱい */
+  max-width: 600px; /* 🔥 コンテナ幅を統一 */
+  margin: 0 auto 15px; /* 🔥 中央配置 */
 }
 
 .selected-option {
-  flex: 1;
-  max-width: 200px;
-  min-width: 100px;
-  padding: 8px 12px;
+  flex: 1; /* 🔥 各要素を均等幅に */
+  max-width: 200px; /* 🔥 最大幅 */
+  min-width: 100px; /* 🔥 最小幅 */
+  padding: 8px 12px; /* 🔥 ボタンのサイズ統一 */
   color: white;
-  font-size: 14px;
+  font-size: 14px; /* 🔽 文字サイズを少し小さくする */
   font-weight: bold;
   border-radius: 8px;
   text-align: center;
@@ -482,54 +579,21 @@ button:disabled {
   cursor: default;
   opacity: 0.9;
   border: none;
-  white-space: nowrap;
+  white-space: nowrap; /* 🔥 折り返し防止 */
 }
 
-/* 🏆 セクションタイトル */
-.category-title {
-  width: 100%;
-  text-align: center;
-  font-size: 25px;
-  font-weight: bold;
-  margin-top: 30px;
-  margin-bottom: 20px;
-}
+/* 🎨 各オプションの色（ボタンと統一） */
+.netflix { background-color: #E50914; }
+.amazon { background-color: #00A8E1; }
+.disney { background-color: #113CCF; }
+.hulu { background-color: #1CE783; }
 
-/* 📌 モーダル関連 */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+.laugh { background-color: #E50914; }
+.cry { background-color: #1E90FF; }
+.thrill { background-color: #FF4500; }
+.romance { background-color: #FF1493; }
 
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  max-width: 400px;
-}
-
-.modal-content p {
-  margin-bottom: 10px;
-}
-
-/* 📢 TMDb クレジット表示 */
-.tmdb-credit {
-  text-align: center;
-  font-size: 11px;
-  padding: 15px 0;
-  margin-top: 25px;
-  line-height: 1.6;
-  border-top: 1px solid #ccc;
-  padding-top: 20px;
-  background-color: #f8f9fa;
-}
-
+.western { background-color: #DAA520; }
+.japanese { background-color: #C70039; }
+.korean { background-color: #003366; }
 </style>
