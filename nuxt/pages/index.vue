@@ -1,6 +1,9 @@
 <template>
   <div class="container">
-    <h1 class="title">MoviReco</h1>
+    <!-- 🔥 ヘッダーを追加 -->
+    <header class="header">
+      <h1 class="title">MoviReco</h1>
+    </header>
 
     <div v-if="movies.trend.length === 0 && movies.toprated.length === 0">
       <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
@@ -284,10 +287,20 @@ const getMoviePoster = (path) => {
   text-align: center;
 }
 
+.header {
+  background-color: #ffffff; /* 背景を白に */
+  text-align: center;
+  padding: 20px 0;
+  border-bottom: 2px solid #ddd; /* 🔥 ヘッダーの下に線を追加 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 🔥 軽く影をつける */
+  margin-bottom: 30px; /* 🔥 フォームとの間を開ける */
+}
+
 .title {
   font-size: 28px;
-  margin-bottom: 20px;
   font-weight: bold;
+  margin: 0;
+  color: #333;
 }
 
 .form-group {
