@@ -69,7 +69,7 @@
             <p v-if="movie.overview">
               <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
             </p>
-            <p v-else class="no-overview">概要なし</p>
+            <p v-else class="no-overview">この映画の概要情報はありません。</p>
           </div>
         </div>
       </div>
