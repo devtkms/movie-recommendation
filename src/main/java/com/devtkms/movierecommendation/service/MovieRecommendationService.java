@@ -71,39 +71,42 @@ public class MovieRecommendationService {
                 .queryParam("with_original_language", requestDto.getLanguage())
                 .queryParam("language", "ja-JP")
                 .queryParam("sort_by", sortBy)
-                .queryParam("page", page);  // 🔥 ページ指定
+                .queryParam("page", page);
 
         String url = urlBuilder.toUriString();
         logger.info("📡 TMDb APIリクエスト: {}", url);
 
-        // TMDb APIからデータを取得
         TmdbResponse response = restTemplate.getForObject(url, TmdbResponse.class);
 
-        // 取得結果から最大 limit 件を取得
-        return response != null ? response.toMovieDtoList().stream().limit(limit).collect(Collectors.toList()) : List.of();
+        return response != null
+                ? response.toMovieDtoList().stream()
+                .filter(movie -> movie.getPosterPath() != null && !movie.getPosterPath().isEmpty()) // 🔥 ポスターがある映画のみ取得
+                .limit(limit)
+                .collect(Collectors.toList())
+                : List.of();
     }
 
     private List<MovieRecommendationResponseDto> fetchAdditionalTopRatedMovies(MovieRecommendationRequestDto requestDto,
                                                                                Set<String> trendMovieTitles,
                                                                                int neededCount) {
         List<MovieRecommendationResponseDto> additionalMovies = new ArrayList<>();
-        int page = 2; // 🔥 追加取得する場合は2ページ目から
+        int page = 2;
 
         while (additionalMovies.size() < neededCount) {
             List<MovieRecommendationResponseDto> movies = fetchMoviesFromTmdb("/discover/movie", requestDto, neededCount, "vote_average.desc", page);
             if (movies.isEmpty()) {
-                break; // これ以上映画がない場合は終了
+                break;
             }
 
-            // トレンドにある映画を除外しつつ追加
             List<MovieRecommendationResponseDto> filteredMovies = movies.stream()
-                    .filter(movie -> !trendMovieTitles.contains(movie.getTitle()))
+                    .filter(movie -> !trendMovieTitles.contains(movie.getTitle())) // 🔥 トレンドの映画を除外
+                    .filter(movie -> movie.getPosterPath() != null && !movie.getPosterPath().isEmpty()) // 🔥 ポスターがある映画のみ
                     .collect(Collectors.toList());
 
             additionalMovies.addAll(filteredMovies);
-            page++; // 次のページを取得
+            page++;
         }
 
-        return additionalMovies.stream().limit(neededCount).collect(Collectors.toList()); // 必要な数だけ取得
+        return additionalMovies.stream().limit(neededCount).collect(Collectors.toList());
     }
 }
