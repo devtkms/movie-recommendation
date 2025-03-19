@@ -208,26 +208,32 @@ const fetchMovies = async () => {
 
   // 🔥 キャッシュがある場合はそれを使用
   if (storedMovies.trend && storedMovies.toprated) {
-    movies.value = {
-      trend: storedMovies.trend.length > 0 ? [storedMovies.trend.shift()] : [],
-      toprated: storedMovies.toprated.length > 1 ? [storedMovies.toprated.shift(), storedMovies.toprated.shift()] : []
-    };
+    // **ローカルストレージから取得する前に先頭の映画を削除する**
+    const nextTrend = storedMovies.trend.length > 0 ? storedMovies.trend.shift() : null;
+    const nextTopRated = storedMovies.toprated.length > 1 ? [storedMovies.toprated.shift(), storedMovies.toprated.shift()] : [];
 
     localStorage.setItem(storageKey, JSON.stringify(storedMovies));
 
-    if (!storedMovies.trend.length && !storedMovies.toprated.length) {
+    if (!nextTrend && nextTopRated.length === 0) {
       isSearchExhausted.value = true;
-      movies.value = {trend: [], toprated: []};
+      loading.value = false;
+      return;
     }
+
+    movies.value = {
+      trend: nextTrend ? [nextTrend] : [],
+      toprated: nextTopRated
+    };
+
     loading.value = false;
-    return;  // 🔥 ここで処理を終了し、APIリクエストを送らない
+    return; // 🔥 ここで処理を終了し、APIリクエストを送らない
   }
 
   // 🔥 キャッシュがない場合はAPIリクエスト
   try {
     // const response = await fetch(`${config.public.apiBase}/movies`,{
-    // const response = await fetch(`http://localhost:8080/api/movies`, {
-    const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
+    const response = await fetch(`http://localhost:8080/api/movies`, {
+    // const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(selectedOptions.value),
@@ -240,12 +246,19 @@ const fetchMovies = async () => {
     if (!data.trend.length && !data.toprated.length) {
       errorMessage.value = "検索結果がありませんでした。";
     } else {
-      movies.value = {
-        trend: data.trend.length > 0 ? [data.trend[0]] : [],
-        toprated: data.toprated.length > 1 ? [data.toprated[0], data.toprated[1]] : []
-      };
+      // **キャッシュを保存する前に、取得データをコピー**
+      const storedData = { ...data };
 
-      localStorage.setItem(storageKey, JSON.stringify(data)); // 🔥 キャッシュを保存
+      // 🔥 1回目に表示する映画を取り出し、残りをキャッシュに保存
+      const firstTrend = storedData.trend.length > 0 ? storedData.trend.shift() : null;
+      const firstTopRated = storedData.toprated.length > 1 ? [storedData.toprated.shift(), storedData.toprated.shift()] : [];
+
+      localStorage.setItem(storageKey, JSON.stringify(storedData));
+
+      movies.value = {
+        trend: firstTrend ? [firstTrend] : [],
+        toprated: firstTopRated
+      };
     }
   } catch (error) {
     console.error("❌ 映画データの取得に失敗:", error);
