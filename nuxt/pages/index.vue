@@ -1,10 +1,6 @@
 <template>
   <div class="container">
-    <!-- 🔥 ヘッダーを追加 -->
-    <header class="header">
-      <h1 class="title">MoviReco</h1>
-    </header>
-
+    <Header />
     <div v-if="movies.trend.length === 0 && movies.toprated.length === 0">
       <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
         <label>{{ label }}</label>
@@ -85,21 +81,15 @@
         <button @click="closeModal">閉じる</button>
       </div>
     </div>
-
-    <footer class="tmdb-credit">
-      <img src="/images/tmdb-logo.png" alt="TMDb Logo" width="100"/>
-      <p>This application uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</p>
-      <p>このアプリは TMDb API を使用していますが、TMDb によって承認、認定、またはその他の承認は受けていません。</p>
-      <p>
-        <NuxtLink to="/privacy">プライバシーポリシー</NuxtLink>
-      </p>
-    </footer>
+    <Footer />
   </div>
 </template>
 
 
 <script setup>
 import {ref} from 'vue';
+import Header from '~/components/Header.vue'
+import Footer from '~/components/Footer.vue'
 
 const searchOptions = {
   genre: '今の気分を教えてください',
@@ -287,22 +277,6 @@ const getMoviePoster = (path) => {
   text-align: center;
 }
 
-.header {
-  background-color: #ffffff; /* 背景を白に */
-  text-align: center;
-  padding: 20px 0;
-  border-bottom: 2px solid #ddd; /* 🔥 ヘッダーの下に線を追加 */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 🔥 軽く影をつける */
-  margin-bottom: 30px; /* 🔥 フォームとの間を開ける */
-}
-
-.title {
-  font-size: 28px;
-  font-weight: bold;
-  margin: 0;
-  color: #333;
-}
-
 .form-group {
   margin-bottom: 15px;
 }
@@ -329,50 +303,6 @@ label {
   border-radius: 8px;
   min-width: 140px;
   text-align: center;
-}
-
-.netflix {
-  background-color: #E50914;
-}
-
-.amazon {
-  background-color: #00A8E1;
-}
-
-.disney {
-  background-color: #113CCF;
-}
-
-.hulu {
-  background-color: #1CE783;
-}
-
-.laugh {
-  background-color: #E50914;
-}
-
-.cry {
-  background-color: #1E90FF;
-}
-
-.thrill {
-  background-color: #FF4500;
-}
-
-.romance {
-  background-color: #FF1493;
-}
-
-.western {
-  background-color: #DAA520;
-}
-
-.japanese {
-  background-color: #C70039;
-}
-
-.korean {
-  background-color: #003366;
 }
 
 button.selected {
@@ -454,23 +384,6 @@ button:disabled {
   font-weight: bold;
   margin-top: 10px;
   font-size: 14px;
-}
-
-.tmdb-credit {
-  text-align: center;
-  font-size: 11px;
-  padding: 15px 0;
-  margin-top: 25px;
-  line-height: 1.6;
-  border-top: 1px solid #ccc; /* 上に1pxの線を追加 */
-  padding-top: 20px;
-  background-color: #f8f9fa; /* 超薄いグレー */
-}
-
-.tmdb-logo {
-  width: 160px;
-  display: block;
-  margin: 15px auto;
 }
 
 .search-button {
