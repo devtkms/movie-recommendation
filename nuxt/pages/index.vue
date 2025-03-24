@@ -75,12 +75,11 @@
       <button @click="resetSearch" class="search-button">検索画面に戻る</button>
     </div>
 
-    <div v-if="showModal" class="modal">
-      <div class="modal-content">
-        <p>{{ modalContent }}</p>
-        <button @click="closeModal">閉じる</button>
-      </div>
-    </div>
+    <OverviewModal
+        :show="showModal"
+        :content="modalContent"
+        @close="closeModal"
+    />
     <Footer />
   </div>
 </template>
@@ -90,6 +89,8 @@
 import {ref} from 'vue';
 import Header from '~/components/Header.vue'
 import Footer from '~/components/Footer.vue'
+import OverviewModal from '~/components/OverviewModal.vue'
+
 
 const searchOptions = {
   genre: '今の気分を教えてください',
