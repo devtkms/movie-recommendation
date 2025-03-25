@@ -217,9 +217,12 @@ const fetchMovies = async () => {
   currentMovie.value = null;
 
   const storageKey = generateStorageKey();
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
   let stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
 
-  if (stored.pool && stored.pool.length > 0) {
+  // 🔍 日付が今日と一致しているか
+  if (stored.pool && stored.savedDate === today) {
     moviePool.value = stored.pool;
     currentIndex.value = stored.index || 0;
     currentMovie.value = moviePool.value[currentIndex.value];
@@ -240,7 +243,7 @@ const fetchMovies = async () => {
 
     const data = await response.json();
 
-// 🔀 combinedをシャッフル
+    // 🔀 combinedをシャッフル
     const combined = [...(data.combined || [])];
     for (let i = combined.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -250,7 +253,9 @@ const fetchMovies = async () => {
     moviePool.value = combined;
     currentIndex.value = 0;
     currentMovie.value = moviePool.value[0];
-    localStorage.setItem(storageKey, JSON.stringify({ pool: combined, index: 0 }));
+
+    // 🔐 保存時に日付を追加
+    localStorage.setItem(storageKey, JSON.stringify({ pool: combined, index: 0, savedDate: today }));
   } catch (error) {
     console.error("❌ 映画データの取得に失敗:", error);
     errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。";
@@ -266,9 +271,6 @@ const resetSearch = () => {
   isSearchExhausted.value = false;
 };
 </script>
-
-
-
 
 <style scoped>
 .container {
@@ -397,7 +399,6 @@ button:disabled {
   }
 }
 
-
 .error-message {
   color: red;
   text-align: center;
@@ -427,7 +428,6 @@ button:disabled {
   background-color: #999;
   cursor: not-allowed;
 }
-
 
 .modal {
   position: fixed;
