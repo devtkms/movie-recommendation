@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <Header />
-    <div v-if="movies.trend.length === 0 && movies.toprated.length === 0">
+    <div v-if="!currentMovie">
       <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
         <label>{{ label }}</label>
         <div class="button-group">
@@ -30,9 +30,7 @@
 
     <div v-if="loading">ロード中...</div>
 
-    <div v-if="movies.trend.length > 0 || movies.toprated.length > 0" class="movie-results">
-
-      <!-- 🔥 選択されたオプションを表示 -->
+    <div v-if="currentMovie" class="movie-results">
       <div class="selected-options">
         <div class="selected-option" :class="getGenreClass(selectedOptions.genre)">
           {{ getGenreLabel(selectedOptions.genre) }}
@@ -45,52 +43,37 @@
         </div>
       </div>
 
-      <h2 class="category-title">📈 今話題の映画</h2>
-      <div class="movie-list">
-        <div v-for="movie in movies.trend" :key="movie.title" class="movie-card">
-          <h3 class="movie-title">{{ movie.title }}</h3>
-          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
-          <div class="overview-container">
-            <p v-if="movie.overview">
-              <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
-            </p>
-            <p v-else class="no-overview">概要なし</p>
-          </div>
+      <div
+          class="movie-card"
+          @touchstart="onTouchStart"
+          @touchmove="onTouchMove"
+          @touchend="onTouchEnd"
+          :style="cardStyle"
+      >
+        <h3 class="movie-title">{{ currentMovie.title }}</h3>
+        <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
+        <div class="overview-container">
+          <p v-if="currentMovie.overview">
+            <button class="overview-button" @click="showOverview(currentMovie.overview)">概要を見る</button>
+          </p>
+          <p v-else class="no-overview">この映画の概要情報はありません。</p>
         </div>
       </div>
 
-      <h2 class="category-title">🏆 名作</h2>
-      <div class="movie-list">
-        <div v-for="movie in movies.toprated" :key="movie.title" class="movie-card">
-          <h3 class="movie-title">{{ movie.title }}</h3>
-          <img :src="getMoviePoster(movie.posterPath)" alt="映画ポスター" class="movie-poster">
-          <div class="overview-container">
-            <p v-if="movie.overview">
-              <button class="overview-button" @click="showOverview(movie.overview)">概要を見る</button>
-            </p>
-            <p v-else class="no-overview">この映画の概要情報はありません。</p>
-          </div>
-        </div>
-      </div>
       <button @click="resetSearch" class="search-button">検索画面に戻る</button>
     </div>
 
-    <OverviewModal
-        :show="showModal"
-        :content="modalContent"
-        @close="closeModal"
-    />
+    <OverviewModal :show="showModal" :content="modalContent" @close="closeModal" />
     <Footer />
   </div>
 </template>
 
 
 <script setup>
-import {ref} from 'vue';
-import Header from '~/components/Header.vue'
-import Footer from '~/components/Footer.vue'
-import OverviewModal from '~/components/OverviewModal.vue'
-
+import { ref, computed } from 'vue';
+import Header from '~/components/Header.vue';
+import Footer from '~/components/Footer.vue';
+import OverviewModal from '~/components/OverviewModal.vue';
 
 const searchOptions = {
   genre: '今の気分を教えてください',
@@ -100,48 +83,84 @@ const searchOptions = {
 
 const options = {
   genre: [
-    {value: '35', label: '笑いたい'},
-    {value: '18', label: '泣きたい'},
-    {value: '53', label: 'ハラハラしたい'},
-    {value: '10749', label: 'キュンキュンしたい'}
+    { value: '35', label: '笑いたい' },
+    { value: '18', label: '泣きたい' },
+    { value: '53', label: 'ハラハラしたい' },
+    { value: '10749', label: 'キュンキュンしたい' }
   ],
   provider: [
-    {value: '8', label: 'Netflix'},
-    {value: '9', label: 'Amazonプライム'},
-    {value: '337', label: 'ディズニープラス'},
-    {value: '15', label: 'Hulu'}
+    { value: '8', label: 'Netflix' },
+    { value: '9', label: 'Amazonプライム' },
+    { value: '337', label: 'ディズニープラス' },
+    { value: '15', label: 'Hulu' }
   ],
   language: [
-    {value: 'en', label: '洋画'},
-    {value: 'ja', label: '邦画'},
-    {value: 'ko', label: '韓国映画'}
+    { value: 'en', label: '洋画' },
+    { value: 'ja', label: '邦画' },
+    { value: 'ko', label: '韓国映画' }
   ]
 };
 
-const selectedOptions = ref({
-  genre: '',
-  provider: '',
-  language: ''
-});
-
-const movies = ref({
-  trend: [],
-  toprated: []
-});
-
+const selectedOptions = ref({ genre: '', provider: '', language: '' });
+const currentMovie = ref(null);
+const moviePool = ref([]);
 const loading = ref(false);
 const errorMessage = ref("");
 const isSearchExhausted = ref(false);
 const showModal = ref(false);
 const modalContent = ref("");
 
+const touchStartX = ref(0);
+const touchCurrentX = ref(0);
+const isSwiping = ref(false);
+
+const cardStyle = computed(() => {
+  const dx = touchCurrentX.value - touchStartX.value;
+  return isSwiping.value
+      ? `transform: translateX(${dx}px) rotate(${dx / 20}deg); transition: none;`
+      : '';
+});
+
+const onTouchStart = (e) => {
+  touchStartX.value = e.touches[0].clientX;
+  touchCurrentX.value = touchStartX.value;
+  isSwiping.value = true;
+};
+
+const onTouchMove = (e) => {
+  touchCurrentX.value = e.touches[0].clientX;
+};
+
+const onTouchEnd = () => {
+  const dx = touchCurrentX.value - touchStartX.value;
+  if (Math.abs(dx) > 80) {
+    nextMovie();
+  }
+  isSwiping.value = false;
+  touchStartX.value = 0;
+  touchCurrentX.value = 0;
+};
+
 const showOverview = (overview) => {
   modalContent.value = overview;
   showModal.value = true;
 };
 
-const closeModal = () => {
-  showModal.value = false;
+const closeModal = () => showModal.value = false;
+
+const getMoviePoster = (path) => path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/500';
+
+const getGenreLabel = (genre) => options.genre.find(opt => opt.value === genre)?.label || "未選択";
+const getProviderLabel = (provider) => options.provider.find(opt => opt.value === provider)?.label || "未選択";
+const getLanguageLabel = (language) => options.language.find(opt => opt.value === language)?.label || "未選択";
+
+const getGenreClass = (genre) => {
+  return {
+    '35': 'laugh',
+    '18': 'cry',
+    '53': 'thrill',
+    '10749': 'romance'
+  }[genre] || '';
 };
 
 const getProviderClass = (provider) => {
@@ -153,15 +172,6 @@ const getProviderClass = (provider) => {
   }[provider] || '';
 };
 
-const getGenreClass = (genre) => {
-  return {
-    '35': 'laugh',
-    '18': 'cry',
-    '53': 'thrill',
-    '10749': 'romance'
-  }[genre] || '';
-};
-
 const getLanguageClass = (language) => {
   return {
     'en': 'western',
@@ -170,21 +180,17 @@ const getLanguageClass = (language) => {
   }[language] || '';
 };
 
-// 選択肢のラベルを取得する関数
-const getGenreLabel = (genre) => {
-  return options.genre.find(opt => opt.value === genre)?.label || "未選択";
-};
+const generateStorageKey = () => `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
 
-const getProviderLabel = (provider) => {
-  return options.provider.find(opt => opt.value === provider)?.label || "未選択";
-};
-
-const getLanguageLabel = (language) => {
-  return options.language.find(opt => opt.value === language)?.label || "未選択";
-};
-
-const generateStorageKey = () => {
-  return `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
+const nextMovie = () => {
+  if (moviePool.value.length === 0) {
+    isSearchExhausted.value = true;
+    currentMovie.value = null;
+    return;
+  }
+  const index = Math.floor(Math.random() * moviePool.value.length);
+  currentMovie.value = moviePool.value.splice(index, 1)[0];
+  localStorage.setItem(generateStorageKey(), JSON.stringify({ pool: moviePool.value }));
 };
 
 const fetchMovies = async () => {
@@ -194,67 +200,34 @@ const fetchMovies = async () => {
   }
 
   loading.value = true;
-  movies.value = {trend: [], toprated: []};
   errorMessage.value = "";
   isSearchExhausted.value = false;
+  currentMovie.value = null;
 
   const storageKey = generateStorageKey();
-  let storedMovies = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  let stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
 
-  // 🔥 キャッシュがある場合はそれを使用
-  if (storedMovies.trend && storedMovies.toprated) {
-    // **ローカルストレージから取得する前に先頭の映画を削除する**
-    const nextTrend = storedMovies.trend.length > 0 ? storedMovies.trend.shift() : null;
-    const nextTopRated = storedMovies.toprated.length > 1 ? [storedMovies.toprated.shift(), storedMovies.toprated.shift()] : [];
-
-    localStorage.setItem(storageKey, JSON.stringify(storedMovies));
-
-    if (!nextTrend && nextTopRated.length === 0) {
-      isSearchExhausted.value = true;
-      loading.value = false;
-      return;
-    }
-
-    movies.value = {
-      trend: nextTrend ? [nextTrend] : [],
-      toprated: nextTopRated
-    };
-
+  if (stored.pool && stored.pool.length > 0) {
+    moviePool.value = stored.pool;
+    nextMovie();
     loading.value = false;
-    return; // 🔥 ここで処理を終了し、APIリクエストを送らない
+    return;
   }
 
-  // 🔥 キャッシュがない場合はAPIリクエスト
   try {
-    // const response = await fetch(`${config.public.apiBase}/movies`,{
-    // const response = await fetch(`http://localhost:8080/api/movies`, {
     const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(selectedOptions.value),
     });
 
     if (!response.ok) throw new Error("API リクエストが失敗しました");
 
     const data = await response.json();
-
-    if (!data.trend.length && !data.toprated.length) {
-      errorMessage.value = "検索結果がありませんでした。";
-    } else {
-      // **キャッシュを保存する前に、取得データをコピー**
-      const storedData = { ...data };
-
-      // 🔥 1回目に表示する映画を取り出し、残りをキャッシュに保存
-      const firstTrend = storedData.trend.length > 0 ? storedData.trend.shift() : null;
-      const firstTopRated = storedData.toprated.length > 1 ? [storedData.toprated.shift(), storedData.toprated.shift()] : [];
-
-      localStorage.setItem(storageKey, JSON.stringify(storedData));
-
-      movies.value = {
-        trend: firstTrend ? [firstTrend] : [],
-        toprated: firstTopRated
-      };
-    }
+    const combined = [...(data.trend || []), ...(data.toprated || [])];
+    moviePool.value = [...combined];
+    localStorage.setItem(storageKey, JSON.stringify({ pool: combined }));
+    nextMovie();
   } catch (error) {
     console.error("❌ 映画データの取得に失敗:", error);
     errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。";
@@ -263,13 +236,13 @@ const fetchMovies = async () => {
 };
 
 const resetSearch = () => {
-  movies.value = {trend: [], toprated: []};
-};
-
-const getMoviePoster = (path) => {
-  return path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/500';
+  moviePool.value = [];
+  currentMovie.value = null;
+  isSearchExhausted.value = false;
 };
 </script>
+
+
 
 <style scoped>
 .container {
@@ -348,20 +321,40 @@ button:disabled {
 }
 .movie-results {
   text-align: center;
-  padding-bottom: 40px; /* 🔥 ボタンの下に余白を増やす */
+  padding-bottom: 40px;
+
+  /* ↓ 追加（中央揃え用） */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .movie-card {
   background-color: #f8f8ff;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 15px; /* 🔥 余白を増やして広げる */
-  text-align: center;
-  width: 280px; /* 🔥 カードの幅を広げる */
-  max-width: 320px; /* 🔥 最大幅を大きくする */
+  padding: 15px;
+  width: 280px;
+  max-width: 320px;
+
+  /* ✨ 高さはautoでOK（中身に応じて伸縮） */
+  height: auto;
+
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  /* ✨ 余白調整 */
+  gap: 12px;
+  transition: transform 0.3s ease;
+}
+
+.movie-poster.fixed-size {
+  width: 100%;
+  max-width: 220px;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 .movie-poster {
