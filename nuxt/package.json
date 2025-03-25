@@ -12,6 +12,7 @@
     "keep-awake": "ts-node nuxt/scripts/keepAwake.ts"
   },
   "dependencies": {
+    "@heroicons/vue": "^2.2.0",
     "node-fetch": "^3.3.2",
     "nuxt": "^3.15.4",
     "vue": "^3.5.13",

@@ -51,7 +51,11 @@
           :style="cardStyle"
       >
         <h3 class="movie-title">{{ currentMovie.title }}</h3>
-        <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
+        <div class="poster-wrapper">
+          <ArrowLeftCircleIcon class="icon-left" />
+          <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
+          <ArrowRightCircleIcon class="icon-right" />
+        </div>
         <div class="overview-container">
           <p v-if="currentMovie.overview">
             <button class="overview-button" @click="showOverview(currentMovie.overview)">概要を見る</button>
@@ -74,6 +78,7 @@ import { ref, computed } from 'vue';
 import Header from '~/components/Header.vue';
 import Footer from '~/components/Footer.vue';
 import OverviewModal from '~/components/OverviewModal.vue';
+import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
 
 const searchOptions = {
   genre: '今の気分を教えてください',
@@ -104,6 +109,7 @@ const options = {
 const selectedOptions = ref({ genre: '', provider: '', language: '' });
 const currentMovie = ref(null);
 const moviePool = ref([]);
+const currentIndex = ref(0);
 const loading = ref(false);
 const errorMessage = ref("");
 const isSearchExhausted = ref(false);
@@ -134,7 +140,11 @@ const onTouchMove = (e) => {
 const onTouchEnd = () => {
   const dx = touchCurrentX.value - touchStartX.value;
   if (Math.abs(dx) > 80) {
-    nextMovie();
+    if (dx > 0) {
+      prevMovie();
+    } else {
+      nextMovie();
+    }
   }
   isSwiping.value = false;
   touchStartX.value = 0;
@@ -148,49 +158,51 @@ const showOverview = (overview) => {
 
 const closeModal = () => showModal.value = false;
 
-const getMoviePoster = (path) => path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/500';
+const getMoviePoster = (path) =>
+    path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/500';
 
 const getGenreLabel = (genre) => options.genre.find(opt => opt.value === genre)?.label || "未選択";
 const getProviderLabel = (provider) => options.provider.find(opt => opt.value === provider)?.label || "未選択";
 const getLanguageLabel = (language) => options.language.find(opt => opt.value === language)?.label || "未選択";
 
-const getGenreClass = (genre) => {
-  return {
-    '35': 'laugh',
-    '18': 'cry',
-    '53': 'thrill',
-    '10749': 'romance'
-  }[genre] || '';
-};
+const getGenreClass = (genre) => ({
+  '35': 'laugh',
+  '18': 'cry',
+  '53': 'thrill',
+  '10749': 'romance'
+}[genre] || '');
 
-const getProviderClass = (provider) => {
-  return {
-    '8': 'netflix',
-    '9': 'amazon',
-    '337': 'disney',
-    '15': 'hulu'
-  }[provider] || '';
-};
+const getProviderClass = (provider) => ({
+  '8': 'netflix',
+  '9': 'amazon',
+  '337': 'disney',
+  '15': 'hulu'
+}[provider] || '');
 
-const getLanguageClass = (language) => {
-  return {
-    'en': 'western',
-    'ja': 'japanese',
-    'ko': 'korean'
-  }[language] || '';
-};
+const getLanguageClass = (language) => ({
+  'en': 'western',
+  'ja': 'japanese',
+  'ko': 'korean'
+}[language] || '');
 
-const generateStorageKey = () => `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
+const generateStorageKey = () =>
+    `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
 
 const nextMovie = () => {
-  if (moviePool.value.length === 0) {
+  if (currentIndex.value < moviePool.value.length - 1) {
+    currentIndex.value++;
+    currentMovie.value = moviePool.value[currentIndex.value];
+  } else {
     isSearchExhausted.value = true;
-    currentMovie.value = null;
-    return;
   }
-  const index = Math.floor(Math.random() * moviePool.value.length);
-  currentMovie.value = moviePool.value.splice(index, 1)[0];
-  localStorage.setItem(generateStorageKey(), JSON.stringify({ pool: moviePool.value }));
+};
+
+const prevMovie = () => {
+  if (currentIndex.value > 0) {
+    currentIndex.value--;
+    currentMovie.value = moviePool.value[currentIndex.value];
+    isSearchExhausted.value = false;
+  }
 };
 
 const fetchMovies = async () => {
@@ -209,7 +221,8 @@ const fetchMovies = async () => {
 
   if (stored.pool && stored.pool.length > 0) {
     moviePool.value = stored.pool;
-    nextMovie();
+    currentIndex.value = stored.index || 0;
+    currentMovie.value = moviePool.value[currentIndex.value];
     loading.value = false;
     return;
   }
@@ -226,8 +239,9 @@ const fetchMovies = async () => {
     const data = await response.json();
     const combined = [...(data.trend || []), ...(data.toprated || [])];
     moviePool.value = [...combined];
-    localStorage.setItem(storageKey, JSON.stringify({ pool: combined }));
-    nextMovie();
+    currentIndex.value = 0;
+    currentMovie.value = moviePool.value[0];
+    localStorage.setItem(storageKey, JSON.stringify({ pool: combined, index: 0 }));
   } catch (error) {
     console.error("❌ 映画データの取得に失敗:", error);
     errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。";
@@ -238,9 +252,11 @@ const fetchMovies = async () => {
 const resetSearch = () => {
   moviePool.value = [];
   currentMovie.value = null;
+  currentIndex.value = 0;
   isSearchExhausted.value = false;
 };
 </script>
+
 
 
 
@@ -516,4 +532,18 @@ button:disabled {
 .western { background-color: #DAA520; }
 .japanese { background-color: #C70039; }
 .korean { background-color: #003366; }
+
+.icon-left,
+.icon-right {
+  width: 32px;
+  height: 32px;
+  color: rgba(100, 100, 100, 0.4); /* グレー＋40%の透明度 */
+}
+
+.poster-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
 </style>
