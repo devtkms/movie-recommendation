@@ -31,6 +31,7 @@ const toggleMenu = () => {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1;
 }
 
 .title {
@@ -65,7 +66,9 @@ const toggleMenu = () => {
   display: none;
   min-width: 120px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+
+  /* 🔽 これを追加 */
+  z-index: 9999;
 }
 
 .nav.open {
