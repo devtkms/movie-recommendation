@@ -228,7 +228,7 @@ const fetchMovies = async () => {
   }
 
   try {
-    const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
+    const response = await fetch(`http://localhost:8080/api/movies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(selectedOptions.value),
@@ -237,8 +237,15 @@ const fetchMovies = async () => {
     if (!response.ok) throw new Error("API リクエストが失敗しました");
 
     const data = await response.json();
-    const combined = [...(data.trend || []), ...(data.toprated || [])];
-    moviePool.value = [...combined];
+
+// 🔀 combinedをシャッフル
+    const combined = [...(data.combined || [])];
+    for (let i = combined.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [combined[i], combined[j]] = [combined[j], combined[i]];
+    }
+
+    moviePool.value = combined;
     currentIndex.value = 0;
     currentMovie.value = moviePool.value[0];
     localStorage.setItem(storageKey, JSON.stringify({ pool: combined, index: 0 }));
@@ -246,6 +253,7 @@ const fetchMovies = async () => {
     console.error("❌ 映画データの取得に失敗:", error);
     errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。";
   }
+
   loading.value = false;
 };
 

@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,71 +25,44 @@ public class MovieRecommendationService {
     private static final Logger logger = LoggerFactory.getLogger(MovieRecommendationService.class);
 
     /**
-     * ユーザーのリクエストに基づいて映画の推薦リストを取得する
-     * - 「今話題の映画」(トレンド) と「名作映画」(高評価) の2種類を取得
-     * - キャッシュを利用し、同じ条件でのAPIリクエストを削減
-     *
-     * @param requestDto ユーザーのリクエスト情報（ジャンル、配信サービス、言語）
-     * @return トレンド映画・名作映画を分類したマップ
+     * ユーザーの検索条件に基づいて、異なるタイプの映画（評価順、人気順、新作、ランダム）を最大40件取得する。
+     * 各カテゴリで15件ずつ取得し、重複を除外して最大40件まで絞り込む。
      */
-    @Cacheable(value = "movies", key = "#requestDto.genre + '_' + #requestDto.provider + '_' + #requestDto.language",
-            unless = "#result == null or #result.isEmpty()")
+    @Cacheable(value = "movies", key = "#requestDto.genre + '_' + #requestDto.provider + '_' + #requestDto.language", unless = "#result == null or #result.isEmpty()")
     public Map<String, List<MovieRecommendationResponseDto>> getMovies(MovieRecommendationRequestDto requestDto) {
         Map<String, List<MovieRecommendationResponseDto>> categorizedMovies = new HashMap<>();
+        Set<String> seenTitles = new HashSet<>();
 
-        // 🔥 トレンド映画（人気順）
-        List<MovieRecommendationResponseDto> trendMovies = fetchMoviesFromTmdb("/discover/movie", requestDto, 10, "popularity.desc");
-        categorizedMovies.put("trend", trendMovies);
+        List<MovieRecommendationResponseDto> highRated = fetchMoviesFromTmdb("/discover/movie", requestDto, 15, "vote_average.desc", 1);
+        List<MovieRecommendationResponseDto> popular = fetchMoviesFromTmdb("/discover/movie", requestDto, 15, "popularity.desc", 1);
+        List<MovieRecommendationResponseDto> recent = fetchMoviesFromTmdb("/discover/movie", requestDto, 15, "release_date.desc", 1);
+        int randomPage = new Random().nextInt(2) + 2; // 2 or 3
+        List<MovieRecommendationResponseDto> surprise = fetchMoviesFromTmdb("/discover/movie", requestDto, 15, "popularity.desc", randomPage);
 
-        // 🔥 トレンド映画のタイトルセット（名作リストから重複を防ぐため）
-        Set<String> trendMovieTitles = trendMovies.stream()
-                .map(MovieRecommendationResponseDto::getTitle)
-                .collect(Collectors.toSet());
+        // 重複を除きながらカテゴリごとに追加（40件を上限）
+        List<MovieRecommendationResponseDto> allMovies = new ArrayList<>();
 
-        // 🔥 名作映画（高評価順）
-        List<MovieRecommendationResponseDto> topRatedMovies = fetchMoviesFromTmdb("/discover/movie", requestDto, 20, "vote_average.desc")
-                .stream()
-                .filter(movie -> !trendMovieTitles.contains(movie.getTitle())) // 🔥 トレンドにある映画を除外
-                .collect(Collectors.toList());
-
-        // 🔥 名作映画が不足している場合、追加取得
-        int missingCount = 20 - topRatedMovies.size();
-        if (missingCount > 0) {
-            logger.info("📉 `toprated` が {}件不足。追加取得を実行...", missingCount);
-            topRatedMovies.addAll(fetchAdditionalTopRatedMovies(requestDto, trendMovieTitles, missingCount));
+        for (MovieRecommendationResponseDto movie : mergeLists(highRated, popular, recent, surprise)) {
+            if (!seenTitles.contains(movie.getTitle())) {
+                allMovies.add(movie);
+                seenTitles.add(movie.getTitle());
+            }
+            if (allMovies.size() >= 40) break;
         }
 
-        categorizedMovies.put("toprated", topRatedMovies);
-
+        categorizedMovies.put("combined", allMovies);
         return categorizedMovies;
     }
 
     /**
-     * TMDb API から映画データを取得（デフォルト1ページ目）
-     *
-     * @param endpoint APIのエンドポイント（`/discover/movie` など）
-     * @param requestDto ユーザーのリクエスト情報
-     * @param limit 最大取得件数
-     * @param sortBy ソート条件（`popularity.desc` など）
-     * @return 取得した映画のリスト
+     * TMDb API から映画情報を取得する共通メソッド。
+     * @param endpoint APIエンドポイント
+     * @param requestDto 検索条件（ジャンル、配信サービス、言語）
+     * @param limit 最大取得数
+     * @param sortBy ソート条件（例：popularity.desc）
+     * @param page APIのページ番号
      */
-    private List<MovieRecommendationResponseDto> fetchMoviesFromTmdb(String endpoint, MovieRecommendationRequestDto requestDto,
-                                                                     int limit, String sortBy) {
-        return fetchMoviesFromTmdb(endpoint, requestDto, limit, sortBy, 1); // 1ページ目から取得
-    }
-
-    /**
-     * TMDb API から映画データを取得
-     *
-     * @param endpoint APIのエンドポイント
-     * @param requestDto ユーザーのリクエスト情報
-     * @param limit 最大取得件数
-     * @param sortBy ソート条件
-     * @param page 取得するページ番号
-     * @return 取得した映画のリスト
-     */
-    private List<MovieRecommendationResponseDto> fetchMoviesFromTmdb(String endpoint, MovieRecommendationRequestDto requestDto,
-                                                                     int limit, String sortBy, int page) {
+    private List<MovieRecommendationResponseDto> fetchMoviesFromTmdb(String endpoint, MovieRecommendationRequestDto requestDto, int limit, String sortBy, int page) {
         UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromHttpUrl(TMDB_BASE_URL + endpoint)
                 .queryParam("api_key", apiKey)
                 .queryParam("watch_region", "JP")
@@ -107,41 +80,20 @@ public class MovieRecommendationService {
 
         return response != null
                 ? response.toMovieDtoList().stream()
-                .filter(movie -> movie.getPosterPath() != null && !movie.getPosterPath().isEmpty()) // 🔥 ポスターがある映画のみ取得
+                .filter(movie -> movie.getPosterPath() != null && !movie.getPosterPath().isEmpty())
                 .limit(limit)
                 .collect(Collectors.toList())
                 : List.of();
     }
 
     /**
-     * 追加の名作映画を取得（不足分を補う）
-     *
-     * @param requestDto ユーザーのリクエスト情報
-     * @param trendMovieTitles トレンド映画のタイトル（重複防止用）
-     * @param neededCount 追加で必要な映画の数
-     * @return 追加取得した映画のリスト
+     * 複数の映画リストを順番に結合するヘルパーメソッド。
      */
-    private List<MovieRecommendationResponseDto> fetchAdditionalTopRatedMovies(MovieRecommendationRequestDto requestDto,
-                                                                               Set<String> trendMovieTitles,
-                                                                               int neededCount) {
-        List<MovieRecommendationResponseDto> additionalMovies = new ArrayList<>();
-        int page = 2;
-
-        while (additionalMovies.size() < neededCount) {
-            List<MovieRecommendationResponseDto> movies = fetchMoviesFromTmdb("/discover/movie", requestDto, neededCount, "vote_average.desc", page);
-            if (movies.isEmpty()) {
-                break;
-            }
-
-            List<MovieRecommendationResponseDto> filteredMovies = movies.stream()
-                    .filter(movie -> !trendMovieTitles.contains(movie.getTitle())) // 🔥 トレンドの映画を除外
-                    .filter(movie -> movie.getPosterPath() != null && !movie.getPosterPath().isEmpty()) // 🔥 ポスターがある映画のみ
-                    .collect(Collectors.toList());
-
-            additionalMovies.addAll(filteredMovies);
-            page++;
+    private List<MovieRecommendationResponseDto> mergeLists(List<MovieRecommendationResponseDto>... lists) {
+        List<MovieRecommendationResponseDto> merged = new ArrayList<>();
+        for (List<MovieRecommendationResponseDto> list : lists) {
+            merged.addAll(list);
         }
-
-        return additionalMovies.stream().limit(neededCount).collect(Collectors.toList());
+        return merged;
     }
 }
