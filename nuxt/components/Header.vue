@@ -1,6 +1,9 @@
 <template>
   <header class="header">
-    <h1 class="title">MoviReco</h1>
+    <div class="logo-title">
+      <img src="/images/logo.png" alt="MoviRecoロゴ" class="logo-image" />
+      <h1 class="title">MoviReco</h1>
+    </div>
     <div class="nav-container">
       <button class="hamburger" @click="toggleMenu">☰</button>
       <nav :class="{ open: menuOpen }" class="nav">
@@ -21,32 +24,42 @@ const toggleMenu = () => {
 
 <style scoped>
 .header {
-  position: sticky; /* スクロールに合わせて固定 */
-  top: 0;            /* 上から0px */
-  z-index: 1000;     /* ナビより少し高く（メニューは9999でOK） */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   background-color: #ffffff;
-  text-align: center;
-  padding: 20px 0;
   border-bottom: 2px solid #ddd;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between; /* ✅ 左右に分ける */
   align-items: center;
+  height: 64px;
+  padding: 0 20px;
+  margin-bottom: 30px;
+}
+
+.logo-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+}
+
+.logo-image {
+  height: 35px;
+  width: auto;
 }
 
 .title {
-  font-size: 28px;
+  font-size: 23px;
   font-weight: bold;
   margin: 0;
   color: #333;
 }
 
 .nav-container {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
 }
 
 .hamburger {
