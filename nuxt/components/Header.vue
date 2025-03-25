@@ -21,17 +21,18 @@ const toggleMenu = () => {
 
 <style scoped>
 .header {
+  position: sticky; /* スクロールに合わせて固定 */
+  top: 0;            /* 上から0px */
+  z-index: 1000;     /* ナビより少し高く（メニューは9999でOK） */
   background-color: #ffffff;
   text-align: center;
   padding: 20px 0;
   border-bottom: 2px solid #ddd;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
-  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1;
 }
 
 .title {
