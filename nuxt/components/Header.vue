@@ -50,7 +50,7 @@ const toggleMenu = () => {
 }
 @media (max-width: 600px) {
   .logo-image {
-    height: 70px; /* ← iPhoneなどでは高さを小さめに */
+    height: 50px; /* ← iPhoneなどでは高さを小さめに */
   }
 }
 
