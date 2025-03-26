@@ -7,21 +7,30 @@
     <div v-if="!currentMovie">
       <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
         <label>{{ label }}</label>
+
         <div class="button-group">
           <button
               v-for="option in options[key]"
               :key="option.value"
               :class="[
-              'button',
-              key === 'genre' ? getGenreClass(option.value) : '',
-              key === 'provider' ? getProviderClass(option.value) : '',
-              key === 'language' ? getLanguageClass(option.value) : '',
-              { selected: selectedOptions[key] === option.value }
-            ]"
+        'button',
+        key === 'genre' ? getGenreClass(option.value) : '',
+        key === 'provider' ? getProviderClass(option.value) : '',
+        key === 'language' ? getLanguageClass(option.value) : '',
+        { selected: selectedOptions[key] === option.value }
+      ]"
               @click="selectedOptions[key] = option.value"
           >
             {{ option.label }}
           </button>
+        </div>
+
+        <!-- ✅ .button-group の外で v-if することで中央寄せの影響を回避 -->
+        <div v-if="key === 'language'" class="checkbox-wrapper">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="selectedOptions.includeAnime" />
+            アニメを含める
+          </label>
         </div>
       </div>
 
@@ -124,7 +133,7 @@ const options = {
   ]
 };
 
-const selectedOptions = ref({ genre: '', provider: '', language: '' });
+const selectedOptions = ref({ genre: '', provider: '', language: '' ,includeAnime: false});
 const currentMovie = ref(null);
 const moviePool = ref([]);
 const currentIndex = ref(0);
@@ -204,7 +213,7 @@ const getLanguageClass = (language) => ({
 }[language] || '');
 
 const generateStorageKey = () =>
-    `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
+    `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}_anime_${selectedOptions.value.includeAnime}`;
 
 const nextMovie = () => {
   if (currentIndex.value < moviePool.value.length - 1) {
@@ -573,5 +582,19 @@ button:disabled {
   align-items: center;
   justify-content: center;
   gap: 12px;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  justify-content: flex-start;
+  padding-left: calc((100% - 300px) / 2);
+  margin-top: 12px; /* ← ここを大きめにする（例: 12px や 16px）*/
+}
+
+@media (max-width: 600px) {
+  .checkbox-wrapper {
+    padding-left: calc((100% - 280px) / 2);
+    margin-top: 15px; /* ← 同様に */
+  }
 }
 </style>

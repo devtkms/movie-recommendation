@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class MovieRecommendationRequestDto {
-    private String genre;  // 映画ジャンル
-    private String provider;  // 配信サービス
-    private String language;  // 言語
+    private String genre;
+    private String provider;
+    private String language;
+    private boolean includeAnime; // ✅ 追加
 }

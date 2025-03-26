@@ -28,24 +28,33 @@ public class MovieRecommendationService {
      * ユーザーの検索条件に基づいて、異なるタイプの映画（評価順、人気順、新作、ランダム）を最大40件取得する。
      * 各カテゴリで15件ずつ取得し、重複を除外して最大40件まで絞り込む。
      */
-    @Cacheable(value = "movies", key = "#requestDto.genre + '_' + #requestDto.provider + '_' + #requestDto.language", unless = "#result == null or #result.isEmpty()")
+    @Cacheable(
+            value = "movies",
+            key = "#requestDto.genre + '_' + #requestDto.provider + '_' + #requestDto.language + '_' + #requestDto.includeAnime",
+            unless = "#result == null or #result.isEmpty()"
+    )
     public Map<String, List<MovieRecommendationResponseDto>> getMovies(MovieRecommendationRequestDto requestDto) {
         Map<String, List<MovieRecommendationResponseDto>> categorizedMovies = new HashMap<>();
         Set<String> seenTitles = new HashSet<>();
-
-        List<MovieRecommendationResponseDto> highRated = fetchMoviesFromTmdb("/discover/movie", requestDto, 15, "vote_average.desc", 1);
-        List<MovieRecommendationResponseDto> popular = fetchMoviesFromTmdb("/discover/movie", requestDto, 15, "popularity.desc", 1);
-        List<MovieRecommendationResponseDto> recent = fetchMoviesFromTmdb("/discover/movie", requestDto, 15, "release_date.desc", 1);
-        int randomPage = new Random().nextInt(2) + 2; // 2 or 3
-        List<MovieRecommendationResponseDto> surprise = fetchMoviesFromTmdb("/discover/movie", requestDto, 15, "popularity.desc", randomPage);
-
-        // 重複を除きながらカテゴリごとに追加（40件を上限）
         List<MovieRecommendationResponseDto> allMovies = new ArrayList<>();
 
-        for (MovieRecommendationResponseDto movie : mergeLists(highRated, popular, recent, surprise)) {
-            if (!seenTitles.contains(movie.getTitle())) {
-                allMovies.add(movie);
-                seenTitles.add(movie.getTitle());
+        for (String genreId : resolveGenre(requestDto.getGenre(), requestDto.isIncludeAnime())) {
+            requestDto.setGenre(genreId);
+
+            // 以下省略…
+
+            List<MovieRecommendationResponseDto> highRated = fetchMoviesFromTmdb("/discover/movie", requestDto, 7, "vote_average.desc", 1);
+            List<MovieRecommendationResponseDto> popular = fetchMoviesFromTmdb("/discover/movie", requestDto, 7, "popularity.desc", 1);
+            List<MovieRecommendationResponseDto> recent = fetchMoviesFromTmdb("/discover/movie", requestDto, 7, "release_date.desc", 1);
+            int randomPage = new Random().nextInt(2) + 2; // 2 or 3
+            List<MovieRecommendationResponseDto> surprise = fetchMoviesFromTmdb("/discover/movie", requestDto, 7, "popularity.desc", randomPage);
+
+            for (MovieRecommendationResponseDto movie : mergeLists(highRated, popular, recent, surprise)) {
+                if (!seenTitles.contains(movie.getTitle())) {
+                    allMovies.add(movie);
+                    seenTitles.add(movie.getTitle());
+                }
+                if (allMovies.size() >= 40) break;
             }
             if (allMovies.size() >= 40) break;
         }
@@ -73,8 +82,13 @@ public class MovieRecommendationService {
                 .queryParam("sort_by", sortBy)
                 .queryParam("page", page);
 
+        // ✅ チェックがOFFのときアニメを除外する
+        if (!requestDto.isIncludeAnime()) {
+            urlBuilder.queryParam("without_genres", "16");
+        }
+
         String url = urlBuilder.toUriString();
-        logger.info("📡 TMDb APIリクエスト: {}", url);
+        logger.info("\uD83D\uDCF1 TMDb APIリクエスト: {}", url);
 
         TmdbResponse response = restTemplate.getForObject(url, TmdbResponse.class);
 
@@ -84,6 +98,26 @@ public class MovieRecommendationService {
                 .limit(limit)
                 .collect(Collectors.toList())
                 : List.of();
+    }
+
+    /**
+     * フロントから渡されたジャンルに応じて、複数ジャンルを含めたTMDbのID文字列を返す。
+     */
+    private List<String> resolveGenre(String genre, boolean includeAnime) {
+        List<String> baseGenres = switch (genre) {
+            case "35" -> List.of("35", "10751");       // 笑いたい：コメディ + ファミリー
+            case "18" -> List.of("18");                // 泣きたい：ドラマ
+            case "53" -> List.of("53", "28", "27");    // ハラハラしたい：スリラー + アクション + ホラー
+            case "10749" -> List.of("10749");          // キュンキュンしたい：ロマンス
+            default -> List.of(genre);
+        };
+
+        if (includeAnime) {
+            baseGenres = new ArrayList<>(baseGenres); // Listがimmutableの場合のためコピー
+            baseGenres.add("16"); // TMDb アニメジャンルID
+        }
+
+        return baseGenres;
     }
 
     /**
