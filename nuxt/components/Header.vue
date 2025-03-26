@@ -48,11 +48,6 @@ const toggleMenu = () => {
   height: 110px;
   width: auto;
 }
-@media (max-width: 600px) {
-  .logo-image {
-    height: 50px; /* ← iPhoneなどでは高さを小さめに */
-  }
-}
 
 .title {
   font-size: 23px;
