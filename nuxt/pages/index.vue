@@ -1,6 +1,9 @@
 <template>
   <div class="container">
     <Header />
+    <!-- ✅ 初回モーダル表示 -->
+    <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
+
     <div v-if="!currentMovie">
       <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
         <label>{{ label }}</label>
@@ -74,11 +77,26 @@
 
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import Header from '~/components/Header.vue';
 import Footer from '~/components/Footer.vue';
 import OverviewModal from '~/components/OverviewModal.vue';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
+
+
+const showIntroModal = ref(false)
+
+onMounted(() => {
+  const hasVisited = localStorage.getItem('visited')
+  if (!hasVisited) {
+    showIntroModal.value = true
+    localStorage.setItem('visited', 'true')
+  }
+})
+
+const closeIntroModal = () => {
+  showIntroModal.value = false
+}
 
 const searchOptions = {
   genre: '今の気分を教えてください',
