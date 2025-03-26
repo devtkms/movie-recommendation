@@ -2,7 +2,7 @@
   <header class="header">
     <div class="logo-title">
       <img src="/images/logo.png" alt="MoviRecoロゴ" class="logo-image" />
-      <h1 class="title">MoviReco</h1>
+<!--      <h1 class="title">MoviReco</h1>-->
     </div>
     <div class="nav-container">
       <button class="hamburger" @click="toggleMenu">☰</button>
@@ -33,7 +33,7 @@ const toggleMenu = () => {
   justify-content: space-between;
   align-items: center;
   height: 64px;
-  padding: 0 20px;
+  padding: 0 10px;
   margin-bottom: 30px;
 }
 
@@ -45,7 +45,7 @@ const toggleMenu = () => {
 }
 
 .logo-image {
-  height: 35px;
+  height: 110px;
   width: auto;
 }
 
