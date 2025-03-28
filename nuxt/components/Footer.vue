@@ -7,7 +7,7 @@
     <!-- 🔗 SNSリンクをここに追加 -->
     <p class="developer-credit">
       Created by
-      <a href="https://twitter.com/yourusername" target="_blank" rel="noopener noreferrer" class="social-link">
+      <a href="https://twitter.com/MoviReco" target="_blank" rel="noopener noreferrer" class="social-link">
         @MoviReco
       </a>
     </p>
