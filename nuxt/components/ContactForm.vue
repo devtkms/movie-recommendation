@@ -54,8 +54,8 @@ const handleConfirm = async () => {
   errorMessage.value = '' // エラーリセット
 
   try {
-    const res = await fetch(`https://movie-recommendation-uybc.onrender.com/api/contact/validate`, {
-    // const res = await fetch('http://localhost:8080/api/contact/validate', {
+    const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/contact/validate`, {
+    // const response = await fetch('http://localhost:8080/api/contact/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
