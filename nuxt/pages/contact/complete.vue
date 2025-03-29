@@ -2,8 +2,11 @@
 <template>
   <Header />
   <div class="form-container text-center">
-    <h2 class="form-title">お問い合わせありがとうございます</h2>
-    <p class="text-lg mt-6">お問い合わせが送信されました。</p>
+    <h2 class="form-title">お問い合わせありがとうございます。</h2>
+    <p class="form-description">
+      ご入力いただいた内容は今後の参考とさせていただくとともに、<br>
+      必要に応じてXでのご回答またはご報告をさせていただくことがございます。
+    </p>
     <p class="mt-4">
       トップページに戻るには
       <router-link to="/" class="text-blue-600 hover:underline">こちら</router-link>
@@ -36,5 +39,14 @@ onMounted(() => {
 .form-title {
   font-size: 1.8rem;
   font-weight: bold;
+}
+
+.form-description {
+  font-size: 1.05rem;
+  margin-top: 16px;
+  line-height: 1.6;
+  color: #333;
+  display: inline-block;
+  text-align: left;
 }
 </style>
