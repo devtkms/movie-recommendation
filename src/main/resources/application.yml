@@ -1,13 +1,5 @@
 spring:
   application:
     name: movie-recommendation
-
-logging:
-  level:
-    root: INFO
-    com.devtkms.devmatchapp: DEBUG
-    org.apache.ibatis: DEBUG
-
-tmdb:
-  api:
-    key: ${TMDB_API_KEY}
+  profiles:
+    active: dev

@@ -8,6 +8,7 @@
       <button class="hamburger" @click="toggleMenu">☰</button>
       <nav :class="{ open: menuOpen }" class="nav">
         <NuxtLink to="/" class="nav-link">ホーム</NuxtLink>
+        <NuxtLink to="/contact" class="nav-link">お問い合わせ</NuxtLink>
         <NuxtLink to="/privacy" class="nav-link">プライバシーポリシー</NuxtLink>
       </nav>
     </div>

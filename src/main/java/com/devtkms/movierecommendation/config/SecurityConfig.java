@@ -29,6 +29,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/movies").permitAll()
                         .requestMatchers("/health").permitAll()
+                        .requestMatchers("/api/contact/submit").permitAll()
+                        .requestMatchers("/api/contact/validate").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf((csrf) -> csrf.disable())
