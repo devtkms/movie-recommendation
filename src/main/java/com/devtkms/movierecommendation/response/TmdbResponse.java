@@ -17,20 +17,36 @@ public class TmdbResponse {
 
     // APIレスポンスをDTOリストに変換するメソッド
     public List<MovieRecommendationResponseDto> toMovieDtoList() {
-        return results.stream().map(result -> new MovieRecommendationResponseDto(
-                result.getTitle(),
-                result.getOverview(),
-                result.getPosterPath()
-        )).collect(Collectors.toList());
+        if (results == null) return List.of();
+
+        return results.stream()
+                .filter(result -> result.getPosterPath() != null && !result.getPosterPath().isEmpty()) // ポスターが空でない映画を選択
+                .map(result -> {
+                    // genreIdsが存在すれば最初のジャンルIDを使う。なければ空文字
+                    String genreId = (result.getGenreIds() != null && !result.getGenreIds().isEmpty())
+                            ? String.valueOf(result.getGenreIds().get(0)) : "";
+                    // MovieRecommendationResponseDto のインスタンスを返す
+                    return new MovieRecommendationResponseDto(
+                            result.getTitle(),
+                            result.getOverview(),
+                            result.getPosterPath(),
+                            genreId,  // 取得した genreId を設定
+                            0          // genreScore の初期値として0を設定（必要に応じて後で更新）
+                    );
+                })
+                .collect(Collectors.toList()); // DTOリストを返す
     }
 
     @Getter
     @Setter
-    public static class MovieResult {
+    private static class MovieResult {
         private String title;
         private String overview;
 
         @JsonProperty("poster_path")
         private String posterPath;
+
+        @JsonProperty("genre_ids")
+        private List<Integer> genreIds; // TMDb APIからのジャンルIDリスト
     }
 }

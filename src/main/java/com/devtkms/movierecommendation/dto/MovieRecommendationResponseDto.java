@@ -11,4 +11,6 @@ public class MovieRecommendationResponseDto {
     private String title;      // 映画タイトル
     private String overview;   // 概要
     private String posterPath; // ポスター画像のパス
+    private String genreId;
+    private int genreScore;
 }

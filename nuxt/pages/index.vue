@@ -12,9 +12,9 @@
               :key="option.value"
               :class="[
               'button',
-              key === 'genre' ? getGenreClass(option.value) : '',
-              key === 'provider' ? getProviderClass(option.value) : '',
-              key === 'language' ? getLanguageClass(option.value) : '',
+              key === 'mood' ? getMoodClass(option.value) : '',
+              key === 'tone' ? getToneClass(option.value) : '',
+              key === 'after' ? getAfterClass(option.value) : '',
               { selected: selectedOptions[key] === option.value }
             ]"
               @click="selectedOptions[key] = option.value"
@@ -31,14 +31,14 @@
       <div v-show="showFilters">
         <div class="checkbox-wrapper providers">
           <label class="checkbox-label" v-for="option in options.provider" :key="option.value">
-            <input type="checkbox" :value="option.value" v-model="selectedOptions.providers" />
+            <input type="radio" :value="option.value" v-model="selectedOptions.providers" />
             {{ option.label }}
           </label>
         </div>
 
         <div class="checkbox-wrapper languages">
           <label class="checkbox-label" v-for="option in options.language" :key="option.value">
-            <input type="checkbox" :value="option.value" v-model="selectedOptions.languages" />
+            <input type="radio" :value="option.value" v-model="selectedOptions.languages" />
             {{ option.label }}
           </label>
         </div>
@@ -54,14 +54,14 @@
 
     <div v-if="currentMovie" class="movie-results">
       <div class="selected-options">
-        <div class="selected-option" :class="getGenreClass(selectedOptions.genre)">
-          {{ getGenreLabel(selectedOptions.genre) }}
+        <div class="selected-option" :class="getMoodClass(selectedOptions.mood)">
+          {{ getMoodLabel(selectedOptions.mood) }}
         </div>
-        <div class="selected-option" :class="getProviderClass(selectedOptions.provider)">
-          {{ getProviderLabel(selectedOptions.provider) }}
+        <div class="selected-option" :class="getToneClass(selectedOptions.tone)">
+          {{ getToneLabel(selectedOptions.tone) }}
         </div>
-        <div class="selected-option" :class="getLanguageClass(selectedOptions.language)">
-          {{ getLanguageLabel(selectedOptions.language) }}
+        <div class="selected-option" :class="getAfterClass(selectedOptions.after)">
+          {{ getAfterLabel(selectedOptions.after) }}
         </div>
       </div>
 
@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import Header from '~/components/Header.vue';
 import Footer from '~/components/Footer.vue';
 import OverviewModal from '~/components/OverviewModal.vue';
@@ -117,32 +117,44 @@ const closeIntroModal = () => {
 };
 
 const searchOptions = {
-  genre: '今の気分を教えてください',
-  provider: '配信サービスを選んでください',
-  language: '洋画・邦画・韓国映画を選んでください',
+  mood: '今の気分を教えてください',
+  tone: '映画の雰囲気はどんな感じがいいですか',
+  after: '観終わった後、どんな気持ちになりたいですか？'
 };
 
 const options = {
-  genre: [
-    { value: '35', label: '笑いたい' },
-    { value: '18', label: '泣きたい' },
-    { value: '53', label: 'ハラハラしたい' },
-    { value: '10749', label: 'キュンキュンしたい' }
+  mood: [
+    { value: 'light', label: '気軽に楽しみたい' },
+    { value: 'emotional', label: '感情を動かされたい' },
+    { value: 'escape', label: '非日常を味わいたい' },
+    { value: 'thrill', label: 'スリルを感じたい' }
+  ],
+  tone: [
+    { value: 'slow', label: 'ゆったり観たい' },
+    { value: 'fast', label: 'テンポよく進んでほしい' },
+    { value: 'deep', label: 'どっぷり浸りたい' },
+    { value: 'casual', label: '軽めに流したい' }
+  ],
+  after: [
+    { value: 'refresh', label: 'スカッとしたい' },
+    { value: 'warm', label: '心が温まりたい' },
+    { value: 'cry', label: '泣いてスッキリしたい' },
+    { value: 'think', label: 'ちょっと考えたい' }
   ],
   provider: [
-    { value: '8', label: 'Netflix' },
-    { value: '9', label: 'Amazonプライム' },
-    { value: '337', label: 'ディズニープラス' },
-    { value: '15', label: 'Hulu' }
+    { value: 'netflix', label: 'Netflix' },
+    { value: 'prime', label: 'Amazonプライム' },
+    { value: 'disney', label: 'ディズニープラス' },
+    { value: 'hulu', label: 'Hulu' }
   ],
   language: [
-    { value: 'en', label: '洋画' },
-    { value: 'ja', label: '邦画' },
-    { value: 'ko', label: '韓国映画' }
+    { value: 'western', label: '洋画' },
+    { value: 'japanese', label: '邦画' },
+    { value: 'korean', label: '韓国映画' }
   ]
 };
 
-const selectedOptions = ref({ genre: '', provider: '', language: '', providers: [], languages: [] });
+const selectedOptions = ref({ mood: '', tone: '', after: '', providers: [], languages: [] });
 const currentMovie = ref(null);
 const moviePool = ref([]);
 const currentIndex = ref(0);
@@ -191,32 +203,33 @@ const closeModal = () => showModal.value = false;
 const getMoviePoster = (path) =>
     path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/500';
 
-const getGenreLabel = (genre) => options.genre.find(opt => opt.value === genre)?.label || "未選択";
-const getProviderLabel = (provider) => options.provider.find(opt => opt.value === provider)?.label || "未選択";
-const getLanguageLabel = (language) => options.language.find(opt => opt.value === language)?.label || "未選択";
+const getMoodLabel = (mood) => options.mood.find(opt => opt.value === mood)?.label || "未選択";
+const getToneLabel = (tone) => options.tone.find(opt => opt.value === tone)?.label || "未選択";
+const getAfterLabel = (after) => options.after.find(opt => opt.value === after)?.label || "未選択";
 
-const getGenreClass = (genre) => ({
-  '35': 'laugh',
-  '18': 'cry',
-  '53': 'thrill',
-  '10749': 'romance'
-}[genre] || '');
+const getMoodClass = (mood) => ({
+  'light': 'light',
+  'emotional': 'emotional',
+  'escape': 'escape',
+  'thrill': 'thrill'
+}[mood] || '');
 
-const getProviderClass = (provider) => ({
-  '8': 'netflix',
-  '9': 'amazon',
-  '337': 'disney',
-  '15': 'hulu'
-}[provider] || '');
+const getToneClass = (tone) => ({
+  'slow': 'slow',
+  'fast': 'fast',
+  'deep': 'deep',
+  'casual': 'casual'
+}[tone] || '');
 
-const getLanguageClass = (language) => ({
-  'en': 'western',
-  'ja': 'japanese',
-  'ko': 'korean'
-}[language] || '');
+const getAfterClass = (after) => ({
+  'refresh': 'refresh',
+  'warm': 'warm',
+  'cry': 'cry',
+  'think': 'think'
+}[after] || '');
 
 const generateStorageKey = () =>
-    `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
+    `movies_mood_${selectedOptions.value.mood}_provider_${selectedOptions.value.tone}_language_${selectedOptions.value.after}`;
 
 const nextMovie = () => {
   if (currentIndex.value < moviePool.value.length - 1) {
@@ -235,8 +248,9 @@ const prevMovie = () => {
   }
 };
 
+// チェックボックスや選択肢の変化を監視
 const fetchMovies = async () => {
-  if (!selectedOptions.value.genre || !selectedOptions.value.provider || !selectedOptions.value.language) {
+  if (!selectedOptions.value.mood || !selectedOptions.value.tone || !selectedOptions.value.after) {
     errorMessage.value = "必須の質問に回答してください。";
     return;
   }
@@ -259,7 +273,7 @@ const fetchMovies = async () => {
   }
 
   try {
-    const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
+    const response = await fetch(`http://localhost:8080/api/movies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(selectedOptions.value),
@@ -291,6 +305,11 @@ const resetSearch = () => {
   currentMovie.value = null;
   currentIndex.value = 0;
   isSearchExhausted.value = false;
+};
+
+// 映画を探すボタンがクリックされた時にのみリクエストを送信
+const handleSearchButtonClick = () => {
+  fetchMovies();
 };
 </script>
 
@@ -328,8 +347,10 @@ label {
   cursor: pointer;
   margin-top: 5px;
   border-radius: 8px;
-  min-width: 140px;
+  min-width: 170px;   /* ← 統一したい幅に調整 */
+  max-width: 170px;   /* ← 同じにして幅を固定 */
   text-align: center;
+  white-space: nowrap; /* ← テキスト折り返し防止 */
 }
 
 button.selected {
@@ -540,20 +561,23 @@ button:disabled {
   white-space: nowrap;
 }
 
-/* 🎨 オプション別カラー */
-.netflix { background-color: #E50914; }
-.amazon { background-color: #00A8E1; }
-.disney { background-color: #113CCF; }
-.hulu { background-color: #1CE783; }
+/* 🎨 mood（気分） */
+.light    { background-color: #FFD700; }  /* 明るくポップな黄色 */
+.emotional{ background-color: #FF69B4; }  /* 感情 → ピンク系 */
+.escape   { background-color: #6A5ACD; }  /* 非日常 → ミステリアスな紫 */
+.thrill   { background-color: #FF4500; }  /* スリル → 鮮やかな赤橙 */
 
-.laugh { background-color: #E50914; }
-.cry { background-color: #1E90FF; }
-.thrill { background-color: #FF4500; }
-.romance { background-color: #FF1493; }
+/* 🎬 tone（雰囲気） */
+.slow     { background-color: #87CEFA; }  /* ゆったり → 空色 */
+.fast     { background-color: #00CED1; }  /* テンポよく → 爽やかな青緑 */
+.deep     { background-color: #191970; }  /* どっぷり浸かる → 深い藍色 */
+.casual   { background-color: #90EE90; }  /* 軽く観たい → 柔らかい緑 */
 
-.western { background-color: #DAA520; }
-.japanese { background-color: #C70039; }
-.korean { background-color: #003366; }
+/* 🎭 after（気持ち） */
+.refresh  { background-color: #32CD32; }  /* スカッと → 元気な緑 */
+.warm     { background-color: #FFB347; }  /* 温かい気持ち → オレンジ系 */
+.cry      { background-color: #1E90FF; }  /* 泣く → さわやかな青 */
+.think    { background-color: #708090; }  /* 考える → グレー（落ち着き） */
 
 .icon-left,
 .icon-right {
