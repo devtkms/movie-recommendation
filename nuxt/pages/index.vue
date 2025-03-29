@@ -1,35 +1,45 @@
 <template>
   <div class="container">
     <Header />
-    <!-- ✅ 初回モーダル表示 -->
     <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
 
     <div v-if="!currentMovie">
       <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
         <label>{{ label }}</label>
-
         <div class="button-group">
           <button
               v-for="option in options[key]"
               :key="option.value"
               :class="[
-        'button',
-        key === 'genre' ? getGenreClass(option.value) : '',
-        key === 'provider' ? getProviderClass(option.value) : '',
-        key === 'language' ? getLanguageClass(option.value) : '',
-        { selected: selectedOptions[key] === option.value }
-      ]"
+              'button',
+              key === 'genre' ? getGenreClass(option.value) : '',
+              key === 'provider' ? getProviderClass(option.value) : '',
+              key === 'language' ? getLanguageClass(option.value) : '',
+              { selected: selectedOptions[key] === option.value }
+            ]"
               @click="selectedOptions[key] = option.value"
           >
             {{ option.label }}
           </button>
         </div>
+      </div>
 
-        <!-- ✅ .button-group の外で v-if することで中央寄せの影響を回避 -->
-        <div v-if="key === 'language'" class="checkbox-wrapper">
-          <label class="checkbox-label">
-            <input type="checkbox" v-model="selectedOptions.includeAnime" />
-            アニメを含める
+      <div class="filter-toggle" @click="showFilters = !showFilters">
+        <span>{{ showFilters ? '▲ フィルターを閉じる' : '▼ フィルターを開く' }}</span>
+      </div>
+
+      <div v-show="showFilters">
+        <div class="checkbox-wrapper providers">
+          <label class="checkbox-label" v-for="option in options.provider" :key="option.value">
+            <input type="checkbox" :value="option.value" v-model="selectedOptions.providers" />
+            {{ option.label }}
+          </label>
+        </div>
+
+        <div class="checkbox-wrapper languages">
+          <label class="checkbox-label" v-for="option in options.language" :key="option.value">
+            <input type="checkbox" :value="option.value" v-model="selectedOptions.languages" />
+            {{ option.label }}
           </label>
         </div>
       </div>
@@ -84,28 +94,27 @@
   </div>
 </template>
 
-
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import Header from '~/components/Header.vue';
 import Footer from '~/components/Footer.vue';
 import OverviewModal from '~/components/OverviewModal.vue';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
 
-
-const showIntroModal = ref(false)
+const showIntroModal = ref(false);
+const showFilters = ref(true);
 
 onMounted(() => {
-  const hasVisited = localStorage.getItem('visited')
+  const hasVisited = localStorage.getItem('visited');
   if (!hasVisited) {
-    showIntroModal.value = true
-    localStorage.setItem('visited', 'true')
+    showIntroModal.value = true;
+    localStorage.setItem('visited', 'true');
   }
-})
+});
 
 const closeIntroModal = () => {
-  showIntroModal.value = false
-}
+  showIntroModal.value = false;
+};
 
 const searchOptions = {
   genre: '今の気分を教えてください',
@@ -133,7 +142,7 @@ const options = {
   ]
 };
 
-const selectedOptions = ref({ genre: '', provider: '', language: '' ,includeAnime: false});
+const selectedOptions = ref({ genre: '', provider: '', language: '', providers: [], languages: [] });
 const currentMovie = ref(null);
 const moviePool = ref([]);
 const currentIndex = ref(0);
@@ -149,9 +158,7 @@ const isSwiping = ref(false);
 
 const cardStyle = computed(() => {
   const dx = touchCurrentX.value - touchStartX.value;
-  return isSwiping.value
-      ? `transform: translateX(${dx}px) rotate(${dx / 20}deg); transition: none;`
-      : '';
+  return isSwiping.value ? `transform: translateX(${dx}px) rotate(${dx / 20}deg); transition: none;` : '';
 });
 
 const onTouchStart = (e) => {
@@ -167,11 +174,7 @@ const onTouchMove = (e) => {
 const onTouchEnd = () => {
   const dx = touchCurrentX.value - touchStartX.value;
   if (Math.abs(dx) > 80) {
-    if (dx > 0) {
-      prevMovie();
-    } else {
-      nextMovie();
-    }
+    dx > 0 ? prevMovie() : nextMovie();
   }
   isSwiping.value = false;
   touchStartX.value = 0;
@@ -213,7 +216,7 @@ const getLanguageClass = (language) => ({
 }[language] || '');
 
 const generateStorageKey = () =>
-    `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}_anime_${selectedOptions.value.includeAnime}`;
+    `movies_genre_${selectedOptions.value.genre}_provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
 
 const nextMovie = () => {
   if (currentIndex.value < moviePool.value.length - 1) {
@@ -244,11 +247,9 @@ const fetchMovies = async () => {
   currentMovie.value = null;
 
   const storageKey = generateStorageKey();
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10);
+  const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
 
-  let stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
-
-  // 🔍 日付が今日と一致しているか
   if (stored.pool && stored.savedDate === today) {
     moviePool.value = stored.pool;
     currentIndex.value = stored.index || 0;
@@ -258,19 +259,15 @@ const fetchMovies = async () => {
   }
 
   try {
-    // const response = await fetch(`${config.public.apiBase}/movies`,{
-    // const response = await fetch(`http://localhost:8080/api/movies`, {
-      const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
+    const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/movies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(selectedOptions.value),
     });
 
     if (!response.ok) throw new Error("API リクエストが失敗しました");
-
     const data = await response.json();
 
-    // 🔀 combinedをシャッフル
     const combined = [...(data.combined || [])];
     for (let i = combined.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -280,8 +277,6 @@ const fetchMovies = async () => {
     moviePool.value = combined;
     currentIndex.value = 0;
     currentMovie.value = moviePool.value[0];
-
-    // 🔐 保存時に日付を追加
     localStorage.setItem(storageKey, JSON.stringify({ pool: combined, index: 0, savedDate: today }));
   } catch (error) {
     console.error("❌ 映画データの取得に失敗:", error);
@@ -298,6 +293,9 @@ const resetSearch = () => {
   isSearchExhausted.value = false;
 };
 </script>
+
+<!-- CSSは別ファイル or style scoped にて対応中 -->
+
 
 <style scoped>
 .container {
@@ -352,8 +350,8 @@ button:disabled {
 .movie-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px; /* カード間のスペース */
-  justify-content: center; /* 🔥 カードを中央に配置 */
+  gap: 20px;
+  justify-content: center;
   width: 100%;
 }
 
@@ -374,11 +372,10 @@ button:disabled {
   text-align: center;
   margin-bottom: 10px;
 }
+
 .movie-results {
   text-align: center;
   padding-bottom: 40px;
-
-  /* ↓ 追加（中央揃え用） */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -391,15 +388,10 @@ button:disabled {
   padding: 15px;
   width: 280px;
   max-width: 320px;
-
-  /* ✨ 高さはautoでOK（中身に応じて伸縮） */
   height: auto;
-
   display: flex;
   flex-direction: column;
   align-items: center;
-
-  /* ✨ 余白調整 */
   gap: 12px;
   transition: transform 0.3s ease;
 }
@@ -413,8 +405,8 @@ button:disabled {
 }
 
 .movie-poster {
-  max-width: 80%; /* 🔥 見やすいバランスに調整 */
-  height: auto; /* 🔥 縦横比を維持 */
+  max-width: 80%;
+  height: auto;
   border-radius: 8px;
   display: block;
   margin: auto;
@@ -444,7 +436,7 @@ button:disabled {
   border: none;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out;
-  margin-top: 60px; /* 🔥 もっと下に下げる */
+  margin-top: 60px;
 }
 
 .search-button:hover {
@@ -510,39 +502,32 @@ button:disabled {
 }
 
 .category-title {
-  width: 100%; /* 🔥 タイトルがコンテナ内で適切に表示される */
-  text-align: center; /* 🔥 タイトルを中央揃え */
+  width: 100%;
+  text-align: center;
   font-size: 25px;
   font-weight: bold;
   margin-top: 30px;
   margin-bottom: 20px;
   display: flex;
-  justify-content: center; /* 🔥 タイトルを中央配置 */
+  justify-content: center;
   align-items: center;
-}
-
-.category-title {
-  font-size: 30px;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 10px;
 }
 
 .selected-options {
   display: flex;
-  justify-content: space-between; /* 🔥 均等配置 */
-  width: 100%; /* 🔥 横幅いっぱい */
-  max-width: 600px; /* 🔥 コンテナ幅を統一 */
-  margin: 0 auto 15px; /* 🔥 中央配置 */
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 15px;
 }
 
 .selected-option {
-  flex: 1; /* 🔥 各要素を均等幅に */
-  max-width: 200px; /* 🔥 最大幅 */
-  min-width: 100px; /* 🔥 最小幅 */
-  padding: 8px 12px; /* 🔥 ボタンのサイズ統一 */
+  flex: 1;
+  max-width: 200px;
+  min-width: 100px;
+  padding: 8px 12px;
   color: white;
-  font-size: 14px; /* 🔽 文字サイズを少し小さくする */
+  font-size: 14px;
   font-weight: bold;
   border-radius: 8px;
   text-align: center;
@@ -552,10 +537,10 @@ button:disabled {
   cursor: default;
   opacity: 0.9;
   border: none;
-  white-space: nowrap; /* 🔥 折り返し防止 */
+  white-space: nowrap;
 }
 
-/* 🎨 各オプションの色（ボタンと統一） */
+/* 🎨 オプション別カラー */
 .netflix { background-color: #E50914; }
 .amazon { background-color: #00A8E1; }
 .disney { background-color: #113CCF; }
@@ -574,7 +559,7 @@ button:disabled {
 .icon-right {
   width: 32px;
   height: 32px;
-  color: rgba(100, 100, 100, 0.4); /* グレー＋40%の透明度 */
+  color: rgba(100, 100, 100, 0.4);
 }
 
 .poster-wrapper {
@@ -584,17 +569,53 @@ button:disabled {
   gap: 12px;
 }
 
+/* ✅ チェックボックス表示用追加 */
 .checkbox-wrapper {
   display: flex;
-  justify-content: flex-start;
-  padding-left: calc((100% - 300px) / 2);
-  margin-top: 12px; /* ← ここを大きめにする（例: 12px や 16px）*/
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 14px;
 }
 
-@media (max-width: 600px) {
-  .checkbox-wrapper {
-    padding-left: calc((100% - 280px) / 2);
-    margin-top: 15px; /* ← 同様に */
-  }
+.checkbox-wrapper.providers,
+.checkbox-wrapper.languages {
+  display: grid;
+  grid-template-columns: 140px 140px;
+  column-gap: 20px;
+  row-gap: 8px;
+  justify-content: center;
+  margin-top: 24px;
+  padding-top: 4px;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ✅ 各チェックボックス：左揃え */
+.checkbox-label {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+.filter-toggle {
+  text-align: left;          /* ← 左寄せに変更 */
+  font-weight: bold;
+  font-size: 16px;
+  margin: 24px auto 10px;
+  padding-left: 20px;        /* ← 左に少し余白 */
+  cursor: pointer;
+  color: #333;
+  user-select: none;
+  max-width: 300px;          /* ← 中央寄せの最大幅に合わせる */
+}
+
+.filter-toggle:hover {
+  opacity: 0.8;
 }
 </style>
