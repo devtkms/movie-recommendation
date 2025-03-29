@@ -11,7 +11,7 @@ import java.util.Map;
 public class MoodScoringServiceImpl implements MoodScoringService {
 
     private static final Map<String, int[]> MOOD_GENRE_MAP = Map.of(
-            "light", new int[]{35, 10751, 16, 12, 10402, 10770},
+            "light", new int[]{35, 10751, 12, 10402, 10770},
             "emotional", new int[]{18, 10749, 99, 36, 10752},
             "escape", new int[]{878, 14, 37},
             "thrill", new int[]{53, 27, 28, 80, 9648}

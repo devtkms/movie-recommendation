@@ -13,7 +13,7 @@ public class ToneScoringServiceImpl implements ToneScoringService {
             "slow", new int[]{10749, 18, 99},
             "fast", new int[]{28, 12, 35},
             "deep", new int[]{878, 14, 9648, 27},
-            "casual", new int[]{10751, 16, 10770}
+            "casual", new int[]{10751, 10770}
     );
 
     @Override

@@ -14,7 +14,7 @@ public class AfterScoringServiceImpl implements AfterScoringService {
 
     private static final Map<String, int[]> AFTER_GENRE_MAP = Map.of(
             "refresh", new int[]{28, 80, 37},
-            "warm", new int[]{16, 10751, 10749},
+            "warm", new int[]{10751, 10749},
             "cry", new int[]{18, 10752, 10749},
             "think", new int[]{99, 9648, 36}
     );
