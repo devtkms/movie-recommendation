@@ -10,6 +10,6 @@ public class MovieRecommendationRequestDto {
     private String tone;                    // Q2: 雰囲気
     private String after;                   // Q3: 見終わった後の気持ち
     private String genre;
-    private List<String> providers;         // フィルター：配信サービス
-    private List<String> languages;         // フィルター：言語
+    private String provider;         // フィルター：配信サービス
+    private String language;         // フィルター：言語
 }

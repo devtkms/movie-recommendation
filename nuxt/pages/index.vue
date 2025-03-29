@@ -31,14 +31,14 @@
       <div v-show="showFilters">
         <div class="checkbox-wrapper providers">
           <label class="checkbox-label" v-for="option in options.provider" :key="option.value">
-            <input type="radio" :value="option.value" v-model="selectedOptions.providers" />
+            <input type="radio" :value="option.value" v-model="selectedOptions.provider" />
             {{ option.label }}
           </label>
         </div>
 
         <div class="checkbox-wrapper languages">
           <label class="checkbox-label" v-for="option in options.language" :key="option.value">
-            <input type="radio" :value="option.value" v-model="selectedOptions.languages" />
+            <input type="radio" :value="option.value" v-model="selectedOptions.language" />
             {{ option.label }}
           </label>
         </div>
@@ -154,7 +154,7 @@ const options = {
   ]
 };
 
-const selectedOptions = ref({ mood: '', tone: '', after: '', providers: [], languages: [] });
+const selectedOptions = ref({ mood: '', tone: '', after: '', provider: '', language: '' });
 const currentMovie = ref(null);
 const moviePool = ref([]);
 const currentIndex = ref(0);
@@ -229,7 +229,8 @@ const getAfterClass = (after) => ({
 }[after] || '');
 
 const generateStorageKey = () =>
-    `movies_mood_${selectedOptions.value.mood}_provider_${selectedOptions.value.tone}_language_${selectedOptions.value.after}`;
+    `movies_mood_${selectedOptions.value.mood}_tone_${selectedOptions.value.tone}_after_${selectedOptions.value.after}
+    _provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
 
 const nextMovie = () => {
   if (currentIndex.value < moviePool.value.length - 1) {
