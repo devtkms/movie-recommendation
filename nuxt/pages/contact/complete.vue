@@ -7,6 +7,12 @@
       ご入力いただいた内容は今後の参考とさせていただくとともに、<br>
       必要に応じてXでのご回答またはご報告をさせていただくことがございます。
     </p>
+    <p class="developer-credit">
+      Xアカウント：
+      <a href="https://twitter.com/MoviReco" target="_blank" rel="noopener noreferrer" class="social-link">
+        @MoviReco
+      </a>
+    </p>
     <p class="mt-4">
       トップページに戻るには
       <router-link to="/" class="text-blue-600 hover:underline">こちら</router-link>
@@ -48,5 +54,9 @@ onMounted(() => {
   color: #333;
   display: inline-block;
   text-align: left;
+}
+
+.developer-credit {
+  font-size: 15px;
 }
 </style>
