@@ -45,6 +45,10 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'  // Spring Boot のテストフレームワーク
 	testImplementation 'org.springframework.security:spring-security-test'  // Spring Security テスト
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher' // JUnit テスト実行用
+
+
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4'
+	implementation 'org.postgresql:postgresql:42.7.5'
 }
 
 tasks.named('test') {
