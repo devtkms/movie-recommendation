@@ -11,5 +11,4 @@ public class MovieRecommendationRequestDto {
     private String after;                   // Q3: 見終わった後の気持ち
     private String genre;
     private String provider;         // フィルター：配信サービス
-    private String language;         // フィルター：言語
 }

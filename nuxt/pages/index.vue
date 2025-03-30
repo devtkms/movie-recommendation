@@ -35,13 +35,6 @@
             {{ option.label }}
           </label>
         </div>
-
-        <div class="checkbox-wrapper languages">
-          <label class="checkbox-label" v-for="option in options.language" :key="option.value">
-            <input type="radio" :value="option.value" v-model="selectedOptions.language" />
-            {{ option.label }}
-          </label>
-        </div>
       </div>
 
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
@@ -146,11 +139,6 @@ const options = {
     { value: 'prime', label: 'Amazonプライム' },
     { value: 'disney', label: 'ディズニープラス' },
     { value: 'hulu', label: 'Hulu' }
-  ],
-  language: [
-    { value: 'western', label: '洋画' },
-    { value: 'japanese', label: '邦画' },
-    { value: 'korean', label: '韓国映画' }
   ]
 };
 

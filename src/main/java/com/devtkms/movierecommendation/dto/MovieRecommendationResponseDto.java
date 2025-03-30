@@ -8,9 +8,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MovieRecommendationResponseDto {
-    private String title;      // 映画タイトル
-    private String overview;   // 概要
-    private String posterPath; // ポスター画像のパス
-    private String genreId;
-    private int genreScore;
+    private String title;        // 映画タイトル
+    private String overview;     // 概要
+    private String posterPath;   // ポスター画像のパス
+    private String genreId;      // ジャンルID
+    private int genreScore;      // ジャンルスコア
+    private String releaseDate;  // 公開日（追加）
 }
