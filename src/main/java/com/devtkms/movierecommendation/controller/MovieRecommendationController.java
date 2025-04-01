@@ -2,6 +2,7 @@ package com.devtkms.movierecommendation.controller;
 
 import com.devtkms.movierecommendation.dto.MovieRecommendationRequestDto;
 import com.devtkms.movierecommendation.dto.MovieRecommendationResponseDto;
+import com.devtkms.movierecommendation.dto.MovieRecommendationResultDto;
 import com.devtkms.movierecommendation.service.MovieRecommendationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,8 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/movies")
-@CrossOrigin(origins = "*") // 必要に応じてCORS設定
+@RequestMapping("/api/recommendations")
 public class MovieRecommendationController {
 
     private final MovieRecommendationService recommendationService;
@@ -21,10 +21,9 @@ public class MovieRecommendationController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, List<MovieRecommendationResponseDto>>> recommendMovies(
-            @RequestBody MovieRecommendationRequestDto requestDto
-    ) {
-        Map<String, List<MovieRecommendationResponseDto>> result = recommendationService.recommend(requestDto);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<MovieRecommendationResultDto> getRecommendations(
+            @RequestBody MovieRecommendationRequestDto requestDto) {
+        MovieRecommendationResultDto response = recommendationService.recommendMovies(requestDto);
+        return ResponseEntity.ok(response);
     }
 }

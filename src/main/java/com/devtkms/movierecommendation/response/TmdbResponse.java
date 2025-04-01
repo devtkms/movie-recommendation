@@ -30,8 +30,6 @@ public class TmdbResponse {
                             result.getTitle(),
                             result.getOverview(),
                             result.getPosterPath(),
-                            genreId,  // 取得した genreId を設定
-                            0,         // genreScore の初期値として0を設定（必要に応じて後で更新）
                             result.getReleaseDate()  // 追加：公開日を設定
                     );
                 })
@@ -40,7 +38,7 @@ public class TmdbResponse {
 
     @Getter
     @Setter
-    private static class MovieResult {
+    public static class MovieResult {  // ← 修正：private → public
         private String title;
         private String overview;
 
@@ -48,9 +46,9 @@ public class TmdbResponse {
         private String posterPath;
 
         @JsonProperty("genre_ids")
-        private List<Integer> genreIds; // TMDb APIからのジャンルIDリスト
+        private List<Integer> genreIds;
 
         @JsonProperty("release_date")
-        private String releaseDate; // 追加：公開日
+        private String releaseDate;
     }
 }

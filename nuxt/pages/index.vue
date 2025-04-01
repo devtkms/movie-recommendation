@@ -24,19 +24,6 @@
         </div>
       </div>
 
-      <div class="filter-toggle" @click="showFilters = !showFilters">
-        <span>{{ showFilters ? '▲ フィルターを閉じる' : '▼ フィルターを開く' }}</span>
-      </div>
-
-      <div v-show="showFilters">
-        <div class="checkbox-wrapper providers">
-          <label class="checkbox-label" v-for="option in options.provider" :key="option.value">
-            <input type="radio" :value="option.value" v-model="selectedOptions.provider" />
-            {{ option.label }}
-          </label>
-        </div>
-      </div>
-
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
       <p v-if="isSearchExhausted" class="exhausted-message">この条件での検索結果はすべて表示されました。</p>
 
@@ -76,6 +63,11 @@
             <button class="overview-button" @click="showOverview(currentMovie.overview)">概要を見る</button>
           </p>
           <p v-else class="no-overview">この映画の概要情報はありません。</p>
+        </div>
+
+        <div class="button-container">
+          <!-- 配信サービスボタン -->
+          <button class="overview-button" @click="showProviders">配信サービス</button>
         </div>
       </div>
 
@@ -133,16 +125,10 @@ const options = {
     { value: 'warm', label: '心が温まりたい' },
     { value: 'cry', label: '泣いてスッキリしたい' },
     { value: 'think', label: 'ちょっと考えたい' }
-  ],
-  provider: [
-    { value: 'netflix', label: 'Netflix' },
-    { value: 'prime', label: 'Amazonプライム' },
-    { value: 'disney', label: 'ディズニープラス' },
-    { value: 'hulu', label: 'Hulu' }
   ]
 };
 
-const selectedOptions = ref({ mood: '', tone: '', after: '', provider: '', language: '' });
+const selectedOptions = ref({ mood: '', tone: '', after: '' });
 const currentMovie = ref(null);
 const moviePool = ref([]);
 const currentIndex = ref(0);
@@ -217,8 +203,7 @@ const getAfterClass = (after) => ({
 }[after] || '');
 
 const generateStorageKey = () =>
-    `movies_mood_${selectedOptions.value.mood}_tone_${selectedOptions.value.tone}_after_${selectedOptions.value.after}
-    _provider_${selectedOptions.value.provider}_language_${selectedOptions.value.language}`;
+    `movies_mood_${selectedOptions.value.mood}_tone_${selectedOptions.value.tone}_after_${selectedOptions.value.after}`;
 
 const nextMovie = () => {
   if (currentIndex.value < moviePool.value.length - 1) {
@@ -262,7 +247,7 @@ const fetchMovies = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:8080/api/movies`, {
+    const response = await fetch(`http://localhost:8080/api/recommendations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(selectedOptions.value),
@@ -505,10 +490,19 @@ button:disabled {
   border: none;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out;
+  width: 48%; /* 両方のボタンを同じ幅に設定 */
 }
 
 .overview-button:hover {
   background-color: #0056b3;
+}
+
+.button-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 10px;
 }
 
 .category-title {
