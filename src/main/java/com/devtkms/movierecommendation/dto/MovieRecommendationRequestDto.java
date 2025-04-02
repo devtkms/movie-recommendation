@@ -16,4 +16,7 @@ public class MovieRecommendationRequestDto {
 
     /** Q3: 見終わった後の気持ち（例: refresh, think） */
     private String after;
+
+    /** 集計対象外フラグ（true: 開発者自身のリクエスト） */
+    private Boolean isMyData;
 }

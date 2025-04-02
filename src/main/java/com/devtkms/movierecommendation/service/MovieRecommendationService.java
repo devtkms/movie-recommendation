@@ -41,11 +41,13 @@ public class MovieRecommendationService {
      */
     public MovieRecommendationResultDto recommendMovies(MovieRecommendationRequestDto requestDto) {
         // 質問回答のログをDBに保存（後で分析可能）
-        QuestionButtonLogEntity log = new QuestionButtonLogEntity();
-        log.setMood(requestDto.getMood());
-        log.setTone(requestDto.getTone());
-        log.setAfter(requestDto.getAfter());
-        questionButtonLogMapper.insert(log);
+        if (Boolean.FALSE.equals(requestDto.getIsMyData())) {
+            QuestionButtonLogEntity log = new QuestionButtonLogEntity();
+            log.setMood(requestDto.getMood());
+            log.setTone(requestDto.getTone());
+            log.setAfter(requestDto.getAfter());
+            questionButtonLogMapper.insert(log);
+        }
 
         // 質問の組み合わせからTMDbキーワードIDリストを取得
         List<String> keywordIds = tagMasterMapper.findKeywordIdsByConditions(

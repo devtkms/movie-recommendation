@@ -284,7 +284,10 @@
       // const response = await fetch(`http://localhost:8080/api/recommendations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(selectedOptions.value),
+        body: JSON.stringify({
+          ...selectedOptions.value,
+          isMyData: localStorage.getItem('isDevUser') === 'true'
+        }),
       });
 
       if (!response.ok) throw new Error("API リクエストが失敗しました");

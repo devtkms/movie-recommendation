@@ -29,18 +29,22 @@ public class TmdbApiClient {
         String keywordParam = String.join(",", keywordIds);
         List<TmdbResponse.MovieResult> allResults = new java.util.ArrayList<>();
 
-        for (int page = 1; page <= 2; page++) {
+        // 🎲 ランダムに 1〜5ページ目から1つ、6〜10ページ目から1つ選ぶ
+        int page1 = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 6);  // 1〜5
+        int page2 = java.util.concurrent.ThreadLocalRandom.current().nextInt(6, 11); // 6〜10
+
+        for (int page : List.of(page1, page2)) {
             String url = UriComponentsBuilder.fromHttpUrl("https://api.themoviedb.org/3/discover/movie")
                     .queryParam("api_key", apiKey)
                     .queryParam("with_keywords", keywordParam)
                     .queryParam("language", "ja-JP")
                     .queryParam("sort_by", "popularity.desc")
                     .queryParam("without_genres", "16")
-                    .queryParam("page", page) // ✅ 明示的にページ指定
+                    .queryParam("page", page)
                     .build()
                     .toUriString();
 
-            logger.info("🔗 TMDb API リクエストURL (page=" + page + "): " + url);
+            logger.info("🎲 TMDb ランダムページ取得 (page=" + page + "): " + url);
 
             ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
             if (response.getBody() != null && response.getBody().getResults() != null) {
