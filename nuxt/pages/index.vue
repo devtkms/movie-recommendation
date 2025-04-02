@@ -88,19 +88,33 @@
   </template>
 
   <script setup>
-  import { ref, onMounted, computed, watch } from 'vue';
+  import { ref, onMounted, computed } from 'vue';
   import Header from '~/components/Header.vue';
   import Footer from '~/components/Footer.vue';
   import OverviewModal from '~/components/OverviewModal.vue';
   import WatchProvidersModal from '~/components/WatchProvidersModal.vue';
   import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
 
+  /* ------------------------------
+    初期状態
+  ------------------------------ */
+  const selectedOptions = ref({ mood: '', tone: '', after: '' });
+  const currentMovie = ref(null);
+  const moviePool = ref([]);
+  const currentIndex = ref(0);
+  const loading = ref(false);
+  const errorMessage = ref("");
+  const isSearchExhausted = ref(false);
+
   const showIntroModal = ref(false);
-  const showFilters = ref(true);
-  // ✅ モーダル用の状態を追加
+  const showModal = ref(false);
+  const modalContent = ref("");
   const providerList = ref([]);
   const showProviderModal = ref(false);
 
+  /* ------------------------------
+    ライフサイクル
+  ------------------------------ */
   onMounted(() => {
     const hasVisited = localStorage.getItem('visited');
     if (!hasVisited) {
@@ -109,47 +123,42 @@
     }
   });
 
+  /* ------------------------------
+    モーダル操作
+  ------------------------------ */
   const closeIntroModal = () => {
     showIntroModal.value = false;
   };
 
-  const searchOptions = {
-    mood: '今の気分を教えてください',
-    tone: '映画の雰囲気はどんな感じがいいですか',
-    after: '観終わった後、どんな気持ちになりたいですか？'
+  const showOverview = (overview) => {
+    modalContent.value = overview;
+    showModal.value = true;
   };
 
-  const options = {
-    mood: [
-      { value: 'light', label: '気軽に楽しみたい' },
-      { value: 'emotional', label: '感情を動かされたい' },
-      { value: 'escape', label: '非日常を味わいたい' },
-      { value: 'thrill', label: 'スリルを感じたい' }
-    ],
-    tone: [
-      { value: 'slow', label: 'ゆったり観たい' },
-      { value: 'fast', label: 'テンポよく進んでほしい' },
-      { value: 'deep', label: 'どっぷり浸りたい' },
-      { value: 'casual', label: '軽めに流したい' }
-    ],
-    after: [
-      { value: 'refresh', label: 'スカッとしたい' },
-      { value: 'warm', label: '心が温まりたい' },
-      { value: 'cry', label: '泣いてスッキリしたい' },
-      { value: 'think', label: 'ちょっと考えたい' }
-    ]
+  const closeModal = () => {
+    showModal.value = false;
   };
 
-  const selectedOptions = ref({ mood: '', tone: '', after: '' });
-  const currentMovie = ref(null);
-  const moviePool = ref([]);
-  const currentIndex = ref(0);
-  const loading = ref(false);
-  const errorMessage = ref("");
-  const isSearchExhausted = ref(false);
-  const showModal = ref(false);
-  const modalContent = ref("");
+  const showProviders = async () => {
+    if (!currentMovie.value?.id) return;
 
+    try {
+      const res = await fetch(`http://localhost:8080/movie/${currentMovie.value.id}/watch/providers`);
+      if (!res.ok) throw new Error("配信サービス取得に失敗");
+
+      const providers = await res.json();
+      providerList.value = Array.isArray(providers) ? providers : [];
+    } catch (e) {
+      console.error("❌ 配信サービス取得失敗", e);
+      providerList.value = [];
+    } finally {
+      showProviderModal.value = true;
+    }
+  };
+
+  /* ------------------------------
+    スワイプ操作
+  ------------------------------ */
   const touchStartX = ref(0);
   const touchCurrentX = ref(0);
   const isSwiping = ref(false);
@@ -179,13 +188,39 @@
     touchCurrentX.value = 0;
   };
 
-  const showOverview = (overview) => {
-    modalContent.value = overview;
-    showModal.value = true;
+  /* ------------------------------
+    質問定義
+  ------------------------------ */
+  const searchOptions = {
+    mood: '今の気分を教えてください',
+    tone: '映画の雰囲気はどんな感じがいいですか',
+    after: '観終わった後、どんな気持ちになりたいですか？'
   };
 
-  const closeModal = () => showModal.value = false;
+  const options = {
+    mood: [
+      { value: 'light', label: '気軽に楽しみたい' },
+      { value: 'emotional', label: '感情を動かされたい' },
+      { value: 'escape', label: '非日常を味わいたい' },
+      { value: 'thrill', label: 'スリルを感じたい' }
+    ],
+    tone: [
+      { value: 'slow', label: 'ゆったり観たい' },
+      { value: 'fast', label: 'テンポよく進んでほしい' },
+      { value: 'deep', label: 'どっぷり浸りたい' },
+      { value: 'casual', label: '軽めに流したい' }
+    ],
+    after: [
+      { value: 'refresh', label: 'スカッとしたい' },
+      { value: 'warm', label: '心が温まりたい' },
+      { value: 'cry', label: '泣いてスッキリしたい' },
+      { value: 'think', label: 'ちょっと考えたい' }
+    ]
+  };
 
+  /* ------------------------------
+    クラス & ラベル取得関数
+  ------------------------------ */
   const getMoviePoster = (path) =>
       path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/500';
 
@@ -214,27 +249,12 @@
     'think': 'think'
   }[after] || '');
 
+  /* ------------------------------
+    映画取得処理
+  ------------------------------ */
   const generateStorageKey = () =>
       `movies_mood_${selectedOptions.value.mood}_tone_${selectedOptions.value.tone}_after_${selectedOptions.value.after}`;
 
-  const nextMovie = () => {
-    if (currentIndex.value < moviePool.value.length - 1) {
-      currentIndex.value++;
-      currentMovie.value = moviePool.value[currentIndex.value];
-    } else {
-      isSearchExhausted.value = true;
-    }
-  };
-
-  const prevMovie = () => {
-    if (currentIndex.value > 0) {
-      currentIndex.value--;
-      currentMovie.value = moviePool.value[currentIndex.value];
-      isSearchExhausted.value = false;
-    }
-  };
-
-  // チェックボックスや選択肢の変化を監視
   const fetchMovies = async () => {
     if (!selectedOptions.value.mood || !selectedOptions.value.tone || !selectedOptions.value.after) {
       errorMessage.value = "必須の質問に回答してください。";
@@ -266,9 +286,10 @@
       });
 
       if (!response.ok) throw new Error("API リクエストが失敗しました");
-      const data = await response.json();
 
+      const data = await response.json();
       const combined = [...(data.combined || [])];
+
       for (let i = combined.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [combined[i], combined[j]] = [combined[j], combined[i]];
@@ -277,6 +298,7 @@
       moviePool.value = combined;
       currentIndex.value = 0;
       currentMovie.value = moviePool.value[0];
+
       localStorage.setItem(storageKey, JSON.stringify({ pool: combined, index: 0, savedDate: today }));
     } catch (error) {
       console.error("❌ 映画データの取得に失敗:", error);
@@ -286,6 +308,26 @@
     loading.value = false;
   };
 
+  /* ------------------------------
+    ナビゲーション
+  ------------------------------ */
+  const nextMovie = () => {
+    if (currentIndex.value < moviePool.value.length - 1) {
+      currentIndex.value++;
+      currentMovie.value = moviePool.value[currentIndex.value];
+    } else {
+      isSearchExhausted.value = true;
+    }
+  };
+
+  const prevMovie = () => {
+    if (currentIndex.value > 0) {
+      currentIndex.value--;
+      currentMovie.value = moviePool.value[currentIndex.value];
+      isSearchExhausted.value = false;
+    }
+  };
+
   const resetSearch = () => {
     moviePool.value = [];
     currentMovie.value = null;
@@ -293,26 +335,8 @@
     isSearchExhausted.value = false;
   };
 
-  // 映画を探すボタンがクリックされた時にのみリクエストを送信
   const handleSearchButtonClick = () => {
     fetchMovies();
-  };
-
-  const showProviders = async () => {
-    if (!currentMovie.value?.id) return;
-
-    try {
-      const res = await fetch(`http://localhost:8080/movie/${currentMovie.value.id}/watch/providers`);
-      if (!res.ok) throw new Error("配信サービス取得に失敗");
-
-      const providers = await res.json();
-      providerList.value = Array.isArray(providers) ? providers : [];
-      showProviderModal.value = true;
-    } catch (e) {
-      console.error("❌ 配信サービス取得失敗", e);
-      providerList.value = [];
-      showProviderModal.value = true;
-    }
   };
   </script>
 
