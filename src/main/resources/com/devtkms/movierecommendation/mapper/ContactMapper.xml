@@ -4,7 +4,7 @@
 <mapper namespace="com.devtkms.movierecommendation.mapper.ContactMapper">
     <insert id="insert" parameterType="com.devtkms.movierecommendation.entity.ContactEntity">
         INSERT INTO contact (nickname, category, message, created_at)
-        VALUES (#{nickname}, #{category}, #{message}, #{createdAt})
+        VALUES (#{nickname}, #{category}, #{message})
     </insert>
 </mapper>
 

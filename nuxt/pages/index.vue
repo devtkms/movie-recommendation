@@ -1,628 +1,672 @@
-<template>
-  <div class="container">
-    <Header />
-    <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
+  <template>
+    <div class="container">
+      <Header />
+      <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
 
-    <div v-if="!currentMovie">
-      <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
-        <label>{{ label }}</label>
-        <div class="button-group">
-          <button
-              v-for="option in options[key]"
-              :key="option.value"
-              :class="[
-              'button',
-              key === 'mood' ? getMoodClass(option.value) : '',
-              key === 'tone' ? getToneClass(option.value) : '',
-              key === 'after' ? getAfterClass(option.value) : '',
-              { selected: selectedOptions[key] === option.value }
-            ]"
-              @click="selectedOptions[key] = option.value"
-          >
-            {{ option.label }}
-          </button>
+      <div v-if="!currentMovie">
+        <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
+          <label>{{ label }}</label>
+          <div class="button-group">
+            <button
+                v-for="option in options[key]"
+                :key="option.value"
+                :class="[
+                'button',
+                key === 'mood' ? getMoodClass(option.value) : '',
+                key === 'tone' ? getToneClass(option.value) : '',
+                key === 'after' ? getAfterClass(option.value) : '',
+                { selected: selectedOptions[key] === option.value }
+              ]"
+                @click="selectedOptions[key] = option.value"
+            >
+              {{ option.label }}
+            </button>
+          </div>
         </div>
+
+        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+        <p v-if="isSearchExhausted" class="exhausted-message">この条件での検索結果はすべて表示されました。</p>
+
+        <button @click="fetchMovies" :disabled="loading" class="search-button">映画を探す</button>
       </div>
 
-      <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-      <p v-if="isSearchExhausted" class="exhausted-message">この条件での検索結果はすべて表示されました。</p>
+      <div v-if="loading">ロード中...</div>
 
-      <button @click="fetchMovies" :disabled="loading" class="search-button">映画を探す</button>
+      <div v-if="currentMovie" class="movie-results">
+        <div class="selected-options">
+          <div class="selected-option" :class="getMoodClass(selectedOptions.mood)">
+            {{ getMoodLabel(selectedOptions.mood) }}
+          </div>
+          <div class="selected-option" :class="getToneClass(selectedOptions.tone)">
+            {{ getToneLabel(selectedOptions.tone) }}
+          </div>
+          <div class="selected-option" :class="getAfterClass(selectedOptions.after)">
+            {{ getAfterLabel(selectedOptions.after) }}
+          </div>
+        </div>
+
+        <div
+            class="movie-card"
+            @touchstart="onTouchStart"
+            @touchmove="onTouchMove"
+            @touchend="onTouchEnd"
+            :style="cardStyle"
+        >
+          <h3 class="movie-title">{{ currentMovie.title }}</h3>
+          <div class="poster-wrapper">
+            <ArrowLeftCircleIcon class="icon-left" />
+            <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
+            <ArrowRightCircleIcon class="icon-right" />
+          </div>
+          <div class="overview-container">
+            <button
+                class="overview-button"
+                :disabled="!currentMovie.overview"
+                :class="{ disabled: !currentMovie.overview }"
+                @click="showOverview(currentMovie.overview)"
+            >
+              {{ currentMovie.overview ? '概要を見る' : '概要なし' }}
+            </button>
+
+            <button class="overview-button action" @click="showProviders">
+              配信サービス
+            </button>
+          </div>
+        </div>
+
+        <button @click="resetSearch" class="search-button">検索画面に戻る</button>
+      </div>
+
+      <OverviewModal :show="showModal" :content="modalContent" @close="closeModal" />
+      <WatchProvidersModal
+          :show="showProviderModal"
+          :providers="providerList"
+          @close="showProviderModal = false"
+      />
+      <Footer />
     </div>
+  </template>
 
-    <div v-if="loading">ロード中...</div>
+  <script setup>
+  import { ref, onMounted, computed, watch } from 'vue';
+  import Header from '~/components/Header.vue';
+  import Footer from '~/components/Footer.vue';
+  import OverviewModal from '~/components/OverviewModal.vue';
+  import WatchProvidersModal from '~/components/WatchProvidersModal.vue';
+  import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
 
-    <div v-if="currentMovie" class="movie-results">
-      <div class="selected-options">
-        <div class="selected-option" :class="getMoodClass(selectedOptions.mood)">
-          {{ getMoodLabel(selectedOptions.mood) }}
-        </div>
-        <div class="selected-option" :class="getToneClass(selectedOptions.tone)">
-          {{ getToneLabel(selectedOptions.tone) }}
-        </div>
-        <div class="selected-option" :class="getAfterClass(selectedOptions.after)">
-          {{ getAfterLabel(selectedOptions.after) }}
-        </div>
-      </div>
+  const showIntroModal = ref(false);
+  const showFilters = ref(true);
+  // ✅ モーダル用の状態を追加
+  const providerList = ref([]);
+  const showProviderModal = ref(false);
 
-      <div
-          class="movie-card"
-          @touchstart="onTouchStart"
-          @touchmove="onTouchMove"
-          @touchend="onTouchEnd"
-          :style="cardStyle"
-      >
-        <h3 class="movie-title">{{ currentMovie.title }}</h3>
-        <div class="poster-wrapper">
-          <ArrowLeftCircleIcon class="icon-left" />
-          <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
-          <ArrowRightCircleIcon class="icon-right" />
-        </div>
-        <div class="overview-container">
-          <p v-if="currentMovie.overview">
-            <button class="overview-button" @click="showOverview(currentMovie.overview)">概要を見る</button>
-          </p>
-          <p v-else class="no-overview">この映画の概要情報はありません。</p>
-        </div>
+  onMounted(() => {
+    const hasVisited = localStorage.getItem('visited');
+    if (!hasVisited) {
+      showIntroModal.value = true;
+      localStorage.setItem('visited', 'true');
+    }
+  });
 
-        <div class="button-container">
-          <!-- 配信サービスボタン -->
-          <button class="overview-button" @click="showProviders">配信サービス</button>
-        </div>
-      </div>
+  const closeIntroModal = () => {
+    showIntroModal.value = false;
+  };
 
-      <button @click="resetSearch" class="search-button">検索画面に戻る</button>
-    </div>
+  const searchOptions = {
+    mood: '今の気分を教えてください',
+    tone: '映画の雰囲気はどんな感じがいいですか',
+    after: '観終わった後、どんな気持ちになりたいですか？'
+  };
 
-    <OverviewModal :show="showModal" :content="modalContent" @close="closeModal" />
-    <Footer />
-  </div>
-</template>
+  const options = {
+    mood: [
+      { value: 'light', label: '気軽に楽しみたい' },
+      { value: 'emotional', label: '感情を動かされたい' },
+      { value: 'escape', label: '非日常を味わいたい' },
+      { value: 'thrill', label: 'スリルを感じたい' }
+    ],
+    tone: [
+      { value: 'slow', label: 'ゆったり観たい' },
+      { value: 'fast', label: 'テンポよく進んでほしい' },
+      { value: 'deep', label: 'どっぷり浸りたい' },
+      { value: 'casual', label: '軽めに流したい' }
+    ],
+    after: [
+      { value: 'refresh', label: 'スカッとしたい' },
+      { value: 'warm', label: '心が温まりたい' },
+      { value: 'cry', label: '泣いてスッキリしたい' },
+      { value: 'think', label: 'ちょっと考えたい' }
+    ]
+  };
 
-<script setup>
-import { ref, onMounted, computed, watch } from 'vue';
-import Header from '~/components/Header.vue';
-import Footer from '~/components/Footer.vue';
-import OverviewModal from '~/components/OverviewModal.vue';
-import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
+  const selectedOptions = ref({ mood: '', tone: '', after: '' });
+  const currentMovie = ref(null);
+  const moviePool = ref([]);
+  const currentIndex = ref(0);
+  const loading = ref(false);
+  const errorMessage = ref("");
+  const isSearchExhausted = ref(false);
+  const showModal = ref(false);
+  const modalContent = ref("");
 
-const showIntroModal = ref(false);
-const showFilters = ref(true);
+  const touchStartX = ref(0);
+  const touchCurrentX = ref(0);
+  const isSwiping = ref(false);
 
-onMounted(() => {
-  const hasVisited = localStorage.getItem('visited');
-  if (!hasVisited) {
-    showIntroModal.value = true;
-    localStorage.setItem('visited', 'true');
-  }
-});
+  const cardStyle = computed(() => {
+    const dx = touchCurrentX.value - touchStartX.value;
+    return isSwiping.value ? `transform: translateX(${dx}px) rotate(${dx / 20}deg); transition: none;` : '';
+  });
 
-const closeIntroModal = () => {
-  showIntroModal.value = false;
-};
+  const onTouchStart = (e) => {
+    touchStartX.value = e.touches[0].clientX;
+    touchCurrentX.value = touchStartX.value;
+    isSwiping.value = true;
+  };
 
-const searchOptions = {
-  mood: '今の気分を教えてください',
-  tone: '映画の雰囲気はどんな感じがいいですか',
-  after: '観終わった後、どんな気持ちになりたいですか？'
-};
+  const onTouchMove = (e) => {
+    touchCurrentX.value = e.touches[0].clientX;
+  };
 
-const options = {
-  mood: [
-    { value: 'light', label: '気軽に楽しみたい' },
-    { value: 'emotional', label: '感情を動かされたい' },
-    { value: 'escape', label: '非日常を味わいたい' },
-    { value: 'thrill', label: 'スリルを感じたい' }
-  ],
-  tone: [
-    { value: 'slow', label: 'ゆったり観たい' },
-    { value: 'fast', label: 'テンポよく進んでほしい' },
-    { value: 'deep', label: 'どっぷり浸りたい' },
-    { value: 'casual', label: '軽めに流したい' }
-  ],
-  after: [
-    { value: 'refresh', label: 'スカッとしたい' },
-    { value: 'warm', label: '心が温まりたい' },
-    { value: 'cry', label: '泣いてスッキリしたい' },
-    { value: 'think', label: 'ちょっと考えたい' }
-  ]
-};
+  const onTouchEnd = () => {
+    const dx = touchCurrentX.value - touchStartX.value;
+    if (Math.abs(dx) > 80) {
+      dx > 0 ? prevMovie() : nextMovie();
+    }
+    isSwiping.value = false;
+    touchStartX.value = 0;
+    touchCurrentX.value = 0;
+  };
 
-const selectedOptions = ref({ mood: '', tone: '', after: '' });
-const currentMovie = ref(null);
-const moviePool = ref([]);
-const currentIndex = ref(0);
-const loading = ref(false);
-const errorMessage = ref("");
-const isSearchExhausted = ref(false);
-const showModal = ref(false);
-const modalContent = ref("");
+  const showOverview = (overview) => {
+    modalContent.value = overview;
+    showModal.value = true;
+  };
 
-const touchStartX = ref(0);
-const touchCurrentX = ref(0);
-const isSwiping = ref(false);
+  const closeModal = () => showModal.value = false;
 
-const cardStyle = computed(() => {
-  const dx = touchCurrentX.value - touchStartX.value;
-  return isSwiping.value ? `transform: translateX(${dx}px) rotate(${dx / 20}deg); transition: none;` : '';
-});
+  const getMoviePoster = (path) =>
+      path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/500';
 
-const onTouchStart = (e) => {
-  touchStartX.value = e.touches[0].clientX;
-  touchCurrentX.value = touchStartX.value;
-  isSwiping.value = true;
-};
+  const getMoodLabel = (mood) => options.mood.find(opt => opt.value === mood)?.label || "未選択";
+  const getToneLabel = (tone) => options.tone.find(opt => opt.value === tone)?.label || "未選択";
+  const getAfterLabel = (after) => options.after.find(opt => opt.value === after)?.label || "未選択";
 
-const onTouchMove = (e) => {
-  touchCurrentX.value = e.touches[0].clientX;
-};
+  const getMoodClass = (mood) => ({
+    'light': 'light',
+    'emotional': 'emotional',
+    'escape': 'escape',
+    'thrill': 'thrill'
+  }[mood] || '');
 
-const onTouchEnd = () => {
-  const dx = touchCurrentX.value - touchStartX.value;
-  if (Math.abs(dx) > 80) {
-    dx > 0 ? prevMovie() : nextMovie();
-  }
-  isSwiping.value = false;
-  touchStartX.value = 0;
-  touchCurrentX.value = 0;
-};
+  const getToneClass = (tone) => ({
+    'slow': 'slow',
+    'fast': 'fast',
+    'deep': 'deep',
+    'casual': 'casual'
+  }[tone] || '');
 
-const showOverview = (overview) => {
-  modalContent.value = overview;
-  showModal.value = true;
-};
+  const getAfterClass = (after) => ({
+    'refresh': 'refresh',
+    'warm': 'warm',
+    'cry': 'cry',
+    'think': 'think'
+  }[after] || '');
 
-const closeModal = () => showModal.value = false;
+  const generateStorageKey = () =>
+      `movies_mood_${selectedOptions.value.mood}_tone_${selectedOptions.value.tone}_after_${selectedOptions.value.after}`;
 
-const getMoviePoster = (path) =>
-    path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/500';
+  const nextMovie = () => {
+    if (currentIndex.value < moviePool.value.length - 1) {
+      currentIndex.value++;
+      currentMovie.value = moviePool.value[currentIndex.value];
+    } else {
+      isSearchExhausted.value = true;
+    }
+  };
 
-const getMoodLabel = (mood) => options.mood.find(opt => opt.value === mood)?.label || "未選択";
-const getToneLabel = (tone) => options.tone.find(opt => opt.value === tone)?.label || "未選択";
-const getAfterLabel = (after) => options.after.find(opt => opt.value === after)?.label || "未選択";
+  const prevMovie = () => {
+    if (currentIndex.value > 0) {
+      currentIndex.value--;
+      currentMovie.value = moviePool.value[currentIndex.value];
+      isSearchExhausted.value = false;
+    }
+  };
 
-const getMoodClass = (mood) => ({
-  'light': 'light',
-  'emotional': 'emotional',
-  'escape': 'escape',
-  'thrill': 'thrill'
-}[mood] || '');
-
-const getToneClass = (tone) => ({
-  'slow': 'slow',
-  'fast': 'fast',
-  'deep': 'deep',
-  'casual': 'casual'
-}[tone] || '');
-
-const getAfterClass = (after) => ({
-  'refresh': 'refresh',
-  'warm': 'warm',
-  'cry': 'cry',
-  'think': 'think'
-}[after] || '');
-
-const generateStorageKey = () =>
-    `movies_mood_${selectedOptions.value.mood}_tone_${selectedOptions.value.tone}_after_${selectedOptions.value.after}`;
-
-const nextMovie = () => {
-  if (currentIndex.value < moviePool.value.length - 1) {
-    currentIndex.value++;
-    currentMovie.value = moviePool.value[currentIndex.value];
-  } else {
-    isSearchExhausted.value = true;
-  }
-};
-
-const prevMovie = () => {
-  if (currentIndex.value > 0) {
-    currentIndex.value--;
-    currentMovie.value = moviePool.value[currentIndex.value];
-    isSearchExhausted.value = false;
-  }
-};
-
-// チェックボックスや選択肢の変化を監視
-const fetchMovies = async () => {
-  if (!selectedOptions.value.mood || !selectedOptions.value.tone || !selectedOptions.value.after) {
-    errorMessage.value = "必須の質問に回答してください。";
-    return;
-  }
-
-  loading.value = true;
-  errorMessage.value = "";
-  isSearchExhausted.value = false;
-  currentMovie.value = null;
-
-  const storageKey = generateStorageKey();
-  const today = new Date().toISOString().slice(0, 10);
-  const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
-
-  if (stored.pool && stored.savedDate === today) {
-    moviePool.value = stored.pool;
-    currentIndex.value = stored.index || 0;
-    currentMovie.value = moviePool.value[currentIndex.value];
-    loading.value = false;
-    return;
-  }
-
-  try {
-    const response = await fetch(`http://localhost:8080/api/recommendations`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(selectedOptions.value),
-    });
-
-    if (!response.ok) throw new Error("API リクエストが失敗しました");
-    const data = await response.json();
-
-    const combined = [...(data.combined || [])];
-    for (let i = combined.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [combined[i], combined[j]] = [combined[j], combined[i]];
+  // チェックボックスや選択肢の変化を監視
+  const fetchMovies = async () => {
+    if (!selectedOptions.value.mood || !selectedOptions.value.tone || !selectedOptions.value.after) {
+      errorMessage.value = "必須の質問に回答してください。";
+      return;
     }
 
-    moviePool.value = combined;
+    loading.value = true;
+    errorMessage.value = "";
+    isSearchExhausted.value = false;
+    currentMovie.value = null;
+
+    const storageKey = generateStorageKey();
+    const today = new Date().toISOString().slice(0, 10);
+    const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+    if (stored.pool && stored.savedDate === today) {
+      moviePool.value = stored.pool;
+      currentIndex.value = stored.index || 0;
+      currentMovie.value = moviePool.value[currentIndex.value];
+      loading.value = false;
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/recommendations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(selectedOptions.value),
+      });
+
+      if (!response.ok) throw new Error("API リクエストが失敗しました");
+      const data = await response.json();
+
+      const combined = [...(data.combined || [])];
+      for (let i = combined.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [combined[i], combined[j]] = [combined[j], combined[i]];
+      }
+
+      moviePool.value = combined;
+      currentIndex.value = 0;
+      currentMovie.value = moviePool.value[0];
+      localStorage.setItem(storageKey, JSON.stringify({ pool: combined, index: 0, savedDate: today }));
+    } catch (error) {
+      console.error("❌ 映画データの取得に失敗:", error);
+      errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。";
+    }
+
+    loading.value = false;
+  };
+
+  const resetSearch = () => {
+    moviePool.value = [];
+    currentMovie.value = null;
     currentIndex.value = 0;
-    currentMovie.value = moviePool.value[0];
-    localStorage.setItem(storageKey, JSON.stringify({ pool: combined, index: 0, savedDate: today }));
-  } catch (error) {
-    console.error("❌ 映画データの取得に失敗:", error);
-    errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。";
+    isSearchExhausted.value = false;
+  };
+
+  // 映画を探すボタンがクリックされた時にのみリクエストを送信
+  const handleSearchButtonClick = () => {
+    fetchMovies();
+  };
+
+  const showProviders = async () => {
+    if (!currentMovie.value?.id) return;
+
+    try {
+      const res = await fetch(`http://localhost:8080/movie/${currentMovie.value.id}/watch/providers`);
+      if (!res.ok) throw new Error("配信サービス取得に失敗");
+
+      const providers = await res.json();
+      providerList.value = Array.isArray(providers) ? providers : [];
+      showProviderModal.value = true;
+    } catch (e) {
+      console.error("❌ 配信サービス取得失敗", e);
+      providerList.value = [];
+      showProviderModal.value = true;
+    }
+  };
+  </script>
+
+  <!-- CSSは別ファイル or style scoped にて対応中 -->
+
+
+  <style scoped>
+  .container {
+    max-width: 600px;
+    margin: auto;
+    text-align: center;
   }
 
-  loading.value = false;
-};
+  .form-group {
+    margin-bottom: 15px;
+  }
 
-const resetSearch = () => {
-  moviePool.value = [];
-  currentMovie.value = null;
-  currentIndex.value = 0;
-  isSearchExhausted.value = false;
-};
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
 
-// 映画を探すボタンがクリックされた時にのみリクエストを送信
-const handleSearchButtonClick = () => {
-  fetchMovies();
-};
-</script>
+  .button-group {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 10px;
+    justify-content: center;
+  }
 
-<!-- CSSは別ファイル or style scoped にて対応中 -->
+  .button {
+    padding: 8px 12px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 5px;
+    border-radius: 8px;
+    min-width: 170px;   /* ← 統一したい幅に調整 */
+    max-width: 170px;   /* ← 同じにして幅を固定 */
+    text-align: center;
+    white-space: nowrap; /* ← テキスト折り返し防止 */
+  }
 
+  button.selected {
+    background-color: grey;
+    font-weight: bold;
+    opacity: 0.9;
+  }
 
-<style scoped>
-.container {
-  max-width: 600px;
-  margin: auto;
-  text-align: center;
-}
+  .button:hover {
+    opacity: 0.85;
+  }
 
-.form-group {
-  margin-bottom: 15px;
-}
+  button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
 
-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
-}
+  .movie-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+  }
 
-.button-group {
-  display: grid;
-  grid-template-columns: repeat(2, auto);
-  gap: 10px;
-  justify-content: center;
-}
+  .movie-list img {
+    max-width: 100px;
+    display: block;
+    margin: auto;
+  }
 
-.button {
-  padding: 8px 12px;
-  color: white;
-  border: none;
-  cursor: pointer;
-  margin-top: 5px;
-  border-radius: 8px;
-  min-width: 170px;   /* ← 統一したい幅に調整 */
-  max-width: 170px;   /* ← 同じにして幅を固定 */
-  text-align: center;
-  white-space: nowrap; /* ← テキスト折り返し防止 */
-}
+  .movie-list ul {
+    list-style-type: none;
+    padding: 0;
+  }
 
-button.selected {
-  background-color: grey;
-  font-weight: bold;
-  opacity: 0.9;
-}
+  .movie-title {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+  }
 
-.button:hover {
-  opacity: 0.85;
-}
+  .movie-results {
+    text-align: center;
+    padding-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
+  .movie-card {
+    background-color: #f8f8ff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    width: 280px;
+    max-width: 320px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: transform 0.3s ease;
+  }
 
-.movie-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-  width: 100%;
-}
+  .movie-poster.fixed-size {
+    width: 100%;
+    max-width: 220px;
+    height: 320px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
 
-.movie-list img {
-  max-width: 100px;
-  display: block;
-  margin: auto;
-}
-
-.movie-list ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.movie-title {
-  font-size: 16px;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-.movie-results {
-  text-align: center;
-  padding-bottom: 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.movie-card {
-  background-color: #f8f8ff;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 15px;
-  width: 280px;
-  max-width: 320px;
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  transition: transform 0.3s ease;
-}
-
-.movie-poster.fixed-size {
-  width: 100%;
-  max-width: 220px;
-  height: 320px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.movie-poster {
-  max-width: 80%;
-  height: auto;
-  border-radius: 8px;
-  display: block;
-  margin: auto;
-}
-
-@media (max-width: 600px) {
   .movie-poster {
-    max-width: 150px;
+    max-width: 80%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    margin: auto;
   }
-}
 
-.error-message {
-  color: red;
-  text-align: center;
-  font-weight: bold;
-  margin-top: 10px;
-  font-size: 14px;
-}
+  @media (max-width: 600px) {
+    .movie-poster {
+      max-width: 150px;
+    }
+  }
 
-.search-button {
-  background-color: #333;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-  margin-top: 60px;
-}
+  .error-message {
+    color: red;
+    text-align: center;
+    font-weight: bold;
+    margin-top: 10px;
+    font-size: 14px;
+  }
 
-.search-button:hover {
-  background-color: #555;
-}
+  .search-button {
+    background-color: #333;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    margin-top: 60px;
+  }
 
-.search-button:disabled {
-  background-color: #999;
-  cursor: not-allowed;
-}
+  .search-button:hover {
+    background-color: #555;
+  }
 
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+  .search-button:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+  }
 
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  max-width: 400px;
-}
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
-.modal-content p {
-  margin-bottom: 10px;
-}
+  .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+  }
 
-.overview-container {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-}
+  .modal-content p {
+    margin-bottom: 10px;
+  }
 
-.no-overview {
-  color: #777;
-  font-style: italic;
-  margin-top: 5px;
-}
+  .overview-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    gap: 12px;
+  }
 
-.overview-button {
-  background-color: #007BFF;
-  color: white;
-  font-size: 14px;
-  padding: 8px 16px;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-  width: 48%; /* 両方のボタンを同じ幅に設定 */
-}
+  .no-overview {
+    color: #777;
+    font-style: italic;
+    margin-top: 5px;
+  }
 
-.overview-button:hover {
-  background-color: #0056b3;
-}
+  .overview-button {
+    background-color: #2196F3;
+    color: white;
+    font-size: 14px;
+    padding: 8px 16px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    white-space: nowrap;
+    min-width: 120px;
+  }
 
-.button-container {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  margin-top: 10px;
-}
+  .overview-button.info {
+    background-color: #2196F3;
+  }
+  .overview-button.action {
+    background-color: #28a745;
+  }
 
-.category-title {
-  width: 100%;
-  text-align: center;
-  font-size: 25px;
-  font-weight: bold;
-  margin-top: 30px;
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+  .overview-button:hover {
+    background-color: #1976D2;
+  }
 
-.selected-options {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto 15px;
-}
+  .overview-button.disabled {
+    background-color: #ccc !important;
+    cursor: not-allowed;
+    color: #666;
+  }
 
-.selected-option {
-  flex: 1;
-  max-width: 200px;
-  min-width: 100px;
-  padding: 8px 12px;
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
-  border-radius: 8px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: default;
-  opacity: 0.9;
-  border: none;
-  white-space: nowrap;
-}
+  .button-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    margin-top: 10px;
+  }
 
-/* 🎨 mood（気分） */
-.light    { background-color: #FFD700; }  /* 明るくポップな黄色 */
-.emotional{ background-color: #FF69B4; }  /* 感情 → ピンク系 */
-.escape   { background-color: #6A5ACD; }  /* 非日常 → ミステリアスな紫 */
-.thrill   { background-color: #FF4500; }  /* スリル → 鮮やかな赤橙 */
+  .category-title {
+    width: 100%;
+    text-align: center;
+    font-size: 25px;
+    font-weight: bold;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
-/* 🎬 tone（雰囲気） */
-.slow     { background-color: #87CEFA; }  /* ゆったり → 空色 */
-.fast     { background-color: #00CED1; }  /* テンポよく → 爽やかな青緑 */
-.deep     { background-color: #191970; }  /* どっぷり浸かる → 深い藍色 */
-.casual   { background-color: #90EE90; }  /* 軽く観たい → 柔らかい緑 */
+  .selected-options {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto 15px;
+  }
 
-/* 🎭 after（気持ち） */
-.refresh  { background-color: #32CD32; }  /* スカッと → 元気な緑 */
-.warm     { background-color: #FFB347; }  /* 温かい気持ち → オレンジ系 */
-.cry      { background-color: #1E90FF; }  /* 泣く → さわやかな青 */
-.think    { background-color: #708090; }  /* 考える → グレー（落ち着き） */
+  .selected-option {
+    flex: 1;
+    max-width: 200px;
+    min-width: 100px;
+    padding: 8px 12px;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 8px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    opacity: 0.9;
+    border: none;
+    white-space: nowrap;
+  }
 
-.icon-left,
-.icon-right {
-  width: 32px;
-  height: 32px;
-  color: rgba(100, 100, 100, 0.4);
-}
+  /* 🎨 mood（気分） */
+  .light    { background-color: #FFD700; }  /* 明るくポップな黄色 */
+  .emotional{ background-color: #FF69B4; }  /* 感情 → ピンク系 */
+  .escape   { background-color: #6A5ACD; }  /* 非日常 → ミステリアスな紫 */
+  .thrill   { background-color: #FF4500; }  /* スリル → 鮮やかな赤橙 */
 
-.poster-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
+  /* 🎬 tone（雰囲気） */
+  .slow     { background-color: #87CEFA; }  /* ゆったり → 空色 */
+  .fast     { background-color: #00CED1; }  /* テンポよく → 爽やかな青緑 */
+  .deep     { background-color: #191970; }  /* どっぷり浸かる → 深い藍色 */
+  .casual   { background-color: #90EE90; }  /* 軽く観たい → 柔らかい緑 */
 
-/* ✅ チェックボックス表示用追加 */
-.checkbox-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 12px;
-  font-size: 14px;
-}
+  /* 🎭 after（気持ち） */
+  .refresh  { background-color: #32CD32; }  /* スカッと → 元気な緑 */
+  .warm     { background-color: #FFB347; }  /* 温かい気持ち → オレンジ系 */
+  .cry      { background-color: #1E90FF; }  /* 泣く → さわやかな青 */
+  .think    { background-color: #9DC183; }  /* 考える → グレー（落ち着き） */
 
-.checkbox-wrapper.providers,
-.checkbox-wrapper.languages {
-  display: grid;
-  grid-template-columns: 140px 140px;
-  column-gap: 20px;
-  row-gap: 8px;
-  justify-content: center;
-  margin-top: 24px;
-  padding-top: 4px;
-  max-width: 300px;
-  margin-left: auto;
-  margin-right: auto;
-}
+  .icon-left,
+  .icon-right {
+    width: 32px;
+    height: 32px;
+    color: rgba(100, 100, 100, 0.4);
+  }
 
-/* ✅ 各チェックボックス：左揃え */
-.checkbox-label {
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  justify-content: flex-start;
-  white-space: nowrap;
-}
+  .poster-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
 
-.filter-toggle {
-  text-align: left;          /* ← 左寄せに変更 */
-  font-weight: bold;
-  font-size: 16px;
-  margin: 24px auto 10px;
-  padding-left: 20px;        /* ← 左に少し余白 */
-  cursor: pointer;
-  color: #333;
-  user-select: none;
-  max-width: 300px;          /* ← 中央寄せの最大幅に合わせる */
-}
+  /* ✅ チェックボックス表示用追加 */
+  .checkbox-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 14px;
+  }
 
-.filter-toggle:hover {
-  opacity: 0.8;
-}
-</style>
+  .checkbox-wrapper.providers,
+  .checkbox-wrapper.languages {
+    display: grid;
+    grid-template-columns: 140px 140px;
+    column-gap: 20px;
+    row-gap: 8px;
+    justify-content: center;
+    margin-top: 24px;
+    padding-top: 4px;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ✅ 各チェックボックス：左揃え */
+  .checkbox-label {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-start;
+    white-space: nowrap;
+  }
+
+  .filter-toggle {
+    text-align: left;          /* ← 左寄せに変更 */
+    font-weight: bold;
+    font-size: 16px;
+    margin: 24px auto 10px;
+    padding-left: 20px;        /* ← 左に少し余白 */
+    cursor: pointer;
+    color: #333;
+    user-select: none;
+    max-width: 300px;          /* ← 中央寄せの最大幅に合わせる */
+  }
+
+  .filter-toggle:hover {
+    opacity: 0.8;
+  }
+  </style>

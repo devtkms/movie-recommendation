@@ -6,9 +6,8 @@ import com.devtkms.movierecommendation.entity.ContactEntity;
 import com.devtkms.movierecommendation.mapper.ContactMapper;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 @Service
 public class ContactService {
@@ -24,7 +23,6 @@ public class ContactService {
         entity.setNickname(dto.getNickname());
         entity.setCategory(dto.getCategory());
         entity.setMessage(dto.getMessage());
-        entity.setCreatedAt(LocalDateTime.now());
 
         // データベースに保存
         contactMapper.insert(entity);

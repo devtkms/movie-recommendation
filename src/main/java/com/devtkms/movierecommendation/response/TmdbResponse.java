@@ -15,30 +15,26 @@ public class TmdbResponse {
     @JsonProperty("results")
     private List<MovieResult> results;
 
-    // APIレスポンスをDTOリストに変換するメソッド
     public List<MovieRecommendationResponseDto> toMovieDtoList() {
         if (results == null) return List.of();
 
         return results.stream()
-                .filter(result -> result.getPosterPath() != null && !result.getPosterPath().isEmpty()) // ポスターが空でない映画を選択
-                .map(result -> {
-                    // genreIdsが存在すれば最初のジャンルIDを使う。なければ空文字
-                    String genreId = (result.getGenreIds() != null && !result.getGenreIds().isEmpty())
-                            ? String.valueOf(result.getGenreIds().get(0)) : "";
-                    // MovieRecommendationResponseDto のインスタンスを返す
-                    return new MovieRecommendationResponseDto(
-                            result.getTitle(),
-                            result.getOverview(),
-                            result.getPosterPath(),
-                            result.getReleaseDate()  // 追加：公開日を設定
-                    );
-                })
-                .collect(Collectors.toList()); // DTOリストを返す
+                .filter(result -> result.getPosterPath() != null && !result.getPosterPath().isEmpty())
+                .map(result -> new MovieRecommendationResponseDto(
+                        result.getId(),               // ✅ IDを追加
+                        result.getTitle(),
+                        result.getOverview(),
+                        result.getPosterPath(),
+                        result.getReleaseDate()
+                ))
+                .collect(Collectors.toList());
     }
 
     @Getter
     @Setter
-    public static class MovieResult {  // ← 修正：private → public
+    public static class MovieResult {
+        private Long id;  // ✅ 映画ID追加
+
         private String title;
         private String overview;
 

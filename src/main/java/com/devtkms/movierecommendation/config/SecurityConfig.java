@@ -31,6 +31,7 @@ public class SecurityConfig {
                         .requestMatchers("/health").permitAll()
                         .requestMatchers("/api/contact/submit").permitAll()
                         .requestMatchers("/api/contact/validate").permitAll()
+                        .requestMatchers("/movie/{movieId}/watch/providers").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf((csrf) -> csrf.disable())
