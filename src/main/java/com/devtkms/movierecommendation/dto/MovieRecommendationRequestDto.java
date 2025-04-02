@@ -2,10 +2,21 @@ package com.devtkms.movierecommendation.dto;
 
 import lombok.Data;
 
+/**
+ * 映画推薦リクエストで送信される質問の回答内容を保持するDTO
+ */
 @Data
 public class MovieRecommendationRequestDto {
-    private String genre;
-    private String provider;
-    private String language;
-    private boolean includeAnime; // ✅ 追加
+
+    /** Q1: 今の気分（例: light, emotional） */
+    private String mood;
+
+    /** Q2: 映画の雰囲気（例: fast, deep） */
+    private String tone;
+
+    /** Q3: 見終わった後の気持ち（例: refresh, think） */
+    private String after;
+
+    /** 集計対象外フラグ（true: 開発者自身のリクエスト） */
+    private Boolean isMyData;
 }

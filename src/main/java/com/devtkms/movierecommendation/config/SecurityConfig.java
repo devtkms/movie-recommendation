@@ -27,10 +27,11 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/movies").permitAll()
+                        .requestMatchers("/api/recommendations").permitAll()
                         .requestMatchers("/health").permitAll()
                         .requestMatchers("/api/contact/submit").permitAll()
                         .requestMatchers("/api/contact/validate").permitAll()
+                        .requestMatchers("/movie/{movieId}/watch/providers").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf((csrf) -> csrf.disable())

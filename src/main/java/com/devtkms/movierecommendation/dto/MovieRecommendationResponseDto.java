@@ -4,11 +4,26 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * TMDbから取得した映画情報のDTO（1件分）
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class MovieRecommendationResponseDto {
-    private String title;      // 映画タイトル
-    private String overview;   // 概要
-    private String posterPath; // ポスター画像のパス
+
+    /** 映画の一意なID（TMDb ID） */
+    private Long id;
+
+    /** タイトル */
+    private String title;
+
+    /** 概要（あらすじ） */
+    private String overview;
+
+    /** ポスター画像パス（TMDbベース） */
+    private String posterPath;
+
+    /** 公開日（yyyy-MM-dd） */
+    private String releaseDate;
 }
