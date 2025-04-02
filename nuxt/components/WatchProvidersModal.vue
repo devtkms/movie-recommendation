@@ -11,7 +11,7 @@
         </ul>
       </div>
       <div v-else>
-        <p>現在、日本で配信中のサービスは見つかりませんでした。</p>
+        <p>現在、配信中のサービスは見つかりませんでした。</p>
       </div>
       <!-- ✅ JustWatch attribution -->
       <p class="justwatch-attribution">
