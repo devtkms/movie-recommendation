@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * 映画推薦に関するビジネスロジックを担当するサービスクラス
+ */
 @Service
 public class MovieRecommendationService {
 
@@ -30,23 +33,37 @@ public class MovieRecommendationService {
         this.questionButtonLogMapper = questionButtonLogMapper;
     }
 
+    /**
+     * 3つの質問に基づいて映画を推薦するメイン処理
+     *
+     * @param requestDto ユーザーの質問回答（mood, tone, after）
+     * @return 推薦された映画リストを含む結果DTO
+     */
     public MovieRecommendationResultDto recommendMovies(MovieRecommendationRequestDto requestDto) {
+        // 質問回答のログをDBに保存（後で分析可能）
         QuestionButtonLogEntity log = new QuestionButtonLogEntity();
         log.setMood(requestDto.getMood());
         log.setTone(requestDto.getTone());
         log.setAfter(requestDto.getAfter());
         questionButtonLogMapper.insert(log);
 
+        // 質問の組み合わせからTMDbキーワードIDリストを取得
         List<String> keywordIds = tagMasterMapper.findKeywordIdsByConditions(
                 requestDto.getMood(),
                 requestDto.getTone(),
                 requestDto.getAfter()
         );
 
+        // TMDb APIを呼び出して映画データを取得
         TmdbResponse response = tmdbApiClient.fetchMoviesByKeywords(keywordIds);
+
+        // レスポンスをDTOのリストに変換
         List<MovieRecommendationResponseDto> allMovies = response.toMovieDtoList();
+
+        // 映画リストから重複なしで20件に絞り込み
         List<MovieRecommendationResponseDto> selectedMovies = movieSelector.selectUniqueMovies(allMovies, 20);
 
+        // 推薦結果DTOとして返却
         return new MovieRecommendationResultDto(selectedMovies);
     }
 }
