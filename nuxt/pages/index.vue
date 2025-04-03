@@ -604,7 +604,7 @@
     min-width: 100px;
     padding: 8px 12px;
     color: white;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: bold;
     border-radius: 8px;
     text-align: center;
