@@ -1,91 +1,98 @@
-  <template>
-    <div class="container">
-      <Header />
-      <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
+<template>
+  <div class="container">
+    <Header />
+    <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
 
-      <div v-if="!currentMovie">
-        <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
-          <label>{{ label }}</label>
-          <div class="button-group">
-            <button
-                v-for="option in options[key]"
-                :key="option.value"
-                :class="[
-                'button',
-                key === 'mood' ? getMoodClass(option.value) : '',
-                key === 'tone' ? getToneClass(option.value) : '',
-                key === 'after' ? getAfterClass(option.value) : '',
-                { selected: selectedOptions[key] === option.value }
-              ]"
-                @click="selectedOptions[key] = option.value"
-            >
-              {{ option.label }}
-            </button>
-          </div>
+    <div v-if="!currentMovie">
+      <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
+        <label>{{ label }}</label>
+        <div class="button-group">
+          <button
+              v-for="option in options[key]"
+              :key="option.value"
+              :class="[
+              'button',
+              key === 'mood' ? getMoodClass(option.value) : '',
+              key === 'tone' ? getToneClass(option.value) : '',
+              key === 'after' ? getAfterClass(option.value) : '',
+              { selected: selectedOptions[key] === option.value }
+            ]"
+              @click="selectedOptions[key] = option.value"
+          >
+            {{ option.label }}
+          </button>
         </div>
-
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-        <p v-if="isSearchExhausted" class="exhausted-message">この条件での検索結果はすべて表示されました。</p>
-
-        <button @click="fetchMovies" :disabled="loading" class="search-button">映画を探す</button>
       </div>
 
-      <div v-if="loading">ロード中...</div>
+      <p class="error-message">
+        <span v-if="errorMessage">{{ errorMessage }}</span>
+      </p>
+      <p v-if="isSearchExhausted" class="exhausted-message">この条件での検索結果はすべて表示されました。</p>
 
-      <div v-if="currentMovie" class="movie-results">
-        <div class="selected-options">
-          <div class="selected-option" :class="getMoodClass(selectedOptions.mood)">
-            {{ getMoodLabel(selectedOptions.mood) }}
-          </div>
-          <div class="selected-option" :class="getToneClass(selectedOptions.tone)">
-            {{ getToneLabel(selectedOptions.tone) }}
-          </div>
-          <div class="selected-option" :class="getAfterClass(selectedOptions.after)">
-            {{ getAfterLabel(selectedOptions.after) }}
-          </div>
+      <button @click="fetchMovies" :disabled="loading" class="search-button">映画を探す</button>
+    </div>
+
+    <div v-if="loading">ロード中...</div>
+
+    <div v-if="currentMovie" class="movie-results">
+      <div class="selected-options">
+        <div class="selected-option" :class="getMoodClass(selectedOptions.mood)">
+          {{ getMoodLabel(selectedOptions.mood) }}
         </div>
-
-        <div
-            class="movie-card"
-            @touchstart="onTouchStart"
-            @touchmove="onTouchMove"
-            @touchend="onTouchEnd"
-            :style="cardStyle"
-        >
-          <h3 class="movie-title">{{ currentMovie.title }}</h3>
-          <div class="poster-wrapper">
-            <ArrowLeftCircleIcon class="icon-left" />
-            <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
-            <ArrowRightCircleIcon class="icon-right" />
-          </div>
-          <div class="overview-container">
-            <button
-                class="overview-button"
-                :disabled="!currentMovie.overview"
-                :class="{ disabled: !currentMovie.overview }"
-                @click="showOverview(currentMovie.overview)"
-            >
-              {{ currentMovie.overview ? '概要を見る' : '概要なし' }}
-            </button>
-
-            <button class="overview-button action" @click="showProviders">
-              配信サービス
-            </button>
-          </div>
+        <div class="selected-option" :class="getToneClass(selectedOptions.tone)">
+          {{ getToneLabel(selectedOptions.tone) }}
         </div>
-
-        <button @click="resetSearch" class="search-button">検索画面に戻る</button>
+        <div class="selected-option" :class="getAfterClass(selectedOptions.after)">
+          {{ getAfterLabel(selectedOptions.after) }}
+        </div>
       </div>
 
-      <OverviewModal :show="showModal" :content="modalContent" @close="closeModal" />
-      <WatchProvidersModal
-          :show="showProviderModal"
-          :providers="providerList"
-          @close="showProviderModal = false"
-      />
+      <div
+          class="movie-card"
+          @touchstart="onTouchStart"
+          @touchmove="onTouchMove"
+          @touchend="onTouchEnd"
+          :style="cardStyle"
+      >
+        <h3 class="movie-title">{{ currentMovie.title }}</h3>
+        <div class="poster-wrapper">
+          <ArrowLeftCircleIcon class="icon-left" />
+          <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
+          <ArrowRightCircleIcon class="icon-right" />
+        </div>
+        <div class="overview-container">
+          <button
+              class="overview-button"
+              :disabled="!currentMovie.overview"
+              :class="{ disabled: !currentMovie.overview }"
+              @click="showOverview(currentMovie.overview)"
+          >
+            {{ currentMovie.overview ? '概要を見る' : '概要なし' }}
+          </button>
+          <button class="overview-button action" @click="showProviders">
+            配信サービス
+          </button>
+        </div>
+      </div>
+
+      <button @click="resetSearch" class="search-button">検索画面に戻る</button>
+    </div>
+
+    <!-- モーダルなど -->
+    <OverviewModal :show="showModal" :content="modalContent" @close="closeModal" />
+    <WatchProvidersModal
+        :show="showProviderModal"
+        :providers="providerList"
+        @close="showProviderModal = false"
+    />
+
+    <!-- ✅ タブとフッター -->
+    <div class="bottom-bar">
+      <TabBar :current="'main'" />
       <Footer />
     </div>
-  </template>
+  </div>
+</template>
 
   <script setup>
   import { ref, onMounted, computed } from 'vue';
@@ -93,6 +100,7 @@
   import Footer from '~/components/Footer.vue';
   import OverviewModal from '~/components/OverviewModal.vue';
   import WatchProvidersModal from '~/components/WatchProvidersModal.vue';
+  import TabBar from '~/components/TabBar.vue';
   import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
 
   /* ------------------------------
@@ -345,14 +353,14 @@
   };
   </script>
 
-  <!-- CSSは別ファイル or style scoped にて対応中 -->
-
-
   <style scoped>
   .container {
     max-width: 600px;
     margin: auto;
     text-align: center;
+    padding-bottom: 100px;
+    padding-top: 40px; /* ← 上部余白を追加 */
+    position: relative;
   }
 
   .form-group {
@@ -472,6 +480,7 @@
   }
 
   .error-message {
+    min-height: 20px; /* 高さを固定 */
     color: red;
     text-align: center;
     font-weight: bold;
@@ -489,7 +498,7 @@
     border: none;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out;
-    margin-top: 60px;
+    margin-top: 20px;
   }
 
   .search-button:hover {
@@ -698,4 +707,16 @@
   .filter-toggle:hover {
     opacity: 0.8;
   }
+
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+    z-index: 100;
+    margin-top: 40px; /* ← この行を追加 */
+  }
+
   </style>
