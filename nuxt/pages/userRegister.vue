@@ -193,10 +193,15 @@ const goToConfirm = async () => {
 
 const submitForm = async () => {
   try {
-    await $fetch('http://localhost:8080/api/users/register', {
+    const response = await $fetch('http://localhost:8080/api/users/register', {
       method: 'POST',
       body: { ...form.value }
     })
+
+    // ✅ トークン保存（localStorage や cookie）
+    const token = response.token
+    localStorage.setItem('token', token)
+
     isConfirm.value = false
     isComplete.value = true
   } catch (err) {

@@ -1,31 +1,41 @@
 package com.devtkms.movierecommendation.config;
 
 import com.devtkms.movierecommendation.security.CustomUserDetailsService;
+import com.devtkms.movierecommendation.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
+    /**
+     * JWT認証フィルター
+     */
+    private final JwtAuthenticationFilter jwtAuthFilter;
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   CustomUserDetailsService userDetailsService,
+                                                   PasswordEncoder passwordEncoder) throws Exception {
         http
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -42,7 +52,15 @@ public class SecurityConfig {
                 .csrf((csrf) -> csrf.disable())
                 .cors((cors) -> cors
                         .configurationSource(apiConfigurationSource())
-                );
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // ✅ JWTフィルターを認証前に差し込む
+                .authenticationProvider(authenticationProvider(userDetailsService, passwordEncoder))
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -59,6 +77,15 @@ public class SecurityConfig {
         providerManager.setEraseCredentialsAfterAuthentication(false); // Prevent erasure of credentials after authentication
 
         return providerManager; // Return the configured AuthenticationManager
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider(CustomUserDetailsService userDetailsService,
+                                                         PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return provider;
     }
 
 
