@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.devtkms.movierecommendation.mapper.UserMapper">
+
+    <!-- ユーザーを登録 -->
+    <insert id="insertUser" parameterType="com.devtkms.movierecommendation.entity.UserEntity">
+        INSERT INTO users (
+            email,
+            password,
+            nickname,
+            use_provider_name,
+            use_provider_id,
+            favorite_movie_name,
+            favorite_movie_id,
+            gender,
+            age_group,
+            provider,
+            created_at,
+            updated_at
+        )
+        VALUES (
+                   #{email},
+                   #{password},
+                   #{nickname},
+                   #{useProviderName},
+                   #{useProviderId},
+                   #{favoriteMovieName},
+                   #{favoriteMovieId},
+                   #{gender},
+                   #{ageGroup},
+                   #{provider},
+                   #{createdAt},
+                   #{updatedAt}
+               )
+    </insert>
+
+    <!-- メールアドレスでユーザーを検索 -->
+    <select id="selectUser" parameterType="String" resultType="com.devtkms.movierecommendation.entity.UserEntity">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+
+</mapper>
+
+

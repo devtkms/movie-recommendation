@@ -38,4 +38,20 @@ public class MovieRecommendationController {
         // 結果をレスポンスとして返却
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * トレンド映画を取得するエンドポイント
+     *
+     * ユーザーの質問回答なしで、システム側でトレンド映画を推薦する
+     *
+     * @return トレンド映画のリストを含む結果DTO
+     */
+    @GetMapping("/personalize")
+    public ResponseEntity<MovieRecommendationResultDto> getPersonalizeMovies() {
+        // トレンド映画を取得するロジックを実行
+        MovieRecommendationResultDto response = recommendationService.getPersonalizeMovies();
+
+        // 結果をレスポンスとして返却
+        return ResponseEntity.ok(response);
+    }
 }

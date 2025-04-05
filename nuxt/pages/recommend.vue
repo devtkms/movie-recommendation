@@ -1,10 +1,9 @@
-
 <template>
   <div class="container">
     <Header />
 
-    <div v-if="currentMovie" class="movie-results">
-
+    <!-- currentMovieがnullでない場合に表示 -->
+    <div v-if="movies.length" class="movie-results">
       <div
           class="movie-card"
           @touchstart="onTouchStart"
@@ -14,9 +13,9 @@
       >
         <h3 class="movie-title">{{ currentMovie.title }}</h3>
         <div class="poster-wrapper">
-          <ArrowLeftCircleIcon class="icon-left" />
+          <ArrowLeftCircleIcon class="icon-left" @click="prevMovie" />
           <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
-          <ArrowRightCircleIcon class="icon-right" />
+          <ArrowRightCircleIcon class="icon-right" @click="nextMovie" />
         </div>
         <div class="overview-container">
           <button
@@ -51,7 +50,6 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
 import Header from '~/components/Header.vue';
 import Footer from '~/components/Footer.vue';
 import OverviewModal from '~/components/OverviewModal.vue';
@@ -59,16 +57,9 @@ import WatchProvidersModal from '~/components/WatchProvidersModal.vue';
 import TabBar from '~/components/TabBar.vue';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
 
-const currentTab = ref('recommend');
-const route = useRoute();
-
-const selectedOptions = ref({ mood: 'light', tone: 'fast', after: 'refresh' });
-const currentMovie = ref({
-  title: 'デモ映画タイトル',
-  posterPath: '/dummy.jpg',
-  overview: 'これはデモ映画の概要です。',
-  id: 123,
-});
+// 映画リストの管理
+const movies = ref([]);  // 映画のリスト
+const currentIndex = ref(0);  // 現在表示している映画のインデックス
 const showModal = ref(false);
 const modalContent = ref('');
 const providerList = ref([]);
@@ -88,6 +79,7 @@ const showProviders = async () => {
   showProviderModal.value = true;
 };
 
+// スワイプ用の状態
 const touchStartX = ref(0);
 const touchCurrentX = ref(0);
 const isSwiping = ref(false);
@@ -97,33 +89,88 @@ const cardStyle = computed(() => {
   return isSwiping.value ? `transform: translateX(${dx}px) rotate(${dx / 20}deg); transition: none;` : '';
 });
 
+// スワイプ操作の開始
 const onTouchStart = (e) => {
   touchStartX.value = e.touches[0].clientX;
   touchCurrentX.value = touchStartX.value;
   isSwiping.value = true;
 };
+
+// スワイプ操作の中
 const onTouchMove = (e) => {
   touchCurrentX.value = e.touches[0].clientX;
 };
+
+// スワイプ操作の終了
 const onTouchEnd = () => {
   isSwiping.value = false;
+  const dx = touchCurrentX.value - touchStartX.value;
+  if (dx > 100) {
+    prevMovie();  // 右にスワイプしたら前の映画
+  } else if (dx < -100) {
+    nextMovie();  // 左にスワイプしたら次の映画
+  }
 };
 
-const resetSearch = () => {
-  // ダミー処理
-  console.log('検索画面に戻る');
-};
-
+// 映画のポスターパスの取得
 const getMoviePoster = (path) =>
     path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/500';
 
-const getMoodLabel = (mood) => ({ light: '気軽に楽しみたい' }[mood] || '未選択');
-const getToneLabel = (tone) => ({ fast: 'テンポよく進んでほしい' }[tone] || '未選択');
-const getAfterLabel = (after) => ({ refresh: 'スカッとしたい' }[after] || '未選択');
+// 映画を表示するためのAPIリクエスト
+const fetchRecommendedMovies = async () => {
+  try {
+    const response = await fetch('http://localhost:8080/api/recommendations/personalize');
+    const data = await response.json();
 
-const getMoodClass = (mood) => ({ light: 'light' }[mood] || '');
-const getToneClass = (tone) => ({ fast: 'fast' }[tone] || '');
-const getAfterClass = (after) => ({ refresh: 'refresh' }[after] || '');
+    // レスポンスのデータをローカルストレージに保存
+    if (data && data.combined && data.combined.length > 0) {
+      movies.value = data.combined;  // 映画リストを更新
+      localStorage.setItem('movies', JSON.stringify(data.combined));  // ローカルストレージに保存
+      currentIndex.value = 0;  // 最初の映画を表示
+    } else {
+      console.error('映画データが見つかりません');
+    }
+
+  } catch (error) {
+    console.error('Error fetching recommended movies:', error);
+  }
+};
+
+// 映画を前に進める
+const nextMovie = () => {
+  if (currentIndex.value < movies.value.length - 1) {
+    currentIndex.value++;
+  } else {
+    currentIndex.value = 0;  // 最後まで行ったら最初に戻る
+  }
+};
+
+// 映画を後ろに戻す
+const prevMovie = () => {
+  if (currentIndex.value > 0) {
+    currentIndex.value--;
+  } else {
+    currentIndex.value = movies.value.length - 1;  // 最初に戻ったら最後に戻る
+  }
+};
+
+// currentMovieの計算
+const currentMovie = computed(() => movies.value[currentIndex.value]);
+
+// レコメンドタブを押したときに映画を取得
+onMounted(() => {
+  const storedMovies = localStorage.getItem('movies');
+
+  if (storedMovies) {
+    // ローカルストレージに映画データがあれば、それを使用
+    movies.value = JSON.parse(storedMovies);
+    currentIndex.value = 0;  // 最初の映画を表示
+  } else {
+    // ローカルストレージにデータがない場合、APIから取得
+    fetchRecommendedMovies();
+  }
+});
+
 </script>
 
 <style scoped>
@@ -132,14 +179,13 @@ const getAfterClass = (after) => ({ refresh: 'refresh' }[after] || '');
   max-width: 600px;
   margin: auto;
   text-align: center;
-  padding-top: 40px;      /* ✅ 上余白 */
-  padding-bottom: 40px;   /* ✅ 下余白（フッターとの間隔） */
+  padding-top: 40px;
+  padding-bottom: 40px;
   position: relative;
 }
 
-
 .movie-results {
-  padding-bottom: 0;      /* ✅ containerに任せる */
+  padding-bottom: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -187,6 +233,7 @@ const getAfterClass = (after) => ({ refresh: 'refresh' }[after] || '');
   width: 32px;
   height: 32px;
   color: rgba(100, 100, 100, 0.4);
+  cursor: pointer;
 }
 
 .overview-container {
@@ -225,63 +272,6 @@ const getAfterClass = (after) => ({ refresh: 'refresh' }[after] || '');
   color: #666;
 }
 
-
-
-.selected-option {
-  flex: 1;
-  max-width: 200px;
-  min-width: 100px;
-  padding: 8px 12px;
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
-  border-radius: 8px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: default;
-  opacity: 0.9;
-  border: none;
-  white-space: nowrap;
-}
-
-/* mood */
-.light    { background-color: #FFD700; }
-.emotional{ background-color: #FF69B4; }
-.escape   { background-color: #6A5ACD; }
-.thrill   { background-color: #FF4500; }
-
-/* tone */
-.slow     { background-color: #87CEFA; }
-.fast     { background-color: #00CED1; }
-.deep     { background-color: #191970; }
-.casual   { background-color: #90EE90; }
-
-/* after */
-.refresh  { background-color: #32CD32; }
-.warm     { background-color: #FFB347; }
-.cry      { background-color: #1E90FF; }
-.think    { background-color: #9DC183; }
-
-/* 戻るボタン */
-.search-button {
-  background-color: #333;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  padding: 12px 24px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-  margin-top: 60px;
-}
-
-.search-button:hover {
-  background-color: #555;
-}
-
 .bottom-bar {
   position: fixed;
   bottom: 0;
@@ -290,7 +280,5 @@ const getAfterClass = (after) => ({ refresh: 'refresh' }[after] || '');
   background-color: #fff;
   border-top: 1px solid #ccc;
   z-index: 100;
-  /* ✅ 不要なマージンは削除 */
 }
 </style>
-

@@ -70,4 +70,39 @@ public class TmdbApiClient {
                 restTemplate.getForEntity(url, TmdbWatchProviderResponse.class);
         return response.getBody();
     }
+
+    /**
+     * トレンド映画をTMDb APIから取得するメソッド
+     *
+     * @return トレンド映画のレスポンス
+     */
+    public TmdbResponse fetchPersonalizeMovies() {
+        // トレンド映画のTMDb APIエンドポイント
+        String url = UriComponentsBuilder.fromHttpUrl("https://api.themoviedb.org/3/trending/movie/day")
+                .queryParam("api_key", apiKey)
+                .queryParam("language", "ja-JP")
+                .build()
+                .toUriString();
+
+        logger.info("🎬 トレンド映画取得 URL: " + url);
+
+        ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
+
+        // レスポンスから映画情報を取得
+        return response.getBody();
+    }
+
+    public TmdbResponse searchMoviesByTitle(String title) {
+        String url = UriComponentsBuilder.fromHttpUrl("https://api.themoviedb.org/3/search/movie")
+                .queryParam("api_key", apiKey)
+                .queryParam("query", title)
+                .queryParam("language", "ja-JP")
+                .build()
+                .toUriString();
+
+        logger.info("🔍 TMDb 映画タイトル検索 URL: " + url);
+
+        ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
+        return response.getBody();
+    }
 }

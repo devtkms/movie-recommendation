@@ -67,15 +67,14 @@
               :class="{ disabled: !currentMovie.overview }"
               @click="showOverview(currentMovie.overview)"
           >
-            {{ currentMovie.overview ? '概要を見る' : '概要なし' }}
+            {{ currentMovie.overview ? '概要' : '概要' }}
           </button>
           <button class="overview-button action" @click="showProviders">
-            配信サービス
+            配信
           </button>
         </div>
       </div>
 
-      <button @click="resetSearch" class="search-button">検索画面に戻る</button>
     </div>
 
     <!-- モーダルなど -->
@@ -341,16 +340,6 @@
     }
   };
 
-  const resetSearch = () => {
-    moviePool.value = [];
-    currentMovie.value = null;
-    currentIndex.value = 0;
-    isSearchExhausted.value = false;
-  };
-
-  const handleSearchButtonClick = () => {
-    fetchMovies();
-  };
   </script>
 
   <style scoped>
@@ -406,14 +395,6 @@
   button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
-  }
-
-  .movie-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-    width: 100%;
   }
 
   .movie-list img {
@@ -510,26 +491,6 @@
     cursor: not-allowed;
   }
 
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    max-width: 400px;
-  }
-
   .modal-content p {
     margin-bottom: 10px;
   }
@@ -541,12 +502,6 @@
     justify-content: center;
     min-height: 40px;
     gap: 12px;
-  }
-
-  .no-overview {
-    color: #777;
-    font-style: italic;
-    margin-top: 5px;
   }
 
   .overview-button {
@@ -577,26 +532,6 @@
     background-color: #ccc !important;
     cursor: not-allowed;
     color: #666;
-  }
-
-  .button-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  .category-title {
-    width: 100%;
-    text-align: center;
-    font-size: 25px;
-    font-weight: bold;
-    margin-top: 30px;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
   }
 
   .selected-options {

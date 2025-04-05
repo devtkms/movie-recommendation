@@ -68,4 +68,23 @@ public class MovieRecommendationService {
         // 推薦結果DTOとして返却
         return new MovieRecommendationResultDto(selectedMovies);
     }
+
+    /**
+     * トレンド映画を取得する処理
+     *
+     * @return トレンド映画のリストを含む結果DTO
+     */
+    public MovieRecommendationResultDto getPersonalizeMovies() {
+        // TMDb API からトレンド映画を取得
+        TmdbResponse response = tmdbApiClient.fetchPersonalizeMovies();
+
+        // 取得した映画データをDTOに変換
+        List<MovieRecommendationResponseDto> personalizeMovies = response.toMovieDtoList();
+
+        // 映画リストから重複なしで20件に絞り込み
+        List<MovieRecommendationResponseDto> selectedMovies = movieSelector.selectUniqueMovies(personalizeMovies, 20);
+
+        // 推薦結果DTOとして返却
+        return new MovieRecommendationResultDto(selectedMovies);
+    }
 }
