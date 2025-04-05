@@ -24,6 +24,10 @@
         </NuxtLink>
       </div>
 
+      <div class="auth-buttons" v-else>
+        <button class="auth-button logout-button" @click="logout">ログアウト</button>
+      </div>
+
       <!-- ハンバーガーメニュー -->
       <button class="hamburger" @click="toggleMenu">☰</button>
       <nav :class="{ open: menuOpen }" class="nav">
@@ -37,9 +41,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+
 
 const menuOpen = ref(false)
+const router = useRouter()
 const toggleMenu = () => {
   menuOpen.value = !menuOpen.value
 }
@@ -48,8 +54,16 @@ const isLoggedIn = ref(false)
 
 onMounted(() => {
   const token = localStorage.getItem('token')
+
   isLoggedIn.value = !!token
 })
+
+const logout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('nickname')
+  isLoggedIn.value = false
+  router.push('/login') // またはトップページへリダイレクト
+}
 </script>
 
 <style scoped>
@@ -163,4 +177,11 @@ onMounted(() => {
 .login-button:hover {
   background-color: #2563eb;
 }
+.logout-button {
+  background-color: #ef4444; /* 赤 */
+}
+.logout-button:hover {
+  background-color: #dc2626;
+}
+
 </style>

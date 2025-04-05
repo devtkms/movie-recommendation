@@ -60,6 +60,7 @@ const submitLogin = async () => {
     })
 
     localStorage.setItem('token', response.token)
+    localStorage.setItem('nickname', response.nickname)
     error.value = null
     await router.push('/')
   } catch (err) {

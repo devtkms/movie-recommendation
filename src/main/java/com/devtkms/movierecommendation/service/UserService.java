@@ -47,4 +47,12 @@
             userMapper.insertUser(user);
             return user;
         }
+
+        public UserEntity findByEmail(String email) {
+            UserEntity user = userMapper.selectUser(email);
+            if (user == null) {
+                throw new RuntimeException("ユーザーが見つかりません");
+            }
+            return user;
+        }
     }

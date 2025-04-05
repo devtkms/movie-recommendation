@@ -4,6 +4,7 @@
 
     <!-- currentMovieがnullでない場合に表示 -->
     <div v-if="movies.length" class="movie-results">
+      <h2 class="recommend-heading" v-if="nickname">{{ nickname }}さんへのおすすめ</h2>
       <div
           class="movie-card"
           @touchstart="onTouchStart"
@@ -166,22 +167,25 @@ const prevMovie = () => {
 const currentMovie = computed(() => movies.value[currentIndex.value]);
 
 // レコメンドタブを押したときに映画を取得
+const nickname = ref('');
+
 onMounted(() => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('token');
+  nickname.value = localStorage.getItem('nickname') || '';
 
   if (!token) {
-    router.push('/login') // ← 自動リダイレクトのみ
-    return
+    router.push('/login');
+    return;
   }
 
-  const storedMovies = localStorage.getItem('movies')
+  const storedMovies = localStorage.getItem('movies');
   if (storedMovies) {
-    movies.value = JSON.parse(storedMovies)
-    currentIndex.value = 0
+    movies.value = JSON.parse(storedMovies);
+    currentIndex.value = 0;
   } else {
-    fetchRecommendedMovies()
+    fetchRecommendedMovies();
   }
-})
+});
 
 const redirectToLogin = () => {
   showLoginRequiredModal.value = false
@@ -329,5 +333,12 @@ const redirectToLogin = () => {
 
 .login-alert-button:hover {
   background-color: #2563eb;
+}
+
+.recommend-heading {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: #333;
 }
 </style>
