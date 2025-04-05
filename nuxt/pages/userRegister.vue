@@ -4,57 +4,76 @@
     <div class="register-container">
       <div class="register-card">
         <h1 class="register-title">ユーザー登録</h1>
-        <form @submit.prevent="register" class="register-form">
-          <div v-for="(item, key) in formItems" :key="key">
-            <label :for="key" class="form-label">{{ item.label }}</label>
-            <component
-                :is="item.type === 'select' ? 'select' : 'input'"
-                :type="item.inputType"
-                :id="key"
-                :required="item.required"
-                class="form-input"
-                :value="form[key]"
-                @input="(e) => form[key] = e.target.value"
-                @change="key === 'useProviderName' && updateProviderId()"
-            >
-              <template v-if="item.type === 'select'">
-                <option disabled value="">選択してください</option>
-                <option
-                    v-for="option in item.options || []"
-                    :key="option"
-                    :value="option"
-                >
-                  {{ option }}
-                </option>
-              </template>
-            </component>
-          </div>
-
-          <!-- 🎬 好きな映画検索 -->
-          <div ref="searchArea">
-            <label class="form-label">好きな映画</label>
-            <div class="flex gap-2">
-              <input
-                  v-model="searchQuery"
-                  type="text"
-                  placeholder="映画名を入力"
-                  class="form-input flex-1"
-              />
-              <button type="button" @click="searchMovies" class="bg-gray-200 rounded px-3 text-sm hover:bg-gray-300">🔍検索</button>
-            </div>
-            <ul v-if="searchResults.length" class="search-result-list">
-              <li
-                  v-for="movie in searchResults"
-                  :key="movie.id"
-                  @click="selectMovie(movie)"
-                  class="search-result-item"
+        <form @submit.prevent="isConfirm ? submitForm() : goToConfirm()" class="register-form">
+          <template v-if="!isConfirm">
+            <div v-for="(item, key) in formItems" :key="key">
+              <label :for="key" class="form-label">{{ item.label }}</label>
+              <component
+                  :is="item.type === 'select' ? 'select' : 'input'"
+                  :type="item.inputType"
+                  :id="key"
+                  :required="item.required"
+                  class="form-input"
+                  :value="form[key]"
+                  @input="(e) => form[key] = e.target.value"
+                  @change="key === 'useProviderName' && updateProviderId()"
               >
-                {{ movie.title }}（{{ movie.release_date?.slice(0, 4) || '年不明' }}）
-              </li>
-            </ul>
-          </div>
+                <template v-if="item.type === 'select'">
+                  <option disabled value="">選択してください</option>
+                  <option
+                      v-for="option in item.options || []"
+                      :key="option"
+                      :value="option"
+                  >
+                    {{ option }}
+                  </option>
+                </template>
+              </component>
+            </div>
 
-          <button type="submit" class="submit-button">登録する</button>
+            <div ref="searchArea">
+              <label class="form-label">好きな映画</label>
+              <div class="flex gap-2">
+                <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="映画名を入力"
+                    class="form-input flex-1"
+                />
+                <button type="button" @click="searchMovies" class="bg-gray-200 rounded px-3 text-sm hover:bg-gray-300">🔍検索</button>
+              </div>
+              <ul v-if="searchResults.length" class="search-result-list">
+                <li
+                    v-for="movie in searchResults"
+                    :key="movie.id"
+                    @click="selectMovie(movie)"
+                    class="search-result-item"
+                >
+                  {{ movie.title }}（{{ movie.release_date?.slice(0, 4) || '年不明' }}）
+                </li>
+              </ul>
+            </div>
+
+            <button type="submit" class="submit-button">確認する</button>
+          </template>
+
+          <template v-else>
+            <div class="space-y-2 text-sm text-gray-700">
+              <p><strong>Email:</strong> {{ form.email }}</p>
+              <p><strong>パスワード:</strong> ●●●●（非表示）</p>
+              <p><strong>ニックネーム:</strong> {{ form.nickname }}</p>
+              <p><strong>配信サービス:</strong> {{ form.useProviderName }}</p>
+              <p><strong>映画タイトル:</strong> {{ form.favoriteMovieName }}</p>
+              <p><strong>映画ID:</strong> {{ form.favoriteMovieId }}</p>
+              <p><strong>性別:</strong> {{ form.gender }}</p>
+              <p><strong>年代:</strong> {{ form.ageGroup }}</p>
+            </div>
+
+            <div class="flex gap-2 mt-4">
+              <button type="button" class="submit-button bg-gray-400 hover:bg-gray-500" @click="isConfirm = false">戻る</button>
+              <button type="submit" class="submit-button">登録する</button>
+            </div>
+          </template>
         </form>
       </div>
     </div>
@@ -86,6 +105,8 @@ const form = ref({
   gender: '',
   ageGroup: '',
 })
+
+const isConfirm = ref(false)
 
 const formItems = {
   email: { label: 'Email', type: 'input', inputType: 'email', required: true },
@@ -140,51 +161,44 @@ const selectMovie = (movie) => {
   searchResults.value = []
 }
 
-const register = async () => {
+const goToConfirm = async () => {
+  if (!form.value.email || !form.value.password || !form.value.nickname) {
+    alert('必須項目を入力してください')
+    return
+  }
+
+  if (!form.value.favoriteMovieName && searchQuery.value) {
+    form.value.favoriteMovieName = searchQuery.value
+  }
+
+  if (!form.value.favoriteMovieId && searchQuery.value) {
+    const { results } = await $fetch('http://localhost:8080/api/search/movies', {
+      params: { query: searchQuery.value },
+    })
+    if (results?.length === 1) {
+      form.value.favoriteMovieId = results[0].id
+      form.value.favoriteMovieName = results[0].title
+    }
+  }
+
+  form.value.useProviderId = providerMap[form.value.useProviderName] ?? null
+  isConfirm.value = true
+}
+
+const submitForm = async () => {
   try {
-    // 入力補完
-    if (!form.value.favoriteMovieName && searchQuery.value) {
-      form.value.favoriteMovieName = searchQuery.value
-    }
-
-    // 🔽 MovieId の補完処理（1件だけ検索結果があれば自動設定）
-    if (!form.value.favoriteMovieId && searchQuery.value) {
-      const { results } = await $fetch('http://localhost:8080/api/search/movies', {
-        params: { query: searchQuery.value },
-      })
-      if (results?.length === 1) {
-        form.value.favoriteMovieId = results[0].id
-        form.value.favoriteMovieName = results[0].title
-      }
-    }
-
-    form.value.useProviderId = providerMap[form.value.useProviderName] ?? null
-
-    console.log('📦 最終送信フォーム', JSON.stringify(form.value, null, 2))
-
     await $fetch('http://localhost:8080/api/users/register', {
       method: 'POST',
-      body: {
-        email: form.value.email?.trim() ?? '',
-        password: form.value.password ?? '',
-        nickname: form.value.nickname?.trim() ?? '',
-        useProviderName: form.value.useProviderName ?? '',
-        useProviderId: form.value.useProviderId ?? null,
-        favoriteMovieName: form.value.favoriteMovieName ?? '',
-        favoriteMovieId: form.value.favoriteMovieId ?? null,
-        gender: form.value.gender ?? '',
-        ageGroup: form.value.ageGroup ?? ''
-      }
+      body: { ...form.value }
     })
-
     alert('登録が完了しました')
+    isConfirm.value = false
   } catch (err) {
     alert('登録に失敗しました')
     console.error('❌ 登録失敗:', err)
   }
 }
 
-// 検索候補外クリックで非表示
 const searchArea = ref(null)
 const handleClickOutside = (e) => {
   if (searchArea.value && !searchArea.value.contains(e.target)) {
@@ -194,6 +208,7 @@ const handleClickOutside = (e) => {
 onMounted(() => window.addEventListener('click', handleClickOutside))
 onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside))
 </script>
+
 
 <style scoped>
 .register-page {
