@@ -40,6 +40,11 @@
         @close="showProviderModal = false"
     />
 
+    <div v-if="showLoginRequiredModal" class="login-alert">
+      <span>この機能はログインしたユーザーのみ利用できます。</span>
+      <button class="login-alert-button" @click="redirectToLogin">OK</button>
+    </div>
+
     <!-- ✅ タブとフッター -->
     <div class="bottom-bar">
       <TabBar :current="'recommend'" />
@@ -56,6 +61,8 @@ import OverviewModal from '~/components/OverviewModal.vue';
 import WatchProvidersModal from '~/components/WatchProvidersModal.vue';
 import TabBar from '~/components/TabBar.vue';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
+import { useRouter } from 'vue-router' // ✅ 追加
+const router = useRouter()
 
 // 映画リストの管理
 const movies = ref([]);  // 映画のリスト
@@ -64,6 +71,7 @@ const showModal = ref(false);
 const modalContent = ref('');
 const providerList = ref([]);
 const showProviderModal = ref(false);
+const showLoginRequiredModal = ref(false)
 
 const showOverview = (overview) => {
   modalContent.value = overview;
@@ -159,17 +167,26 @@ const currentMovie = computed(() => movies.value[currentIndex.value]);
 
 // レコメンドタブを押したときに映画を取得
 onMounted(() => {
-  const storedMovies = localStorage.getItem('movies');
+  const token = localStorage.getItem('token')
 
-  if (storedMovies) {
-    // ローカルストレージに映画データがあれば、それを使用
-    movies.value = JSON.parse(storedMovies);
-    currentIndex.value = 0;  // 最初の映画を表示
-  } else {
-    // ローカルストレージにデータがない場合、APIから取得
-    fetchRecommendedMovies();
+  if (!token) {
+    router.push('/login') // ← 自動リダイレクトのみ
+    return
   }
-});
+
+  const storedMovies = localStorage.getItem('movies')
+  if (storedMovies) {
+    movies.value = JSON.parse(storedMovies)
+    currentIndex.value = 0
+  } else {
+    fetchRecommendedMovies()
+  }
+})
+
+const redirectToLogin = () => {
+  showLoginRequiredModal.value = false
+  router.push('/login')
+}
 
 </script>
 
@@ -280,5 +297,37 @@ onMounted(() => {
   background-color: #fff;
   border-top: 1px solid #ccc;
   z-index: 100;
+}
+
+.login-alert {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 9999;
+}
+
+.login-alert-button {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: bold;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.login-alert-button:hover {
+  background-color: #2563eb;
 }
 </style>

@@ -47,8 +47,4 @@
             userMapper.insertUser(user);
             return user;
         }
-
-        public UserEntity findByEmail(String email) {
-            return userMapper.selectUser(email);
-        }
     }

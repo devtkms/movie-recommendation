@@ -85,9 +85,15 @@
         @close="showProviderModal = false"
     />
 
+    <div v-if="showLoginRequiredModal" class="login-alert-card">
+      <h3>ようこそ MoviReco へ 👋</h3>
+      <p>この機能を使うには<br><strong>新規登録</strong>または<strong>ログイン</strong>が必要です。</p>
+      <button class="login-alert-button" @click="redirectToLogin">登録 / ログインする</button>
+    </div>
+
     <!-- ✅ タブとフッター -->
     <div class="bottom-bar">
-      <TabBar :current="'main'" />
+      <TabBar :current="'main'" @require-login="showLoginRequiredModal = true" />
       <Footer />
     </div>
   </div>
@@ -100,6 +106,7 @@
   import OverviewModal from '~/components/OverviewModal.vue';
   import WatchProvidersModal from '~/components/WatchProvidersModal.vue';
   import TabBar from '~/components/TabBar.vue';
+  import { useRouter } from 'vue-router'
   import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
 
   /* ------------------------------
@@ -118,6 +125,14 @@
   const modalContent = ref("");
   const providerList = ref([]);
   const showProviderModal = ref(false);
+
+  const router = useRouter()
+  const showLoginRequiredModal = ref(false)
+
+  const redirectToLogin = () => {
+    showLoginRequiredModal.value = false
+    router.push('/login')
+  }
 
   /* ------------------------------
     ライフサイクル
@@ -652,6 +667,63 @@
     border-top: 1px solid #ccc;
     z-index: 100;
     margin-top: 40px; /* ← この行を追加 */
+  }
+
+  .login-alert-card {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fff;
+    color: #333;
+    padding: 20px 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    font-size: 15px;
+    text-align: center;
+    animation: fadeInUp 0.3s ease-out;
+    z-index: 9999;
+    width: 90%;
+    max-width: 300px;
+  }
+
+  .login-alert-card h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+
+  .login-alert-card p {
+    font-size: 14px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .login-alert-button {
+    background-color: #3b82f6;
+    color: white;
+    font-weight: bold;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .login-alert-button:hover {
+    background-color: #2563eb;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   }
 
   </style>

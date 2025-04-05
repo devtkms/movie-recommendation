@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/recommendations/personalize").permitAll()
                         .requestMatchers("/api/search/movies").permitAll()
                         .requestMatchers("/api/users/register").permitAll()
+                        .requestMatchers("/api/users/login").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf((csrf) -> csrf.disable())

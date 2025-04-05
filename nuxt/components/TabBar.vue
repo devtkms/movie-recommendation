@@ -5,18 +5,31 @@
         class="tab-button"
         :class="{ active: current === 'main' }"
     >メイン</NuxtLink>
-    <NuxtLink
-        to="/recommend"
+
+    <a
+        href="#"
         class="tab-button"
         :class="{ active: current === 'recommend' }"
-    >レコメンド</NuxtLink>
+        @click.prevent="handleRecommendClick"
+    >レコメンド</a>
   </div>
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   current: String
-});
+})
+
+const emit = defineEmits(['require-login'])
+
+const handleRecommendClick = () => {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    emit('require-login') // モーダル表示要求
+  } else {
+    window.location.href = '/recommend' // 通常遷移
+  }
+}
 </script>
 
 <style scoped>
@@ -35,6 +48,7 @@ defineProps({
   color: #333;
   text-align: center;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .tab-button.active {
