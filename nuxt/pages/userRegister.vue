@@ -4,7 +4,12 @@
     <div class="register-container">
       <div class="register-card">
         <h1 class="register-title">ユーザー登録</h1>
-        <form @submit.prevent="isConfirm ? submitForm() : goToConfirm()" class="register-form">
+        <template v-if="isComplete">
+          <div class="text-center text-lg text-green-700 font-semibold">
+            登録が完了しました！
+          </div>
+        </template>
+        <form v-else @submit.prevent="isConfirm ? submitForm() : goToConfirm()" class="register-form">
           <template v-if="!isConfirm">
             <div v-for="(item, key) in formItems" :key="key">
               <label :for="key" class="form-label">{{ item.label }}</label>
@@ -107,6 +112,7 @@ const form = ref({
 })
 
 const isConfirm = ref(false)
+const isComplete = ref(false)
 
 const formItems = {
   email: { label: 'Email', type: 'input', inputType: 'email', required: true },
@@ -191,8 +197,8 @@ const submitForm = async () => {
       method: 'POST',
       body: { ...form.value }
     })
-    alert('登録が完了しました')
     isConfirm.value = false
+    isComplete.value = true
   } catch (err) {
     alert('登録に失敗しました')
     console.error('❌ 登録失敗:', err)
@@ -208,6 +214,7 @@ const handleClickOutside = (e) => {
 onMounted(() => window.addEventListener('click', handleClickOutside))
 onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside))
 </script>
+
 
 
 <style scoped>
