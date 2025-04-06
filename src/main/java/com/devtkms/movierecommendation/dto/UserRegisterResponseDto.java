@@ -2,14 +2,13 @@ package com.devtkms.movierecommendation.dto;
 
 import lombok.Data;
 
-
 @Data
-public class LoginResponseDto {
+public class UserRegisterResponseDto {
     private Long id;
     private String token;
     private String nickname;
 
-    public LoginResponseDto(Long id, String token, String nickname) {
+    public UserRegisterResponseDto(Long id, String token, String nickname) {
         this.id = id;
         this.token = token;
         this.nickname = nickname;

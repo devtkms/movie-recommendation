@@ -84,8 +84,20 @@ const closeModal = () => {
 };
 
 const showProviders = async () => {
-  providerList.value = [{ name: 'Netflix' }, { name: 'Amazon Prime' }];
-  showProviderModal.value = true;
+  if (!currentMovie.value?.id) return;
+
+  try {
+    const res = await fetch(`http://localhost:8080/movie/${currentMovie.value.id}/watch/providers`);
+    if (!res.ok) throw new Error("配信サービス取得に失敗");
+
+    const providers = await res.json();
+    providerList.value = Array.isArray(providers) ? providers : [];
+  } catch (e) {
+    console.error("❌ 配信サービス取得失敗", e);
+    providerList.value = [];
+  } finally {
+    showProviderModal.value = true;
+  }
 };
 
 // スワイプ用の状態
@@ -128,14 +140,28 @@ const getMoviePoster = (path) =>
 // 映画を表示するためのAPIリクエスト
 const fetchRecommendedMovies = async () => {
   try {
-    const response = await fetch('http://localhost:8080/api/recommendations/personalize');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('トークンがありません');
+    }
+
+    const response = await fetch('http://localhost:8080/api/recommendations/personalize', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
 
-    // レスポンスのデータをローカルストレージに保存
     if (data && data.combined && data.combined.length > 0) {
-      movies.value = data.combined;  // 映画リストを更新
-      localStorage.setItem('movies', JSON.stringify(data.combined));  // ローカルストレージに保存
-      currentIndex.value = 0;  // 最初の映画を表示
+      movies.value = data.combined;
+      localStorage.setItem('movies', JSON.stringify(data.combined));
+      currentIndex.value = 0;
     } else {
       console.error('映画データが見つかりません');
     }
@@ -178,13 +204,8 @@ onMounted(() => {
     return;
   }
 
-  const storedMovies = localStorage.getItem('movies');
-  if (storedMovies) {
-    movies.value = JSON.parse(storedMovies);
-    currentIndex.value = 0;
-  } else {
-    fetchRecommendedMovies();
-  }
+  // 🔁 強制的に毎回取得
+  fetchRecommendedMovies();
 });
 
 const redirectToLogin = () => {

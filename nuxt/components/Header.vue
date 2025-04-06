@@ -62,7 +62,7 @@ const logout = () => {
   localStorage.removeItem('token')
   localStorage.removeItem('nickname')
   isLoggedIn.value = false
-  router.push('/login') // またはトップページへリダイレクト
+  router.push('/') // ← ホームに遷移
 }
 </script>
 

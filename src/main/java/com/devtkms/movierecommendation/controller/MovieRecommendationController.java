@@ -2,8 +2,11 @@ package com.devtkms.movierecommendation.controller;
 
 import com.devtkms.movierecommendation.dto.MovieRecommendationRequestDto;
 import com.devtkms.movierecommendation.dto.MovieRecommendationResultDto;
+import com.devtkms.movierecommendation.entity.UserEntity;
 import com.devtkms.movierecommendation.service.MovieRecommendationService;
+import com.devtkms.movierecommendation.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -14,9 +17,11 @@ import org.springframework.web.bind.annotation.*;
 public class MovieRecommendationController {
 
     private final MovieRecommendationService recommendationService;
+    private final UserService userService;
 
-    public MovieRecommendationController(MovieRecommendationService recommendationService) {
+    public MovieRecommendationController(MovieRecommendationService recommendationService, UserService userService) {
         this.recommendationService = recommendationService;
+        this.userService = userService;
     }
 
     /**
@@ -47,11 +52,13 @@ public class MovieRecommendationController {
      * @return トレンド映画のリストを含む結果DTO
      */
     @GetMapping("/personalize")
-    public ResponseEntity<MovieRecommendationResultDto> getPersonalizeMovies() {
-        // トレンド映画を取得するロジックを実行
-        MovieRecommendationResultDto response = recommendationService.getPersonalizeMovies();
+    public ResponseEntity<MovieRecommendationResultDto> getPersonalizeMovies(Authentication authentication) {
+        // トークンに含まれる email からユーザー情報を取得
+        String email = authentication.getName(); // 通常は email
+        UserEntity user = userService.findByEmail(email);
 
-        // 結果をレスポンスとして返却
+        MovieRecommendationResultDto response = recommendationService.getPersonalizeMovies(user.getId());
+
         return ResponseEntity.ok(response);
     }
 }

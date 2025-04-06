@@ -8,4 +8,5 @@ public interface UserMapper {
 
     void insertUser(UserEntity user);
     UserEntity selectUser(String email);
+    UserEntity findById(Long id);
 }

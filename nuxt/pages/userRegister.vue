@@ -5,19 +5,32 @@
       <div class="register-card">
         <h1 class="register-title">ユーザー登録</h1>
         <template v-if="isComplete">
-          <div class="text-center text-lg text-green-700 font-semibold">
-            登録が完了しました！
+          <div class="text-center text-green-700">
+            <p class="text-xl font-semibold mb-2">登録が完了しました！</p>
+            <p class="text-sm text-gray-700 mb-4">
+              MoviRecoを使って、あなたにぴったりの映画を見つけてみましょう🎬
+            </p>
+            <NuxtLink to="/" class="home-link-button">
+              ホーム画面へ戻る
+            </NuxtLink>
           </div>
         </template>
         <form v-else @submit.prevent="isConfirm ? submitForm() : goToConfirm()" class="register-form">
+          <div v-if="errorRequiredFields" class="tooltip-error mb-4">
+            <span class="tooltip-icon">⚠</span>
+            {{ errorRequiredFields }}
+          </div>
           <template v-if="!isConfirm">
+
             <div v-for="(item, key) in formItems" :key="key">
-              <label :for="key" class="form-label">{{ item.label }}</label>
+              <label :for="key" class="form-label">
+                {{ item.label }}
+                <span v-if="item.required" class="required-mark">※</span>
+              </label>
               <component
                   :is="item.type === 'select' ? 'select' : 'input'"
                   :type="item.inputType"
                   :id="key"
-                  :required="item.required"
                   class="form-input"
                   :value="form[key]"
                   @input="(e) => form[key] = e.target.value"
@@ -37,15 +50,27 @@
             </div>
 
             <div ref="searchArea">
-              <label class="form-label">好きな映画</label>
-              <div class="flex gap-2">
+              <label class="form-label">
+                好きな映画<br />
+              </label>
+              <div class="flex items-center gap-x-4">
                 <input
                     v-model="searchQuery"
                     type="text"
                     placeholder="映画名を入力"
-                    class="form-input flex-1"
+                    class="form-input w-full max-w-[280px]"
                 />
-                <button type="button" @click="searchMovies" class="bg-gray-200 rounded px-3 text-sm hover:bg-gray-300">🔍検索</button>
+                <button
+                    type="button"
+                    @click="searchMovies"
+                    class="search-button"
+                >
+                  🔍 検索
+                </button>
+              </div>
+              <div v-if="errorFavoriteMovie" class="tooltip-error mt-1">
+                <span class="tooltip-icon">⚠</span>
+                {{ errorFavoriteMovie }}
               </div>
               <ul v-if="searchResults.length" class="search-result-list">
                 <li
@@ -59,7 +84,9 @@
               </ul>
             </div>
 
-            <button type="submit" class="submit-button">確認する</button>
+            <div class="button-wrapper">
+              <button type="submit" class="submit-button">確認する</button>
+            </div>
           </template>
 
           <template v-else>
@@ -69,14 +96,24 @@
               <p><strong>ニックネーム:</strong> {{ form.nickname }}</p>
               <p><strong>配信サービス:</strong> {{ form.useProviderName }}</p>
               <p><strong>映画タイトル:</strong> {{ form.favoriteMovieName }}</p>
-              <p><strong>映画ID:</strong> {{ form.favoriteMovieId }}</p>
               <p><strong>性別:</strong> {{ form.gender }}</p>
               <p><strong>年代:</strong> {{ form.ageGroup }}</p>
             </div>
 
-            <div class="flex gap-2 mt-4">
-              <button type="button" class="submit-button bg-gray-400 hover:bg-gray-500" @click="isConfirm = false">戻る</button>
-              <button type="submit" class="submit-button">登録する</button>
+            <div class="button-wrapper flex mt-4 justify-center gap-4">
+              <button
+                  type="button"
+                  class="submit-button bg-red-500 hover:bg-red-600"
+                  @click="isConfirm = false"
+              >
+                戻る
+              </button>
+              <button
+                  type="submit"
+                  class="submit-button !bg-emerald-500 hover:!bg-emerald-600"
+              >
+                登録する
+              </button>
             </div>
           </template>
         </form>
@@ -113,6 +150,9 @@ const form = ref({
 
 const isConfirm = ref(false)
 const isComplete = ref(false)
+const errorMessage = ref('')
+const errorRequiredFields = ref('')
+const errorFavoriteMovie = ref('')
 
 const formItems = {
   email: { label: 'Email', type: 'input', inputType: 'email', required: true },
@@ -167,24 +207,26 @@ const selectMovie = (movie) => {
   searchResults.value = []
 }
 
-const goToConfirm = async () => {
+const goToConfirm = () => {
+  errorRequiredFields.value = ''
+  errorFavoriteMovie.value = ''
+
   if (!form.value.email || !form.value.password || !form.value.nickname) {
-    alert('必須項目を入力してください')
+    errorRequiredFields.value = '必須項目を入力してください'
     return
   }
 
-  if (!form.value.favoriteMovieName && searchQuery.value) {
-    form.value.favoriteMovieName = searchQuery.value
+  const hasMovieNameInput = form.value.favoriteMovieName.trim().length > 0 || searchQuery.value.trim().length > 0
+  const hasMovieId = !!form.value.favoriteMovieId
+
+  if (hasMovieNameInput && !hasMovieId) {
+    errorFavoriteMovie.value = '好きな映画に文字を入力した場合、検索ボタンを押して候補から映画を選択してください'
+    return
   }
 
-  if (!form.value.favoriteMovieId && searchQuery.value) {
-    const { results } = await $fetch('http://localhost:8080/api/search/movies', {
-      params: { query: searchQuery.value },
-    })
-    if (results?.length === 1) {
-      form.value.favoriteMovieId = results[0].id
-      form.value.favoriteMovieName = results[0].title
-    }
+  if (!hasMovieNameInput) {
+    form.value.favoriteMovieName = ''
+    form.value.favoriteMovieId = null
   }
 
   form.value.useProviderId = providerMap[form.value.useProviderName] ?? null
@@ -201,6 +243,8 @@ const submitForm = async () => {
     // ✅ トークン保存（localStorage や cookie）
     const token = response.token
     localStorage.setItem('token', token)
+    localStorage.setItem('id', response.id)
+    localStorage.setItem('nickname', response.nickname)
 
     isConfirm.value = false
     isComplete.value = true
@@ -282,20 +326,20 @@ onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside))
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-.submit-button {
-  width: 100%;
-  padding: 0.65rem;
-  background-color: #3b82f6;
+.search-button {
+  background-color: #10b981; /* エメラルドグリーン */
   color: white;
-  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.95rem;
   border: none;
   border-radius: 0.5rem;
-  transition: background-color 0.2s;
-  margin-top: 0.75rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
 }
 
-.submit-button:hover {
-  background-color: #2563eb;
+.search-button:hover {
+  background-color: #059669; /* 濃いめのグリーン */
 }
 
 .search-result-list {
@@ -322,5 +366,68 @@ onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside))
 .search-result-item:hover {
   background-color: #f3f4f6;
   border-radius: 0.5rem;
+}
+
+.required-mark {
+  color: #dc2626;
+  margin-left: 4px;
+  font-weight: bold;
+}
+
+.submit-button {
+  display: inline-block; /* ← これで幅を自然に */
+  background-color: #3b82f6;
+  color: white;
+  font-size: 0.95rem;
+  padding: 0.55rem 1.25rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease;
+  margin-top: 0.75rem;
+}
+
+.submit-button:hover {
+  background-color: #2563eb;
+}
+
+.button-wrapper {
+  text-align: center;
+}
+
+.tooltip-error {
+  position: relative;
+  background-color: #fef3c7; /* 薄い黄色 */
+  border: 1px solid #fcd34d; /* 黄色枠 */
+  color: #92400e; /* 警告文字色 */
+  font-size: 0.85rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  max-width: 300px;
+}
+
+.tooltip-icon {
+  font-weight: bold;
+}
+
+.home-link-button {
+  display: inline-block;
+  background-color: #10b981; /* エメラルドグリーン */
+  color: white;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+}
+
+.home-link-button:hover {
+  background-color: #059669;
 }
 </style>

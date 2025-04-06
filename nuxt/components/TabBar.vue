@@ -24,6 +24,10 @@ const emit = defineEmits(['require-login'])
 
 const handleRecommendClick = () => {
   const token = localStorage.getItem('token')
+
+  // すでに recommend にいるなら何もしない
+  if (props.current === 'recommend') return
+
   if (!token) {
     emit('require-login') // モーダル表示要求
   } else {

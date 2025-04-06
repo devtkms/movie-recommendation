@@ -3,6 +3,7 @@ package com.devtkms.movierecommendation.controller;
 import com.devtkms.movierecommendation.dto.LoginRequestDto;
 import com.devtkms.movierecommendation.dto.LoginResponseDto;
 import com.devtkms.movierecommendation.dto.UserRegisterRequestDto;
+import com.devtkms.movierecommendation.dto.UserRegisterResponseDto;
 import com.devtkms.movierecommendation.entity.UserEntity;
 import com.devtkms.movierecommendation.service.JwtService;
 import com.devtkms.movierecommendation.service.UserService;
@@ -29,15 +30,22 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody UserRegisterRequestDto userDto) {
         try {
+            // DB登録
             UserEntity user = userService.registerUser(userDto);
 
+            // 認証（パスワードがエンコードされている前提）
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(userDto.getEmail(), userDto.getPassword()));
+                    new UsernamePasswordAuthenticationToken(userDto.getEmail(), userDto.getPassword())
+            );
 
+            // JWT発行
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtService.generateToken(userDetails).token();
 
-            return ResponseEntity.ok(new LoginResponseDto(token, user.getNickname()));
+            // レスポンス返却（user.getId()は useGeneratedKeys により自動で取得済み）
+            return ResponseEntity.ok(
+                    new UserRegisterResponseDto(user.getId(), token, user.getNickname())
+            );
 
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -58,11 +66,12 @@ public class UserController {
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             UserEntity user = userService.findByEmail(loginRequestDto.getEmail());
+            System.out.println(user);
 
             // ✅ JwtToken から中身を取り出す
             String token = jwtService.generateToken(userDetails).token();
 
-            return ResponseEntity.ok(new LoginResponseDto(token, user.getNickname()));
+            return ResponseEntity.ok(new LoginResponseDto(user.getId(), token, user.getNickname()));
 
         } catch (Exception e) {
             return ResponseEntity.status(401).body("認証に失敗しました: " + e.getMessage());

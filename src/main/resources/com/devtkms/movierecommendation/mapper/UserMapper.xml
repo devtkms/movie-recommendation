@@ -3,7 +3,10 @@
 <mapper namespace="com.devtkms.movierecommendation.mapper.UserMapper">
 
     <!-- ユーザーを登録 -->
-    <insert id="insertUser" parameterType="com.devtkms.movierecommendation.entity.UserEntity">
+    <insert id="insertUser"
+            parameterType="com.devtkms.movierecommendation.entity.UserEntity"
+            useGeneratedKeys="true"
+            keyProperty="id">
         INSERT INTO users (
             email,
             password,
@@ -37,6 +40,10 @@
     <!-- メールアドレスでユーザーを検索 -->
     <select id="selectUser" parameterType="String" resultType="com.devtkms.movierecommendation.entity.UserEntity">
         SELECT * FROM users WHERE email = #{email}
+    </select>
+
+    <select id="findById" parameterType="long" resultType="com.devtkms.movierecommendation.entity.UserEntity">
+        SELECT * FROM users WHERE id = #{id}
     </select>
 
 </mapper>
