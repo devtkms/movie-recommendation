@@ -48,7 +48,7 @@
 
     <!-- ✅ タブとフッター -->
     <div class="bottom-bar">
-      <TabBar :current="'recommend'" />
+      <TabBar :current="'recommend'" @require-login="showLoginModal" />
       <Footer />
     </div>
   </div>
@@ -73,11 +73,19 @@ const modalContent = ref('');
 const providerList = ref([]);
 const showProviderModal = ref(false);
 const showLoginRequiredModal = ref(false)
+const isAuthenticated = ref(false)
+
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
 
 const showOverview = (overview) => {
   modalContent.value = overview;
   showModal.value = true;
 };
+
+const showLoginModal = () => {
+  showLoginRequiredModal.value = true
+}
 
 const closeModal = () => {
   showModal.value = false;
@@ -87,7 +95,7 @@ const showProviders = async () => {
   if (!currentMovie.value?.id) return;
 
   try {
-    const res = await fetch(`http://localhost:8080/movie/${currentMovie.value.id}/watch/providers`);
+    const res = await fetch(`${apiBase}/movie/${currentMovie.value.id}/watch/providers`);
     if (!res.ok) throw new Error("配信サービス取得に失敗");
 
     const providers = await res.json();
@@ -140,16 +148,9 @@ const getMoviePoster = (path) =>
 // 映画を表示するためのAPIリクエスト
 const fetchRecommendedMovies = async () => {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('トークンがありません');
-    }
-
-    const response = await fetch('http://localhost:8080/api/recommendations/personalize', {
+    const response = await fetch(`${apiBase}/api/recommendations/personalize`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      credentials: 'include' // ✅ Cookie（JWT）を送信
     });
 
     if (!response.ok) {
@@ -165,7 +166,6 @@ const fetchRecommendedMovies = async () => {
     } else {
       console.error('映画データが見つかりません');
     }
-
   } catch (error) {
     console.error('Error fetching recommended movies:', error);
   }
@@ -195,17 +195,30 @@ const currentMovie = computed(() => movies.value[currentIndex.value]);
 // レコメンドタブを押したときに映画を取得
 const nickname = ref('');
 
-onMounted(() => {
-  const token = localStorage.getItem('token');
-  nickname.value = localStorage.getItem('nickname') || '';
+onMounted(async () => {
+  try {
+    const res = await fetch(`${apiBase}/api/users/me`, {
+      method: 'GET',
+      credentials: 'include'
+    });
 
-  if (!token) {
+    if (!res.ok) {
+      if (res.status === 401) {
+        router.push('/login');
+        return;
+      }
+      throw new Error('ユーザー取得失敗');
+    }
+
+    const user = await res.json();
+    nickname.value = user.nickname;
+    isAuthenticated.value = true;
+
+    await fetchRecommendedMovies();
+  } catch (err) {
+    console.error('ログインユーザー情報取得失敗:', err);
     router.push('/login');
-    return;
   }
-
-  // 🔁 強制的に毎回取得
-  fetchRecommendedMovies();
 });
 
 const redirectToLogin = () => {

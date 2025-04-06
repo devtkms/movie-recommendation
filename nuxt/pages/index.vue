@@ -129,6 +129,9 @@
   const router = useRouter()
   const showLoginRequiredModal = ref(false)
 
+  const config = useRuntimeConfig()
+  const apiBase = config.public.apiBase
+
   const redirectToLogin = () => {
     showLoginRequiredModal.value = false
     router.push('/login')
@@ -165,8 +168,7 @@
     if (!currentMovie.value?.id) return;
 
     try {
-      const res = await fetch(`https://movie-recommendation-uybc.onrender.com/movie/${currentMovie.value.id}/watch/providers`);
-      // const res = await fetch(`http://localhost:8080/movie/${currentMovie.value.id}/watch/providers`);
+      const res = await fetch(`${apiBase}/movie/${currentMovie.value.id}/watch/providers`);
       if (!res.ok) throw new Error("配信サービス取得に失敗");
 
       const providers = await res.json();
@@ -302,14 +304,14 @@
     }
 
     try {
-      const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/recommendations`, {
-      // const response = await fetch(`http://localhost:8080/api/recommendations`, {
+      const response = await fetch(`${apiBase}/api/recommendations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...selectedOptions.value,
           isMyData: localStorage.getItem('isDevUser') === 'true'
         }),
+        credentials: 'include'
       });
 
       if (!response.ok) throw new Error("API リクエストが失敗しました");

@@ -154,6 +154,9 @@ const errorMessage = ref('')
 const errorRequiredFields = ref('')
 const errorFavoriteMovie = ref('')
 
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
+
 const formItems = {
   email: { label: 'Email', type: 'input', inputType: 'email', required: true },
   password: { label: 'パスワード', type: 'input', inputType: 'password', required: true },
@@ -190,8 +193,8 @@ const searchResults = ref([])
 const searchMovies = async () => {
   if (!searchQuery.value.trim()) return
   try {
-    const { results } = await $fetch('http://localhost:8080/api/search/movies', {
-      params: { query: searchQuery.value },
+    const { results } = await $fetch(`${apiBase}/api/search/movies`, {
+      params: { query: searchQuery.value }
     })
     searchResults.value = results || []
   } catch (err) {
@@ -235,14 +238,13 @@ const goToConfirm = () => {
 
 const submitForm = async () => {
   try {
-    const response = await $fetch('http://localhost:8080/api/users/register', {
+    const response = await $fetch(`${apiBase}/api/users/register`, {
       method: 'POST',
-      body: { ...form.value }
+      body: { ...form.value },
+      credentials: 'include' // ✅ Cookieにトークンを保存する構成ではこれが必要
     })
 
-    // ✅ トークン保存（localStorage や cookie）
-    const token = response.token
-    localStorage.setItem('token', token)
+    // ✅ Cookie構成なので localStorage.setItem('token', ...) は不要
     localStorage.setItem('id', response.id)
     localStorage.setItem('nickname', response.nickname)
 

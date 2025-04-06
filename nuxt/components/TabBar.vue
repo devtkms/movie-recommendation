@@ -16,22 +16,33 @@
 </template>
 
 <script setup>
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
 const props = defineProps({
   current: String
 })
 
 const emit = defineEmits(['require-login'])
 
-const handleRecommendClick = () => {
-  const token = localStorage.getItem('token')
-
+const handleRecommendClick = async () => {
   // すでに recommend にいるなら何もしない
   if (props.current === 'recommend') return
 
-  if (!token) {
-    emit('require-login') // モーダル表示要求
-  } else {
-    window.location.href = '/recommend' // 通常遷移
+  try {
+    const res = await fetch(`${apiBase}/api/users/me`, {
+      method: 'GET',
+      credentials: 'include', // ✅ Cookie送信
+    })
+
+    if (res.ok) {
+      // ログイン済み → 遷移
+      window.location.href = '/recommend'
+    } else {
+      // 未ログイン → モーダル表示
+      emit('require-login')
+    }
+  } catch (err) {
+    emit('require-login')
   }
 }
 </script>

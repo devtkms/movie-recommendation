@@ -43,26 +43,48 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-
 const menuOpen = ref(false)
+const isLoggedIn = ref(false)
+const route = useRoute()
 const router = useRouter()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
+
 const toggleMenu = () => {
   menuOpen.value = !menuOpen.value
 }
-const route = useRoute()
-const isLoggedIn = ref(false)
+
+const checkLoginStatus = async () => {
+  try {
+    const res = await fetch(`${apiBase}/api/users/me`, {
+      method: 'GET',
+      credentials: 'include'
+    })
+
+    isLoggedIn.value = res.ok
+  } catch (err) {
+    isLoggedIn.value = false
+    console.error('ログイン状態の確認に失敗', err)
+  }
+}
 
 onMounted(() => {
-  const token = localStorage.getItem('token')
-
-  isLoggedIn.value = !!token
+  checkLoginStatus()
 })
 
-const logout = () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('nickname')
-  isLoggedIn.value = false
-  router.push('/') // ← ホームに遷移
+const logout = async () => {
+  try {
+    await fetch(`${apiBase}/api/users/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    })
+
+    localStorage.removeItem('nickname') // 任意
+    isLoggedIn.value = false
+    router.push('/')
+  } catch (err) {
+    console.error('ログアウト失敗', err)
+  }
 }
 </script>
 

@@ -51,49 +51,54 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
+
+        final String jwt = extractToken(request); // 👈 修正ポイント：トークンの取得を関数化
         final String userEmail;
 
-        // Authorizationヘッダーがないか、形式が無効な場合は次のフィルターに進む
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // "Bearer "の後のトークン部分を抽出
-        jwt = authHeader.substring(7);
-
         try {
-            // トークンからユーザー名（またはEメール）を抽出
             userEmail = jwtService.extractUsername(jwt);
 
-            // ユーザー名が存在し、まだ認証されていない場合
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-                // トークンが有効な場合
                 if (jwtService.isTokenValid(jwt, userDetails)) {
-                    // 認証オブジェクトを作成
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
                             userDetails.getAuthorities());
 
-                    // リクエスト詳細を設定
-                    authToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    // SecurityContextに認証情報を設定
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
         } catch (Exception e) {
-            // トークンが無効な場合は、エラーを記録するだけで認証は行わない
             logger.error("JWT token validation failed: {}", e.getMessage());
         }
 
-        // フィルターチェーンを続行
         filterChain.doFilter(request, response);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        // Authorizationヘッダーから取得
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7); // "Bearer " を除く
+        }
+
+        // Cookie から取得
+        if (request.getCookies() != null) {
+            for (var cookie : request.getCookies()) {
+                if ("token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null; // トークンが見つからなければ null
     }
 }

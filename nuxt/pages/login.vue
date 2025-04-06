@@ -51,16 +51,31 @@ const email = ref('')
 const password = ref('')
 const error = ref(null)
 const router = useRouter()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
 
 const submitLogin = async () => {
   try {
-    const response = await $fetch('http://localhost:8080/api/users/login', {
+    const response = await $fetch(`${apiBase}/api/users/login`, {
       method: 'POST',
-      body: { email: email.value, password: password.value }
+      body: {
+        email: email.value,
+        password: password.value
+      },
+      credentials: 'include' // ✅ Cookie送受信のために必須
     })
 
-    localStorage.setItem('token', response.token)
-    localStorage.setItem('nickname', response.nickname)
+    // ✅ login直後にnickname取得
+    const res = await fetch(`${apiBase}/api/users/me`, {
+      method: 'GET',
+      credentials: 'include'
+    })
+
+    if (res.ok) {
+      const user = await res.json()
+      localStorage.setItem('nickname', user.nickname)
+    }
+
     error.value = null
     await router.push('/')
   } catch (err) {

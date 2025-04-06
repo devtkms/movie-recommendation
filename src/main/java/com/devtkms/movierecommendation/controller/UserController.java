@@ -7,7 +7,10 @@ import com.devtkms.movierecommendation.dto.UserRegisterResponseDto;
 import com.devtkms.movierecommendation.entity.UserEntity;
 import com.devtkms.movierecommendation.service.JwtService;
 import com.devtkms.movierecommendation.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,24 +31,28 @@ public class UserController {
      * ユーザー登録 + 自動ログイン（JWT発行）
      */
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody UserRegisterRequestDto userDto) {
+    public ResponseEntity<?> registerUser(@RequestBody UserRegisterRequestDto userDto, HttpServletResponse response) {
         try {
-            // DB登録
             UserEntity user = userService.registerUser(userDto);
 
-            // 認証（パスワードがエンコードされている前提）
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(userDto.getEmail(), userDto.getPassword())
             );
 
-            // JWT発行
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtService.generateToken(userDetails).token();
 
-            // レスポンス返却（user.getId()は useGeneratedKeys により自動で取得済み）
-            return ResponseEntity.ok(
-                    new UserRegisterResponseDto(user.getId(), token, user.getNickname())
-            );
+            ResponseCookie cookie = ResponseCookie.from("token", token)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(60 * 60 * 24 * 7)
+                    .sameSite("Strict")
+                    .build();
+
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+            return ResponseEntity.ok(new UserRegisterResponseDto(user.getId(), null, user.getNickname()));
 
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -56,7 +63,7 @@ public class UserController {
      * ログイン（JWT発行）
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto, HttpServletResponse response) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -66,15 +73,50 @@ public class UserController {
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             UserEntity user = userService.findByEmail(loginRequestDto.getEmail());
-            System.out.println(user);
 
-            // ✅ JwtToken から中身を取り出す
             String token = jwtService.generateToken(userDetails).token();
 
-            return ResponseEntity.ok(new LoginResponseDto(user.getId(), token, user.getNickname()));
+            // ✅ HttpOnly Cookie にトークンをセット
+            ResponseCookie cookie = ResponseCookie.from("token", token)
+                    .httpOnly(true)
+                    .secure(true) // 本番環境は true（HTTPSのみ）
+                    .path("/")
+                    .maxAge(60 * 60 * 24 * 7) // 7日間
+                    .sameSite("Lax")
+                    .build();
+
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+            // トークンは返さず、IDとニックネームのみ返す（セキュリティ強化）
+            return ResponseEntity.ok(new LoginResponseDto(user.getId(), null, user.getNickname()));
 
         } catch (Exception e) {
             return ResponseEntity.status(401).body("認証に失敗しました: " + e.getMessage());
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("token", "")
+                .path("/")
+                .httpOnly(true)
+                .secure(true) // 本番環境のみ
+                .maxAge(0)    // 有効期限切れにする
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body("未認証");
+        }
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        UserEntity user = userService.findByEmail(userDetails.getUsername());
+        return ResponseEntity.ok(new LoginResponseDto(user.getId(), null, user.getNickname()));
     }
 }

@@ -48,6 +48,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/search/movies").permitAll()
                         .requestMatchers("/api/users/register").permitAll()
                         .requestMatchers("/api/users/login").permitAll()
+                        .requestMatchers("/api/users/me").permitAll()
+                        .requestMatchers("/api/users/logout").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf((csrf) -> csrf.disable())

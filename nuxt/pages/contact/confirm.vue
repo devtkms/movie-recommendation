@@ -42,6 +42,9 @@ const router = useRouter()
 const form = ref({ nickname: '', category: '', message: '' })
 const errorMessage = ref('')
 const loading = ref(false)
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
+
 
 onMounted(() => {
   const savedForm = sessionStorage.getItem('contactForm')
@@ -57,11 +60,11 @@ const handleSubmit = async () => {
   loading.value = true
 
   try {
-    const res = await fetch(`https://movie-recommendation-uybc.onrender.com/api/contact/submit`, {
-    // const res = await fetch('http://localhost:8080/api/contact/submit', {
+    const res = await fetch(`${apiBase}/api/contact/submit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.value),
+      credentials: 'include' // ✅ HttpOnly Cookie を送信
     })
 
     if (res.ok) {
