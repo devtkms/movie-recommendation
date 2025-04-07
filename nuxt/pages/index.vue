@@ -85,10 +85,16 @@
         @close="showProviderModal = false"
     />
 
-    <div v-if="showLoginRequiredModal" class="login-alert-card">
-      <h3>ようこそ MoviReco へ 👋</h3>
-      <p>この機能を使うには<br><strong>新規登録</strong>または<strong>ログイン</strong>が必要です。</p>
-      <button class="login-alert-button" @click="redirectToLogin">登録 / ログインする</button>
+    <div
+        v-if="showLoginRequiredModal"
+        class="modal-overlay"
+        @click.self="showLoginRequiredModal = false"
+    >
+      <div class="login-alert-card" @click.stop>
+        <h3>ようこそ MoviReco へ 👋</h3>
+        <p>この機能を使うには<br><strong>新規登録</strong>または<strong>ログイン</strong>が必要です。</p>
+        <button class="login-alert-button" @click="redirectToLogin">登録 / ログインする</button>
+      </div>
     </div>
 
     <!-- ✅ タブとフッター -->
@@ -725,6 +731,16 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4); /* 半透明の背景 */
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 9998;
   }
 
   </style>
