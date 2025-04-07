@@ -80,7 +80,6 @@ public class UserController {
             ResponseCookie cookie = ResponseCookie.from("token", token)
                     .httpOnly(true)
                     .secure(true) // 本番環境は true（HTTPSのみ）
-                    .domain("movireco.com")
                     .path("/")
                     .maxAge(60 * 60 * 24 * 7) // 7日間
                     .sameSite("None")
@@ -102,7 +101,6 @@ public class UserController {
                 .path("/")
                 .httpOnly(true)
                 .secure(true) // 本番環境のみ
-                .domain("movireco.com")
                 .maxAge(0)    // 有効期限切れにする
                 .sameSite("None")
                 .build();
