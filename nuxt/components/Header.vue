@@ -34,6 +34,7 @@
         <NuxtLink to="/" class="nav-link">ホーム</NuxtLink>
         <NuxtLink to="/contact" class="nav-link">お問い合わせ</NuxtLink>
         <NuxtLink to="/privacy" class="nav-link">プライバシーポリシー</NuxtLink>
+        <NuxtLink to="/terms" class="nav-link">利用規約</NuxtLink>
       </nav>
     </div>
   </header>

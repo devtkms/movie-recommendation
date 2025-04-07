@@ -85,7 +85,12 @@
             <div class="checkbox-area">
               <label class="checkbox-label">
                 <input type="checkbox" v-model="agreed" />
-                <span>利用規約に同意する</span>
+                <span>
+      <NuxtLink to="/terms" class="terms-link" target="_blank">
+        利用規約
+      </NuxtLink>
+      に同意する
+    </span>
               </label>
               <div v-if="errorAgree" class="tooltip-error mt-1">
                 <span class="tooltip-icon">⚠</span>
