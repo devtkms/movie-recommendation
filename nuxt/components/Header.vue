@@ -5,15 +5,11 @@
     </div>
 
     <div class="nav-container">
-      <!-- ✅ ログアウトボタンだけ常時表示 -->
-      <div class="auth-buttons" v-if="isLoggedIn">
-        <button class="auth-button logout-button" @click="logout">ログアウト</button>
-      </div>
-
       <!-- ✅ ハンバーガーメニュー -->
       <button class="hamburger" @click="toggleMenu">☰</button>
       <nav :class="{ open: menuOpen }" class="nav">
         <NuxtLink to="/" class="nav-link">ホーム</NuxtLink>
+
         <template v-if="!isLoggedIn">
           <NuxtLink
               v-if="route.path !== '/userRegister'"
@@ -30,9 +26,14 @@
             ログイン
           </NuxtLink>
         </template>
+
         <NuxtLink to="/contact" class="nav-link">お問い合わせ</NuxtLink>
         <NuxtLink to="/privacy" class="nav-link">プライバシーポリシー</NuxtLink>
         <NuxtLink to="/terms" class="nav-link">利用規約</NuxtLink>
+
+        <template v-if="isLoggedIn">
+          <button class="nav-link logout-menu-button" @click="logout">ログアウト</button>
+        </template>
       </nav>
     </div>
   </header>
@@ -167,28 +168,21 @@ const logout = async () => {
   background-color: #f5f5f5;
 }
 
-.auth-button {
-  display: inline-block;
-  padding: 6px 10px;
-  font-size: 12px;
+.logout-menu-button {
+  background: none;
+  border: none;
+  color: #ef4444;
   font-weight: 600;
-  border-radius: 6px;
-  text-decoration: none;
-  transition: background-color 0.2s;
-  color: white;
+  padding: 10px 16px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
 }
 
-.auth-buttons {
-  display: flex;
-  gap: 8px; /* 🔽 ボタン間のスペース（px単位で調整可） */
-  margin-right: 12px; /* ナビとの間に少し余白もつけるなら */
+.logout-menu-button:hover {
+  background-color: #fee2e2; /* 薄い赤 */
 }
 
-.logout-button {
-  background-color: #ef4444; /* 赤 */
-}
-.logout-button:hover {
-  background-color: #dc2626;
-}
+
 
 </style>
