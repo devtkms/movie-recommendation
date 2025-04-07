@@ -1,6 +1,9 @@
 <template>
   <div class="container">
-    <Header />
+    <div class="header-fixed">
+      <Header />
+      <TabBar :current="'recommend'" @require-login="showLoginModal" />
+    </div>
 
     <!-- currentMovieがnullでない場合に表示 -->
     <div v-if="movies.length" class="movie-results">
@@ -46,11 +49,7 @@
       <button class="login-alert-button" @click="redirectToLogin">OK</button>
     </div>
 
-    <!-- ✅ タブとフッター -->
-    <div class="bottom-bar">
-      <TabBar :current="'recommend'" @require-login="showLoginModal" />
       <Footer />
-    </div>
   </div>
 </template>
 
@@ -234,9 +233,18 @@ const redirectToLogin = () => {
   max-width: 600px;
   margin: auto;
   text-align: center;
-  padding-top: 40px;
-  padding-bottom: 40px;
+  padding-top: 120px;
+  padding-bottom: 120px;
   position: relative;
+}
+
+.header-fixed {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .movie-results {

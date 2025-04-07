@@ -1,6 +1,12 @@
 <template>
   <div class="container">
-    <Header />
+    <div class="header-fixed">
+      <Header />
+      <TabBar
+          :current="'main'"
+          @require-login="showLoginRequiredModal = true">
+      </TabBar>
+    </div>
     <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
 
     <div v-if="!currentMovie">
@@ -97,11 +103,8 @@
       </div>
     </div>
 
-    <!-- ✅ タブとフッター -->
-    <div class="bottom-bar">
-      <TabBar :current="'main'" @require-login="showLoginRequiredModal = true" />
+
       <Footer />
-    </div>
   </div>
 </template>
 
@@ -371,8 +374,17 @@
     margin: auto;
     text-align: center;
     padding-bottom: 100px;
-    padding-top: 40px; /* ← 上部余白を追加 */
+    padding-top: 120px; /* ← 上部余白を追加 */
     position: relative;
+  }
+
+  .header-fixed {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   }
 
   .form-group {

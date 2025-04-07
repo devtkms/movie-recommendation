@@ -5,26 +5,26 @@
     </div>
 
     <div class="nav-container">
-      <!-- ✅ ハンバーガーメニュー -->
       <button class="hamburger" @click="toggleMenu">☰</button>
-      <nav :class="{ open: menuOpen }" class="nav">
+
+      <!-- ✅ オーバーレイ（背景） -->
+      <div
+          v-if="menuOpen"
+          class="overlay"
+          @click="menuOpen = false"
+      ></div>
+
+      <!-- ✅ メニュー本体 -->
+      <nav
+          :class="{ open: menuOpen }"
+          class="nav"
+          @click.stop
+      >
         <NuxtLink to="/" class="nav-link">ホーム</NuxtLink>
 
         <template v-if="!isLoggedIn">
-          <NuxtLink
-              v-if="route.path !== '/userRegister'"
-              to="/userRegister"
-              class="nav-link"
-          >
-            新規登録
-          </NuxtLink>
-          <NuxtLink
-              v-if="route.path !== '/login'"
-              to="/login"
-              class="nav-link"
-          >
-            ログイン
-          </NuxtLink>
+          <NuxtLink v-if="route.path !== '/userRegister'" to="/userRegister" class="nav-link">新規登録</NuxtLink>
+          <NuxtLink v-if="route.path !== '/login'" to="/login" class="nav-link">ログイン</NuxtLink>
         </template>
 
         <NuxtLink to="/contact" class="nav-link">お問い合わせ</NuxtLink>
@@ -100,7 +100,6 @@ const logout = async () => {
   align-items: center;
   height: 64px;
   padding: 0 10px;
-  margin-bottom: 30px;
 }
 
 .logo-title {
@@ -183,6 +182,11 @@ const logout = async () => {
   background-color: #fee2e2; /* 薄い赤 */
 }
 
-
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.3); /* 半透明の黒 */
+  z-index: 9998; /* nav より下、header より上 */
+}
 
 </style>
