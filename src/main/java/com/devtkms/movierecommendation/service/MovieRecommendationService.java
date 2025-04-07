@@ -84,10 +84,17 @@ public class MovieRecommendationService {
         UserEntity user = userMapper.findById(userId);
         Long favoriteMovieId = user.getFavoriteMovieId();
 
+        // favoriteMovieId が未設定の場合はトレンドのみ返す
+        if (favoriteMovieId == null) {
+            TmdbResponse trendResponse = tmdbApiClient.fetchRandomTrendingMovies();
+            List<MovieRecommendationResponseDto> trending = trendResponse.toMovieDtoList();
+            return new MovieRecommendationResultDto(trending);
+        }
+
         // レコメンド取得
         TmdbResponse recommendResponse = tmdbApiClient.fetchRecommendationsByMovieId(favoriteMovieId);
 
-        // トレンド映画取得（新規で追加）
+        // トレンド映画取得
         TmdbResponse trendResponse = tmdbApiClient.fetchRandomTrendingMovies();
 
         // DTOへ変換

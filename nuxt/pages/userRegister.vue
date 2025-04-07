@@ -50,9 +50,7 @@
             </div>
 
             <div ref="searchArea">
-              <label class="form-label">
-                好きな映画<br />
-              </label>
+              <label class="form-label">好きな映画</label>
               <div class="flex items-center gap-x-4">
                 <input
                     v-model="searchQuery"
@@ -82,6 +80,17 @@
                   {{ movie.title }}（{{ movie.release_date?.slice(0, 4) || '年不明' }}）
                 </li>
               </ul>
+            </div>
+
+            <div class="checkbox-area">
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="agreed" />
+                <span>利用規約に同意する</span>
+              </label>
+              <div v-if="errorAgree" class="tooltip-error mt-1">
+                <span class="tooltip-icon">⚠</span>
+                {{ errorAgree }}
+              </div>
             </div>
 
             <div class="button-wrapper">
@@ -148,11 +157,14 @@ const form = ref({
   ageGroup: '',
 })
 
+const agreed = ref(false)
+
 const isConfirm = ref(false)
 const isComplete = ref(false)
 const errorMessage = ref('')
 const errorRequiredFields = ref('')
 const errorFavoriteMovie = ref('')
+const errorAgree = ref('')
 
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
@@ -184,7 +196,6 @@ const formItems = {
 const updateProviderId = () => {
   form.value.useProviderId = providerMap[form.value.useProviderName] ?? null
 }
-
 watch(() => form.value.useProviderName, updateProviderId)
 
 const searchQuery = ref('')
@@ -210,12 +221,37 @@ const selectMovie = (movie) => {
   searchResults.value = []
 }
 
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return re.test(email)
+}
+
+const validatePassword = (password) => {
+  return password.length >= 6 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password)
+}
+
 const goToConfirm = () => {
   errorRequiredFields.value = ''
   errorFavoriteMovie.value = ''
+  errorAgree.value = ''
 
   if (!form.value.email || !form.value.password || !form.value.nickname) {
     errorRequiredFields.value = '必須項目を入力してください'
+    return
+  }
+
+  if (!validateEmail(form.value.email)) {
+    errorRequiredFields.value = '正しいメールアドレス形式で入力してください'
+    return
+  }
+
+  if (!validatePassword(form.value.password)) {
+    errorRequiredFields.value = 'パスワードは6文字以上の英数字を含めてください'
+    return
+  }
+
+  if (!agreed.value) {
+    errorAgree.value = '利用規約への同意が必要です'
     return
   }
 
@@ -223,7 +259,7 @@ const goToConfirm = () => {
   const hasMovieId = !!form.value.favoriteMovieId
 
   if (hasMovieNameInput && !hasMovieId) {
-    errorFavoriteMovie.value = '好きな映画に文字を入力した場合、検索ボタンを押して候補から映画を選択してください'
+    errorFavoriteMovie.value = '検索ボタンを押して候補から映画を選択してください'
     return
   }
 
@@ -241,17 +277,18 @@ const submitForm = async () => {
     const response = await $fetch(`${apiBase}/api/users/register`, {
       method: 'POST',
       body: { ...form.value },
-      credentials: 'include' // ✅ Cookieにトークンを保存する構成ではこれが必要
+      credentials: 'include'
     })
 
-    // ✅ Cookie構成なので localStorage.setItem('token', ...) は不要
     localStorage.setItem('id', response.id)
     localStorage.setItem('nickname', response.nickname)
 
     isConfirm.value = false
     isComplete.value = true
   } catch (err) {
-    alert('登録に失敗しました')
+    const message = err?.data || '登録に失敗しました'
+    errorRequiredFields.value = message
+    isConfirm.value = false
     console.error('❌ 登録失敗:', err)
   }
 }

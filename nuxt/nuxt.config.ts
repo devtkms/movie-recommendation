@@ -10,8 +10,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: 'http://localhost:8080'　// 開発環境
-      // apiBase: 'https://movie-recommendation-uybc.onrender.com'　// 本番環境
+      // apiBase: 'http://localhost:8080'　// 開発環境
+      apiBase: 'https://movie-recommendation-uybc.onrender.com'　// 本番環境
     }
   }
 });
