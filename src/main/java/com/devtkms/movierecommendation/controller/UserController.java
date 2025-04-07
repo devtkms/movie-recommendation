@@ -47,7 +47,7 @@ public class UserController {
                     .secure(true)
                     .path("/")
                     .maxAge(60 * 60 * 24 * 7)
-                    .sameSite("Lax")
+                    .sameSite("None")
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -82,7 +82,7 @@ public class UserController {
                     .secure(true) // 本番環境は true（HTTPSのみ）
                     .path("/")
                     .maxAge(60 * 60 * 24 * 7) // 7日間
-                    .sameSite("Lax")
+                    .sameSite("None")
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
