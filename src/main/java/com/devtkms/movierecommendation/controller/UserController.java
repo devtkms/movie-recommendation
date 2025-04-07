@@ -102,7 +102,7 @@ public class UserController {
                 .httpOnly(true)
                 .secure(true) // 本番環境のみ
                 .maxAge(0)    // 有効期限切れにする
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
