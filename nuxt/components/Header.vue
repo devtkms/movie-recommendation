@@ -5,33 +5,31 @@
     </div>
 
     <div class="nav-container">
-      <!-- 🔽 ログイン＆登録ボタン -->
-      <div class="auth-buttons" v-if="!isLoggedIn">
-        <!-- loginページでなければ「ログイン」も表示 -->
-        <NuxtLink
-            v-if="route.path !== '/userRegister'"
-            to="/userRegister"
-            class="auth-button register-button"
-        >
-          新規登録
-        </NuxtLink>
-        <NuxtLink
-            v-if="route.path !== '/login'"
-            to="/login"
-            class="auth-button login-button"
-        >
-          ログイン
-        </NuxtLink>
-      </div>
-
-      <div class="auth-buttons" v-else>
+      <!-- ✅ ログアウトボタンだけ常時表示 -->
+      <div class="auth-buttons" v-if="isLoggedIn">
         <button class="auth-button logout-button" @click="logout">ログアウト</button>
       </div>
 
-      <!-- ハンバーガーメニュー -->
+      <!-- ✅ ハンバーガーメニュー -->
       <button class="hamburger" @click="toggleMenu">☰</button>
       <nav :class="{ open: menuOpen }" class="nav">
         <NuxtLink to="/" class="nav-link">ホーム</NuxtLink>
+        <template v-if="!isLoggedIn">
+          <NuxtLink
+              v-if="route.path !== '/userRegister'"
+              to="/userRegister"
+              class="nav-link"
+          >
+            新規登録
+          </NuxtLink>
+          <NuxtLink
+              v-if="route.path !== '/login'"
+              to="/login"
+              class="nav-link"
+          >
+            ログイン
+          </NuxtLink>
+        </template>
         <NuxtLink to="/contact" class="nav-link">お問い合わせ</NuxtLink>
         <NuxtLink to="/privacy" class="nav-link">プライバシーポリシー</NuxtLink>
         <NuxtLink to="/terms" class="nav-link">利用規約</NuxtLink>
@@ -186,20 +184,6 @@ const logout = async () => {
   margin-right: 12px; /* ナビとの間に少し余白もつけるなら */
 }
 
-/* ✅ 新しいクラスで色指定 */
-.register-button {
-  background-color: #10b981; /* 緑 */
-}
-.register-button:hover {
-  background-color: #059669;
-}
-
-.login-button {
-  background-color: #3b82f6; /* 青 */
-}
-.login-button:hover {
-  background-color: #2563eb;
-}
 .logout-button {
   background-color: #ef4444; /* 赤 */
 }
