@@ -43,6 +43,8 @@ import Header from '~/components/Header.vue'
 import Footer from '~/components/Footer.vue'
 
 const router = useRouter()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
 const form = reactive({
   nickname: '',
   category: '',
@@ -54,11 +56,11 @@ const handleConfirm = async () => {
   errorMessage.value = '' // エラーリセット
 
   try {
-    const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/contact/validate`, {
-    // const response = await fetch('http://localhost:8080/api/contact/validate', {
+    const response = await fetch(`${apiBase}/api/contact/validate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
+      body: JSON.stringify(form),
+      credentials: 'include' // ✅ 追加：JWT Cookie を送るために必須
     })
 
     if (!response.ok) {

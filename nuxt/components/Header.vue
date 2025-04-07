@@ -2,9 +2,33 @@
   <header class="header">
     <div class="logo-title">
       <img src="/images/logo.png" alt="MoviRecoロゴ" class="logo-image" />
-<!--      <h1 class="title">MoviReco</h1>-->
     </div>
+
     <div class="nav-container">
+      <!-- 🔽 ログイン＆登録ボタン -->
+      <div class="auth-buttons" v-if="!isLoggedIn">
+        <!-- loginページでなければ「ログイン」も表示 -->
+        <NuxtLink
+            v-if="route.path !== '/userRegister'"
+            to="/userRegister"
+            class="auth-button register-button"
+        >
+          新規登録
+        </NuxtLink>
+        <NuxtLink
+            v-if="route.path !== '/login'"
+            to="/login"
+            class="auth-button login-button"
+        >
+          ログイン
+        </NuxtLink>
+      </div>
+
+      <div class="auth-buttons" v-else>
+        <button class="auth-button logout-button" @click="logout">ログアウト</button>
+      </div>
+
+      <!-- ハンバーガーメニュー -->
       <button class="hamburger" @click="toggleMenu">☰</button>
       <nav :class="{ open: menuOpen }" class="nav">
         <NuxtLink to="/" class="nav-link">ホーム</NuxtLink>
@@ -16,10 +40,51 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
 const menuOpen = ref(false)
+const isLoggedIn = ref(false)
+const route = useRoute()
+const router = useRouter()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
+
 const toggleMenu = () => {
   menuOpen.value = !menuOpen.value
+}
+
+const checkLoginStatus = async () => {
+  try {
+    const res = await fetch(`${apiBase}/api/users/me`, {
+      method: 'GET',
+      credentials: 'include'
+    })
+
+    isLoggedIn.value = res.ok
+  } catch (err) {
+    isLoggedIn.value = false
+    console.error('ログイン状態の確認に失敗', err)
+  }
+}
+
+onMounted(() => {
+  checkLoginStatus()
+})
+
+const logout = async () => {
+  try {
+    await fetch(`${apiBase}/api/users/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    })
+
+    localStorage.removeItem('nickname') // 任意
+    isLoggedIn.value = false
+    router.push('/')
+  } catch (err) {
+    console.error('ログアウト失敗', err)
+  }
 }
 </script>
 
@@ -102,4 +167,43 @@ const toggleMenu = () => {
 .nav-link:hover {
   background-color: #f5f5f5;
 }
+
+.auth-button {
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  color: white;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 8px; /* 🔽 ボタン間のスペース（px単位で調整可） */
+  margin-right: 12px; /* ナビとの間に少し余白もつけるなら */
+}
+
+/* ✅ 新しいクラスで色指定 */
+.register-button {
+  background-color: #10b981; /* 緑 */
+}
+.register-button:hover {
+  background-color: #059669;
+}
+
+.login-button {
+  background-color: #3b82f6; /* 青 */
+}
+.login-button:hover {
+  background-color: #2563eb;
+}
+.logout-button {
+  background-color: #ef4444; /* 赤 */
+}
+.logout-button:hover {
+  background-color: #dc2626;
+}
+
 </style>

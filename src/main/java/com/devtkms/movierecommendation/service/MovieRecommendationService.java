@@ -5,11 +5,14 @@ import com.devtkms.movierecommendation.dto.MovieRecommendationRequestDto;
 import com.devtkms.movierecommendation.dto.MovieRecommendationResponseDto;
 import com.devtkms.movierecommendation.dto.MovieRecommendationResultDto;
 import com.devtkms.movierecommendation.entity.QuestionButtonLogEntity;
+import com.devtkms.movierecommendation.entity.UserEntity;
 import com.devtkms.movierecommendation.mapper.QuestionButtonLogMapper;
 import com.devtkms.movierecommendation.mapper.TagMasterMapper;
+import com.devtkms.movierecommendation.mapper.UserMapper;
 import com.devtkms.movierecommendation.response.TmdbResponse;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,15 +25,18 @@ public class MovieRecommendationService {
     private final TmdbApiClient tmdbApiClient;
     private final MovieSelectorService movieSelector;
     private final QuestionButtonLogMapper questionButtonLogMapper;
+    private final UserMapper userMapper;
 
     public MovieRecommendationService(TagMasterMapper tagMasterMapper,
                                       TmdbApiClient tmdbApiClient,
                                       MovieSelectorService movieSelector,
-                                      QuestionButtonLogMapper questionButtonLogMapper) {
+                                      QuestionButtonLogMapper questionButtonLogMapper,
+                                      UserMapper userMapper) {
         this.tagMasterMapper = tagMasterMapper;
         this.tmdbApiClient = tmdbApiClient;
         this.movieSelector = movieSelector;
         this.questionButtonLogMapper = questionButtonLogMapper;
+        this.userMapper = userMapper;
     }
 
     /**
@@ -67,5 +73,38 @@ public class MovieRecommendationService {
 
         // 推薦結果DTOとして返却
         return new MovieRecommendationResultDto(selectedMovies);
+    }
+
+    /**
+     *
+     *
+     * @return トレンド映画のリストを含む結果DTO
+     */
+    public MovieRecommendationResultDto getPersonalizeMovies(Long userId) {
+        UserEntity user = userMapper.findById(userId);
+        Long favoriteMovieId = user.getFavoriteMovieId();
+
+        // favoriteMovieId が未設定の場合はトレンドのみ返す
+        if (favoriteMovieId == null) {
+            TmdbResponse trendResponse = tmdbApiClient.fetchRandomTrendingMovies();
+            List<MovieRecommendationResponseDto> trending = trendResponse.toMovieDtoList();
+            return new MovieRecommendationResultDto(trending);
+        }
+
+        // レコメンド取得
+        TmdbResponse recommendResponse = tmdbApiClient.fetchRecommendationsByMovieId(favoriteMovieId);
+
+        // トレンド映画取得
+        TmdbResponse trendResponse = tmdbApiClient.fetchRandomTrendingMovies();
+
+        // DTOへ変換
+        List<MovieRecommendationResponseDto> recommended = recommendResponse.toMovieDtoList();
+        List<MovieRecommendationResponseDto> trending = trendResponse.toMovieDtoList();
+
+        // 合体 & シャッフル
+        recommended.addAll(trending);
+        Collections.shuffle(recommended);
+
+        return new MovieRecommendationResultDto(recommended);
     }
 }

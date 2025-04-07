@@ -10,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
 
 @Component
@@ -68,6 +69,57 @@ public class TmdbApiClient {
 
         ResponseEntity<TmdbWatchProviderResponse> response =
                 restTemplate.getForEntity(url, TmdbWatchProviderResponse.class);
+        return response.getBody();
+    }
+
+    /**
+     *
+     *
+     * @return
+     */
+    public TmdbResponse fetchRecommendationsByMovieId(Long movieId) {
+        String url = UriComponentsBuilder
+                .fromHttpUrl("https://api.themoviedb.org/3/movie/" + movieId + "/recommendations")
+                .queryParam("api_key", apiKey)
+                .queryParam("language", "ja-JP")
+                .build()
+                .toUriString();
+
+        logger.info("🎯 TMDb レコメンド URL: " + url);
+
+        ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
+        return response.getBody();
+    }
+
+    public TmdbResponse searchMoviesByTitle(String title) {
+        String url = UriComponentsBuilder.fromHttpUrl("https://api.themoviedb.org/3/search/movie")
+                .queryParam("api_key", apiKey)
+                .queryParam("query", title)
+                .queryParam("language", "ja-JP")
+                .build()
+                .toUriString();
+
+        logger.info("🔍 TMDb 映画タイトル検索 URL: " + url);
+
+        ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
+        return response.getBody();
+    }
+
+    public TmdbResponse fetchRandomTrendingMovies() {
+        String timeWindow = ThreadLocalRandom.current().nextBoolean() ? "day" : "week";
+        int page = ThreadLocalRandom.current().nextInt(1, 4); // 1〜3
+
+        String url = UriComponentsBuilder
+                .fromHttpUrl("https://api.themoviedb.org/3/trending/movie/" + timeWindow)
+                .queryParam("api_key", apiKey)
+                .queryParam("language", "ja-JP")
+                .queryParam("page", page)
+                .build()
+                .toUriString();
+
+        logger.info("🔥 TMDb ランダムトレンド URL: " + url);
+
+        ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
         return response.getBody();
     }
 }

@@ -8,10 +8,11 @@ export default defineNuxtConfig({
   devServer: {
     port: Number(process.env.PORT) || 3000, // ✅ PORT を number に変換
   },
-  // runtimeConfig: {
-  //   public: {
-  //     apiBase: process.env.API_BASE_URL || "http://localhost:8080/api",  // ✅ 環境変数がなければローカル用
-  //   }
-  // }
+  runtimeConfig: {
+    public: {
+      // apiBase: 'http://localhost:8080'　// 開発環境
+      apiBase: 'https://movie-recommendation-uybc.onrender.com'　// 本番環境
+    }
+  }
 });
 

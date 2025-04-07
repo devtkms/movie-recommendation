@@ -1,91 +1,103 @@
-  <template>
-    <div class="container">
-      <Header />
-      <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
+<template>
+  <div class="container">
+    <Header />
+    <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
 
-      <div v-if="!currentMovie">
-        <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
-          <label>{{ label }}</label>
-          <div class="button-group">
-            <button
-                v-for="option in options[key]"
-                :key="option.value"
-                :class="[
-                'button',
-                key === 'mood' ? getMoodClass(option.value) : '',
-                key === 'tone' ? getToneClass(option.value) : '',
-                key === 'after' ? getAfterClass(option.value) : '',
-                { selected: selectedOptions[key] === option.value }
-              ]"
-                @click="selectedOptions[key] = option.value"
-            >
-              {{ option.label }}
-            </button>
-          </div>
+    <div v-if="!currentMovie">
+      <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
+        <label>{{ label }}</label>
+        <div class="button-group">
+          <button
+              v-for="option in options[key]"
+              :key="option.value"
+              :class="[
+              'button',
+              key === 'mood' ? getMoodClass(option.value) : '',
+              key === 'tone' ? getToneClass(option.value) : '',
+              key === 'after' ? getAfterClass(option.value) : '',
+              { selected: selectedOptions[key] === option.value }
+            ]"
+              @click="selectedOptions[key] = option.value"
+          >
+            {{ option.label }}
+          </button>
         </div>
-
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
-        <p v-if="isSearchExhausted" class="exhausted-message">この条件での検索結果はすべて表示されました。</p>
-
-        <button @click="fetchMovies" :disabled="loading" class="search-button">映画を探す</button>
       </div>
 
-      <div v-if="loading">ロード中...</div>
+      <p class="error-message">
+        <span v-if="errorMessage">{{ errorMessage }}</span>
+      </p>
+      <p v-if="isSearchExhausted" class="exhausted-message">この条件での検索結果はすべて表示されました。</p>
 
-      <div v-if="currentMovie" class="movie-results">
-        <div class="selected-options">
-          <div class="selected-option" :class="getMoodClass(selectedOptions.mood)">
-            {{ getMoodLabel(selectedOptions.mood) }}
-          </div>
-          <div class="selected-option" :class="getToneClass(selectedOptions.tone)">
-            {{ getToneLabel(selectedOptions.tone) }}
-          </div>
-          <div class="selected-option" :class="getAfterClass(selectedOptions.after)">
-            {{ getAfterLabel(selectedOptions.after) }}
-          </div>
+      <button @click="fetchMovies" :disabled="loading" class="search-button">映画を探す</button>
+    </div>
+
+    <div v-if="loading">ロード中...</div>
+
+    <div v-if="currentMovie" class="movie-results">
+      <div class="selected-options">
+        <div class="selected-option" :class="getMoodClass(selectedOptions.mood)">
+          {{ getMoodLabel(selectedOptions.mood) }}
         </div>
-
-        <div
-            class="movie-card"
-            @touchstart="onTouchStart"
-            @touchmove="onTouchMove"
-            @touchend="onTouchEnd"
-            :style="cardStyle"
-        >
-          <h3 class="movie-title">{{ currentMovie.title }}</h3>
-          <div class="poster-wrapper">
-            <ArrowLeftCircleIcon class="icon-left" />
-            <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
-            <ArrowRightCircleIcon class="icon-right" />
-          </div>
-          <div class="overview-container">
-            <button
-                class="overview-button"
-                :disabled="!currentMovie.overview"
-                :class="{ disabled: !currentMovie.overview }"
-                @click="showOverview(currentMovie.overview)"
-            >
-              {{ currentMovie.overview ? '概要を見る' : '概要なし' }}
-            </button>
-
-            <button class="overview-button action" @click="showProviders">
-              配信サービス
-            </button>
-          </div>
+        <div class="selected-option" :class="getToneClass(selectedOptions.tone)">
+          {{ getToneLabel(selectedOptions.tone) }}
         </div>
-
-        <button @click="resetSearch" class="search-button">検索画面に戻る</button>
+        <div class="selected-option" :class="getAfterClass(selectedOptions.after)">
+          {{ getAfterLabel(selectedOptions.after) }}
+        </div>
       </div>
 
-      <OverviewModal :show="showModal" :content="modalContent" @close="closeModal" />
-      <WatchProvidersModal
-          :show="showProviderModal"
-          :providers="providerList"
-          @close="showProviderModal = false"
-      />
+      <div
+          class="movie-card"
+          @touchstart="onTouchStart"
+          @touchmove="onTouchMove"
+          @touchend="onTouchEnd"
+          :style="cardStyle"
+      >
+        <h3 class="movie-title">{{ currentMovie.title }}</h3>
+        <div class="poster-wrapper">
+          <ArrowLeftCircleIcon class="icon-left" />
+          <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
+          <ArrowRightCircleIcon class="icon-right" />
+        </div>
+        <div class="overview-container">
+          <button
+              class="overview-button"
+              :disabled="!currentMovie.overview"
+              :class="{ disabled: !currentMovie.overview }"
+              @click="showOverview(currentMovie.overview)"
+          >
+            {{ currentMovie.overview ? '概要' : '概要' }}
+          </button>
+          <button class="overview-button action" @click="showProviders">
+            配信
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- モーダルなど -->
+    <OverviewModal :show="showModal" :content="modalContent" @close="closeModal" />
+    <WatchProvidersModal
+        :show="showProviderModal"
+        :providers="providerList"
+        @close="showProviderModal = false"
+    />
+
+    <div v-if="showLoginRequiredModal" class="login-alert-card">
+      <h3>ようこそ MoviReco へ 👋</h3>
+      <p>この機能を使うには<br><strong>新規登録</strong>または<strong>ログイン</strong>が必要です。</p>
+      <button class="login-alert-button" @click="redirectToLogin">登録 / ログインする</button>
+    </div>
+
+    <!-- ✅ タブとフッター -->
+    <div class="bottom-bar">
+      <TabBar :current="'main'" @require-login="showLoginRequiredModal = true" />
       <Footer />
     </div>
-  </template>
+  </div>
+</template>
 
   <script setup>
   import { ref, onMounted, computed } from 'vue';
@@ -93,6 +105,8 @@
   import Footer from '~/components/Footer.vue';
   import OverviewModal from '~/components/OverviewModal.vue';
   import WatchProvidersModal from '~/components/WatchProvidersModal.vue';
+  import TabBar from '~/components/TabBar.vue';
+  import { useRouter } from 'vue-router'
   import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
 
   /* ------------------------------
@@ -111,6 +125,17 @@
   const modalContent = ref("");
   const providerList = ref([]);
   const showProviderModal = ref(false);
+
+  const router = useRouter()
+  const showLoginRequiredModal = ref(false)
+
+  const config = useRuntimeConfig()
+  const apiBase = config.public.apiBase
+
+  const redirectToLogin = () => {
+    showLoginRequiredModal.value = false
+    router.push('/login')
+  }
 
   /* ------------------------------
     ライフサイクル
@@ -143,8 +168,7 @@
     if (!currentMovie.value?.id) return;
 
     try {
-      const res = await fetch(`https://movie-recommendation-uybc.onrender.com/movie/${currentMovie.value.id}/watch/providers`);
-      // const res = await fetch(`http://localhost:8080/movie/${currentMovie.value.id}/watch/providers`);
+      const res = await fetch(`${apiBase}/movie/${currentMovie.value.id}/watch/providers`);
       if (!res.ok) throw new Error("配信サービス取得に失敗");
 
       const providers = await res.json();
@@ -280,14 +304,14 @@
     }
 
     try {
-      const response = await fetch(`https://movie-recommendation-uybc.onrender.com/api/recommendations`, {
-      // const response = await fetch(`http://localhost:8080/api/recommendations`, {
+      const response = await fetch(`${apiBase}/api/recommendations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...selectedOptions.value,
           isMyData: localStorage.getItem('isDevUser') === 'true'
         }),
+        credentials: 'include'
       });
 
       if (!response.ok) throw new Error("API リクエストが失敗しました");
@@ -333,26 +357,16 @@
     }
   };
 
-  const resetSearch = () => {
-    moviePool.value = [];
-    currentMovie.value = null;
-    currentIndex.value = 0;
-    isSearchExhausted.value = false;
-  };
-
-  const handleSearchButtonClick = () => {
-    fetchMovies();
-  };
   </script>
-
-  <!-- CSSは別ファイル or style scoped にて対応中 -->
-
 
   <style scoped>
   .container {
     max-width: 600px;
     margin: auto;
     text-align: center;
+    padding-bottom: 100px;
+    padding-top: 40px; /* ← 上部余白を追加 */
+    position: relative;
   }
 
   .form-group {
@@ -398,14 +412,6 @@
   button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
-  }
-
-  .movie-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-    width: 100%;
   }
 
   .movie-list img {
@@ -472,6 +478,7 @@
   }
 
   .error-message {
+    min-height: 20px; /* 高さを固定 */
     color: red;
     text-align: center;
     font-weight: bold;
@@ -489,7 +496,7 @@
     border: none;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out;
-    margin-top: 60px;
+    margin-top: 20px;
   }
 
   .search-button:hover {
@@ -499,26 +506,6 @@
   .search-button:disabled {
     background-color: #999;
     cursor: not-allowed;
-  }
-
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    max-width: 400px;
   }
 
   .modal-content p {
@@ -532,12 +519,6 @@
     justify-content: center;
     min-height: 40px;
     gap: 12px;
-  }
-
-  .no-overview {
-    color: #777;
-    font-style: italic;
-    margin-top: 5px;
   }
 
   .overview-button {
@@ -568,26 +549,6 @@
     background-color: #ccc !important;
     cursor: not-allowed;
     color: #666;
-  }
-
-  .button-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  .category-title {
-    width: 100%;
-    text-align: center;
-    font-size: 25px;
-    font-weight: bold;
-    margin-top: 30px;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
   }
 
   .selected-options {
@@ -698,4 +659,73 @@
   .filter-toggle:hover {
     opacity: 0.8;
   }
+
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+    z-index: 100;
+    margin-top: 40px; /* ← この行を追加 */
+  }
+
+  .login-alert-card {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fff;
+    color: #333;
+    padding: 20px 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    font-size: 15px;
+    text-align: center;
+    animation: fadeInUp 0.3s ease-out;
+    z-index: 9999;
+    width: 90%;
+    max-width: 300px;
+  }
+
+  .login-alert-card h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+
+  .login-alert-card p {
+    font-size: 14px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  .login-alert-button {
+    background-color: #3b82f6;
+    color: white;
+    font-weight: bold;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .login-alert-button:hover {
+    background-color: #2563eb;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
   </style>
