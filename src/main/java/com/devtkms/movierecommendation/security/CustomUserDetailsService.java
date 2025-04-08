@@ -17,24 +17,24 @@ public class CustomUserDetailsService implements UserDetailsService {
     /**
      * Loads user details by username (user ID).
      *
-     * @param email the username (user ID) of the user to be loaded
+     * @param userId the username (user ID) of the user to be loaded
      * @return UserDetails containing the user's information
      * @throws UsernameNotFoundException if the user cannot be found
      */
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
         try {
-            UserEntity user = userMapper.selectUser(email); // Retrieve user from the database
+            UserEntity user = userMapper.selectUser(userId); // Retrieve user from the database
             if (user == null) {
-                throw new UsernameNotFoundException("User not found with email: " + email);
+                throw new UsernameNotFoundException("User not found with userId: " + userId);
             }
 
             return new CustomUserDetails(user);
 
         } catch (NumberFormatException e) {
-            throw new UsernameNotFoundException("Invalid userId format: " + email, e);
+            throw new UsernameNotFoundException("Invalid userId format: " + userId, e);
         } catch (Exception e) {
-            throw new UsernameNotFoundException("Error occurred while fetching user with userId: " + email, e);
+            throw new UsernameNotFoundException("Error occurred while fetching user with userId: " + userId, e);
         }
     }
 }

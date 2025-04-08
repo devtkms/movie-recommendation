@@ -7,13 +7,13 @@
         <h1 class="login-title">ログイン</h1>
 
         <form @submit.prevent="submitLogin" class="login-form">
-          <label class="form-label">メールアドレス</label>
+          <label class="form-label">ユーザーID</label>
           <input
-              v-model="email"
-              type="email"
+              v-model="userId"
+              type="text"
               required
               class="form-input"
-              placeholder="example@example.com"
+              placeholder="yourname123"
           />
 
           <label class="form-label">パスワード</label>
@@ -47,7 +47,7 @@ import Header from '~/components/Header.vue'
 import Footer from '~/components/Footer.vue'
 import { useRouter } from 'vue-router'
 
-const email = ref('')
+const userId = ref('')
 const password = ref('')
 const error = ref(null)
 const router = useRouter()
@@ -59,13 +59,13 @@ const submitLogin = async () => {
     const response = await $fetch(`${apiBase}/api/users/login`, {
       method: 'POST',
       body: {
-        email: email.value,
+        userId: userId.value,
         password: password.value
       },
-      credentials: 'include' // ✅ Cookie送受信のために必須
+      credentials: 'include'
     })
 
-    // ✅ login直後にnickname取得
+    // 以降は変更不要
     const res = await fetch(`${apiBase}/api/users/me`, {
       method: 'GET',
       credentials: 'include'
@@ -80,7 +80,7 @@ const submitLogin = async () => {
     await router.push('/')
   } catch (err) {
     console.error('ログインエラー:', err)
-    error.value = 'ログインに失敗しました。メールアドレスまたはパスワードを確認してください。'
+    error.value = 'ログインに失敗しました。ユーザーIDまたはパスワードを確認してください。'
   }
 }
 </script>

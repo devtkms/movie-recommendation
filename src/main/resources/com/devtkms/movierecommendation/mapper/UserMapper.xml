@@ -8,7 +8,7 @@
             useGeneratedKeys="true"
             keyProperty="id">
         INSERT INTO users (
-            email,
+            user_id,
             password,
             nickname,
             use_provider_name,
@@ -22,7 +22,7 @@
             updated_at
         )
         VALUES (
-                   #{email},
+                   #{userId},
                    #{password},
                    #{nickname},
                    #{useProviderName},
@@ -37,9 +37,8 @@
                )
     </insert>
 
-    <!-- メールアドレスでユーザーを検索 -->
     <select id="selectUser" parameterType="String" resultType="com.devtkms.movierecommendation.entity.UserEntity">
-        SELECT * FROM users WHERE email = #{email}
+        SELECT * FROM users WHERE user_id = #{userId}
     </select>
 
     <select id="findById" parameterType="long" resultType="com.devtkms.movierecommendation.entity.UserEntity">

@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class UserRegisterRequestDto {
-    private String email;
+    private String userId;
     private String password;
     private String nickname;
 

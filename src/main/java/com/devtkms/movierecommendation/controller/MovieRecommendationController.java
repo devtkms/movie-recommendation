@@ -53,9 +53,9 @@ public class MovieRecommendationController {
      */
     @GetMapping("/personalize")
     public ResponseEntity<MovieRecommendationResultDto> getPersonalizeMovies(Authentication authentication) {
-        // トークンに含まれる email からユーザー情報を取得
-        String email = authentication.getName(); // 通常は email
-        UserEntity user = userService.findByEmail(email);
+        // トークンに含まれる userId からユーザー情報を取得
+        String userId = authentication.getName();
+        UserEntity user = userService.findByUserId(userId);
 
         MovieRecommendationResultDto response = recommendationService.getPersonalizeMovies(user.getId());
 

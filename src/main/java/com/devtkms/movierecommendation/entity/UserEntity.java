@@ -8,7 +8,7 @@ import java.util.UUID;
 @Data
 public class UserEntity {
     private Long id;
-    private String email;
+    private String userId;
     private String password;
     private String nickname;
     private String useProviderName;

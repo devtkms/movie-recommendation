@@ -22,8 +22,8 @@
 
         public UserEntity registerUser(UserRegisterRequestDto userDto) {
             // メールの重複チェック
-            if (userMapper.selectUser(userDto.getEmail()) != null) {
-                throw new RuntimeException("このメールアドレスは既に登録されています");
+            if (userMapper.selectUser(userDto.getUserId()) != null) {
+                throw new RuntimeException("このユーザーIDは既に登録されています");
             }
 
             // パスワードをハッシュ化
@@ -31,7 +31,7 @@
 
             // ユーザーエンティティにマッピング
             UserEntity user = new UserEntity();
-            user.setEmail(userDto.getEmail());
+            user.setUserId(userDto.getUserId());
             user.setPassword(hashedPassword);
             user.setNickname(userDto.getNickname());
             user.setUseProviderName(userDto.getUseProviderName());
@@ -49,8 +49,8 @@
             return user;
         }
 
-        public UserEntity findByEmail(String email) {
-            UserEntity user = userMapper.selectUser(email);
+        public UserEntity findByUserId(String userId) {
+            UserEntity user = userMapper.selectUser(userId);
             if (user == null) {
                 throw new RuntimeException("ユーザーが見つかりません");
             }

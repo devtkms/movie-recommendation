@@ -53,7 +53,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         final String jwt = extractToken(request); // 👈 修正ポイント：トークンの取得を関数化
-        final String userEmail;
+        final String userId;
 
         if (jwt == null) {
             filterChain.doFilter(request, response);
@@ -61,10 +61,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            userEmail = jwtService.extractUsername(jwt);
+            userId = jwtService.extractUsername(jwt);
 
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userId);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

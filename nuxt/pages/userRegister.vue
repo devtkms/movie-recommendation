@@ -105,7 +105,7 @@
 
           <template v-else>
             <div class="space-y-2 text-sm text-gray-700">
-              <p><strong>Email:</strong> {{ form.email }}</p>
+              <p><strong>ユーザーID:</strong> {{ form.userId }}</p>
               <p><strong>パスワード:</strong> ●●●●（非表示）</p>
               <p><strong>ニックネーム:</strong> {{ form.nickname }}</p>
               <p><strong>配信サービス:</strong> {{ form.useProviderName }}</p>
@@ -151,7 +151,7 @@ const providerMap = {
 }
 
 const form = ref({
-  email: '',
+  userId: '',
   password: '',
   nickname: '',
   useProviderName: '',
@@ -175,7 +175,7 @@ const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 
 const formItems = {
-  email: { label: 'Email', type: 'input', inputType: 'email', required: true },
+  userId: { label: 'ユーザーID', type: 'input', inputType: 'text', required: true },
   password: { label: 'パスワード', type: 'input', inputType: 'password', required: true },
   nickname: { label: 'ニックネーム', type: 'input', inputType: 'text', required: true },
   useProviderName: {
@@ -226,11 +226,6 @@ const selectMovie = (movie) => {
   searchResults.value = []
 }
 
-const validateEmail = (email) => {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return re.test(email)
-}
-
 const validatePassword = (password) => {
   return password.length >= 6 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password)
 }
@@ -240,13 +235,15 @@ const goToConfirm = () => {
   errorFavoriteMovie.value = ''
   errorAgree.value = ''
 
-  if (!form.value.email || !form.value.password || !form.value.nickname) {
+  if (!form.value.userId  || !form.value.password || !form.value.nickname) {
     errorRequiredFields.value = '必須項目を入力してください'
     return
   }
 
-  if (!validateEmail(form.value.email)) {
-    errorRequiredFields.value = '正しいメールアドレス形式で入力してください'
+  // ユーザーIDの形式チェック（英数字4〜20文字）
+  const validUserId = /^[a-z0-9]{4,20}$/i
+  if (!validUserId.test(form.value.userId)) {
+    errorRequiredFields.value = 'ユーザーIDは4〜20文字の英数字で入力してください'
     return
   }
 

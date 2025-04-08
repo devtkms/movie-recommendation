@@ -9,14 +9,14 @@ import java.util.Collections;
 
 public class CustomUserDetails implements UserDetails {
 
-    private final String email;  // ユーザーのメールアドレス
+    private final String userId;  // ユーザーのユーザーID
     private final String password; // ユーザーのパスワード
 
     public CustomUserDetails(UserEntity user) {
-        if (user == null || user.getEmail() == null || user.getPassword() == null) {
+        if (user == null || user.getUserId() == null || user.getPassword() == null) {
             throw new IllegalArgumentException("UserEntity or its fields cannot be null");
         }
-        this.email = user.getEmail();
+        this.userId = user.getUserId();
         this.password = user.getPassword();
     }
 
@@ -32,7 +32,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email; // Spring Security のユーザー名は email を返す
+        return userId; // Spring Security のユーザー名は userId を返す
     }
 
     @Override

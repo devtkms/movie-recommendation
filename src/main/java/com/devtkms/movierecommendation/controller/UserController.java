@@ -36,7 +36,7 @@ public class UserController {
             UserEntity user = userService.registerUser(userDto);
 
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(userDto.getEmail(), userDto.getPassword())
+                    new UsernamePasswordAuthenticationToken(userDto.getUserId(), userDto.getPassword())
             );
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -67,12 +67,12 @@ public class UserController {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            loginRequestDto.getEmail(),
+                            loginRequestDto.getUserId(),
                             loginRequestDto.getPassword())
             );
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            UserEntity user = userService.findByEmail(loginRequestDto.getEmail());
+            UserEntity user = userService.findByUserId(loginRequestDto.getUserId());
 
             String token = jwtService.generateToken(userDetails).token();
 
@@ -116,7 +116,7 @@ public class UserController {
         }
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        UserEntity user = userService.findByEmail(userDetails.getUsername());
+        UserEntity user = userService.findByUserId(userDetails.getUsername());
         return ResponseEntity.ok(new LoginResponseDto(user.getId(), null, user.getNickname()));
     }
 }
