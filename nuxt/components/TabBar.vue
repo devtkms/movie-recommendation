@@ -4,7 +4,10 @@
         to="/"
         class="tab-button"
         :class="{ active: current === 'main' }"
-    >メイン</NuxtLink>
+        @click.prevent="emit('click-main')"
+    >
+      メイン
+    </NuxtLink>
 
     <a
         href="#"
@@ -22,7 +25,7 @@ const props = defineProps({
   current: String
 })
 
-const emit = defineEmits(['require-login'])
+const emit = defineEmits(['require-login', 'click-main'])
 
 const handleRecommendClick = async () => {
   // すでに recommend にいるなら何もしない

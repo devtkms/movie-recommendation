@@ -4,8 +4,9 @@
       <Header />
       <TabBar
           :current="'main'"
-          @require-login="showLoginRequiredModal = true">
-      </TabBar>
+          @require-login="showLoginRequiredModal = true"
+          @click-main="resetToSearch"
+      />
     </div>
     <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
 
@@ -144,6 +145,13 @@
   const redirectToLogin = () => {
     showLoginRequiredModal.value = false
     router.push('/login')
+  }
+
+  const resetToSearch = () => {
+    currentMovie.value = null
+    currentIndex.value = 0
+    isSearchExhausted.value = false
+    errorMessage.value = ""
   }
 
   /* ------------------------------
