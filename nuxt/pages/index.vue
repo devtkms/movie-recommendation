@@ -100,6 +100,7 @@
       <div class="login-alert-card" @click.stop>
         <h3>ようこそ MoviReco へ 👋</h3>
         <p>この機能を使うには<br><strong>新規登録</strong>または<strong>ログイン</strong>が必要です。</p>
+        <p>お好きな<strong>ユーザーID</strong>と<strong>パスワード</strong>で<br>気軽にご登録いただけます。</p>
         <button class="login-alert-button" @click="redirectToLogin">登録 / ログインする</button>
       </div>
     </div>
