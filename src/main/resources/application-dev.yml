@@ -12,6 +12,7 @@ logging:
     root: INFO
     com.devtkms.devmatchapp: DEBUG
     org.apache.ibatis: DEBUG
+    com.devtkms.movierecommendation.security.JwtAuthenticationFilter: WARN
 
 tmdb:
   api:
