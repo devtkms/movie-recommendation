@@ -1,5 +1,6 @@
 package com.devtkms.movierecommendation.client;
 
+import com.devtkms.movierecommendation.dto.MovieOverviewResponseDto;
 import com.devtkms.movierecommendation.response.TmdbResponse;
 import com.devtkms.movierecommendation.response.TmdbWatchProviderResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,8 +11,10 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Component
 public class TmdbApiClient {
@@ -121,5 +124,31 @@ public class TmdbApiClient {
 
         ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
         return response.getBody();
+    }
+
+    @SuppressWarnings("unchecked")
+    public MovieOverviewResponseDto fetchMovieOverview(Long movieId) {
+        String url = UriComponentsBuilder
+                .fromHttpUrl("https://api.themoviedb.org/3/movie/" + movieId)
+                .queryParam("api_key", apiKey)
+                .queryParam("language", "ja-JP")
+                .build()
+                .toUriString();
+
+        logger.info("📝 TMDb 概要取得 URL: " + url);
+
+        Map<String, Object> result = restTemplate.getForObject(url, Map.class);
+
+        String overview = (String) result.get("overview");
+        String releaseDate = (String) result.get("release_date");
+        Integer runtime = (Integer) result.get("runtime");
+
+        List<Map<String, String>> countriesRaw = (List<Map<String, String>>) result.get("production_countries");
+        List<String> countries = countriesRaw == null ? List.of() :
+                countriesRaw.stream()
+                        .map(c -> c.get("name"))
+                        .collect(Collectors.toList());
+
+        return new MovieOverviewResponseDto(overview, releaseDate, runtime, countries);
     }
 }

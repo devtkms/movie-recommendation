@@ -24,14 +24,12 @@
         <div class="overview-container">
           <button
               class="overview-button"
-              :disabled="!currentMovie.overview"
-              :class="{ disabled: !currentMovie.overview }"
               @click="showOverview(currentMovie.overview)"
           >
-            {{ currentMovie.overview ? '概要を見る' : '概要なし' }}
+            概要
           </button>
           <button class="overview-button action" @click="showProviders">
-            配信サービス
+            配信
           </button>
         </div>
       </div>
@@ -77,9 +75,37 @@ const isAuthenticated = ref(false)
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 
-const showOverview = (overview) => {
-  modalContent.value = overview;
-  showModal.value = true;
+const showOverview = async () => {
+  if (!currentMovie.value?.id) return;
+
+  try {
+    const res = await fetch(`${apiBase}/api/movie/overview`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ movieId: currentMovie.value.id })
+    });
+
+    if (!res.ok) throw new Error("概要取得に失敗しました");
+
+    const data = await res.json();
+
+    const { overview, releaseDate, runtime, productionCountries } = data;
+    let overviewText = '';
+
+    if (overview) overviewText += `📝 あらすじ\n${overview}\n\n`;
+    if (releaseDate) overviewText += `📅 公開日: ${releaseDate}\n`;
+    if (runtime) overviewText += `⏱ 上映時間: ${runtime}分\n`;
+    if (productionCountries?.length)
+      overviewText += `🌍 制作国: ${productionCountries.join(', ')}\n`;
+
+    modalContent.value = overviewText.trim();
+  } catch (err) {
+    console.error("❌ 概要取得エラー:", err);
+    modalContent.value = "映画の概要を取得できませんでした。";
+  } finally {
+    showModal.value = true;
+  }
 };
 
 const showLoginModal = () => {
@@ -94,7 +120,10 @@ const showProviders = async () => {
   if (!currentMovie.value?.id) return;
 
   try {
-    const res = await fetch(`${apiBase}/movie/${currentMovie.value.id}/watch/providers`);
+    const res = await fetch(`${apiBase}/movie/${currentMovie.value.id}/watch/providers`, {
+      method: 'GET',
+      credentials: 'include',
+    });
     if (!res.ok) throw new Error("配信サービス取得に失敗");
 
     const providers = await res.json();
@@ -149,7 +178,7 @@ const fetchRecommendedMovies = async () => {
   try {
     const response = await fetch(`${apiBase}/api/recommendations/personalize`, {
       method: 'GET',
-      credentials: 'include' // ✅ Cookie（JWT）を送信
+      credentials: 'include'
     });
 
     if (!response.ok) {
