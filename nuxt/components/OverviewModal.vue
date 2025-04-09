@@ -76,9 +76,12 @@ defineEmits(['close']);
   border-radius: 12px;
   max-width: 400px;
   width: 90%;
+  max-height: 60vh; /* ← 高さ固定（画面高の80%） */
+  overflow-y: auto; /* ← 内容が多ければ縦スクロール */
   text-align: left;
   font-size: 14px;
   line-height: 1.7;
+  box-sizing: border-box; /* ← パディング込みで高さ管理 */
 }
 
 .overview-block {
