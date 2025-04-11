@@ -80,9 +80,11 @@ public class UserController {
             ResponseCookie cookie = ResponseCookie.from("token", token)
                     .httpOnly(true)
                     .secure(true) // 本番環境は true（HTTPSのみ）
+//                    .secure(false) // ローカルは false（HTTPSのみ）
                     .path("/")
                     .maxAge(60 * 60 * 24 * 7) // 7日間
-                    .sameSite("None")
+                    .sameSite("None") // 本番環境は None（HTTPSのみ）
+//                    .sameSite("Lax") // 本番環境は Lax（HTTPSのみ）
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
