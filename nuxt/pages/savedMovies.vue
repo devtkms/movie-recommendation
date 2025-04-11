@@ -1,20 +1,34 @@
 <template>
-  <div class="container">
-    <Header />
-    <h2 class="page-title">📌 気になる映画リスト</h2>
-
-    <div v-if="loading" class="loading">読み込み中...</div>
-    <div v-else-if="movies.length === 0" class="empty-message">
-      まだ気になる映画はありません。
+  <div class="wrapper">
+    <!-- 固定ヘッダー -->
+    <div class="header-fixed">
+      <Header />
+      <TabBar
+          :current="currentTab"
+          @click-main="resetToSearch"
+          @click-recommend="handleClickRecommendTab"
+          @click-save="handleClickSaveTab"
+          @require-login="handleRequireLogin"
+      />
     </div>
-    <div v-else class="movie-list">
-      <div v-for="movie in movies" :key="movie.movieId" class="movie-card">
-        <img :src="getMoviePoster(movie.posterPath)" alt="poster" class="poster" />
-        <div class="title">{{ movie.title }}</div>
+
+    <!-- スクロール可能な映画リスト + 固定で表示されるフッター -->
+    <div class="main-scroll-area">
+
+
+      <div v-if="loading" class="loading">読み込み中...</div>
+      <div v-else-if="movies.length === 0" class="empty-message">
+        まだ気になる映画はありません。
       </div>
+      <div v-else class="movie-list">
+        <div v-for="movie in movies" :key="movie.movieId" class="movie-card">
+          <img :src="getMoviePoster(movie.posterPath)" alt="poster" class="poster" />
+          <div class="title">{{ movie.title }}</div>
+          <BookmarkSlashIcon class="bookmark-icon" @click="deleteMovie(movie.movieId)" />
+        </div>
+      </div>
+        <Footer />
     </div>
-
-    <Footer />
   </div>
 </template>
 
@@ -23,6 +37,8 @@ import { ref, onMounted } from 'vue';
 import Header from '~/components/Header.vue';
 import Footer from '~/components/Footer.vue';
 import { useRouter } from 'vue-router';
+import TabBar from "~/components/TabBar.vue";
+import { BookmarkSlashIcon } from '@heroicons/vue/24/outline'
 
 const movies = ref([]);
 const loading = ref(true);
@@ -30,18 +46,42 @@ const config = useRuntimeConfig();
 const apiBase = config.public.apiBase;
 const router = useRouter();
 
+const currentTab = ref('save')  // 例として現在タブを "save" に
+
+const resetToSearch = () => {
+  router.push('/')
+}
+
+const handleClickRecommendTab = () => {
+  router.push('/recommend')
+}
+
+const handleClickSaveTab = () => {
+  router.push('/savedMovies')
+}
+
+const handleRequireLogin = (type) => {
+  // loginModalType とかを使ってモーダル表示
+}
+
 onMounted(async () => {
   try {
     const res = await fetch(`${apiBase}/api/movies/saved`, {
       credentials: 'include'
     });
 
-    if (res.status === 401) {
-      router.push('/login');
+    if (!res.ok) {
+      if (res.status === 403) {
+        router.push('/login');
+        return;
+      }
+
+      const text = await res.text();
+      console.error('❌ APIエラー:', res.status, text);
       return;
     }
 
-    const data = await res.json();
+    const data = await res.json(); // ← ここはOKな時だけ呼ぶ
     movies.value = data || [];
   } catch (e) {
     console.error('❌ 保存映画取得エラー:', e);
@@ -50,53 +90,123 @@ onMounted(async () => {
   }
 });
 
+const deleteMovie = async (movieId) => {
+  try {
+    await fetch(`${apiBase}/api/movies/delete/${movieId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    // ローカル状態からも削除
+    movies.value = movies.value.filter(movie => movie.movieId !== movieId);
+  } catch (e) {
+    console.error('❌ 削除エラー:', e);
+  }
+};
+
 const getMoviePoster = (path) =>
     path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/300x450';
 </script>
 
 <style scoped>
-.container {
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header-fixed {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.main-scroll-area {
+  margin-top: 100px; /* ← 60px → 100px に変更してヘッダーの高さを避ける */
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
   max-width: 600px;
-  margin: auto;
-  padding: 100px 20px 60px;
-  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  padding: 20px;
+  padding-bottom: 150px;
+  padding-left: 12px;
+  padding-right: 12px;
+  overflow-x: hidden;
 }
-.page-title {
-  font-size: 20px;
-  margin-bottom: 20px;
-  font-weight: bold;
+
+.movie-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  box-sizing: border-box;
 }
+
 .loading,
 .empty-message {
   margin-top: 40px;
   font-size: 16px;
   color: #666;
+  text-align: center;
 }
-.movie-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
+
 .movie-card {
   background-color: #fff;
   border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   padding: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  max-width: 100%;
 }
 .poster {
-  width: 100%;
-  max-width: 140px;
-  height: auto;
+  width: 100%;           /* ←カード幅にフィット */
+  max-width: 120px;
+  height: 210px;
+  object-fit: cover;
   border-radius: 6px;
 }
 .title {
   margin-top: 8px;
-  font-size: 14px;
+  font-size: 10px;
   font-weight: bold;
   color: #333;
   text-align: center;
+
+  white-space: nowrap;      /* 改行させない */
+  overflow: hidden;         /* はみ出し部分を非表示 */
+  text-overflow: ellipsis;  /* 「…」を表示 */
+  max-width: 100%;          /* 幅制限（親にフィット） */
+}
+
+.bookmark-icon {
+  width: 28px;
+  height: 28px;
+  margin-top: 8px;
+  color: #666;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.bookmark-icon:hover {
+  background-color: #f8d7da;
+  color: #c62828;
+  border-color: #f5c6cb;
+}
+</style>
+
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 </style>

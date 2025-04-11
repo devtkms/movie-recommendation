@@ -26,4 +26,7 @@ public class MovieRecommendationResponseDto {
 
     /** 公開日（yyyy-MM-dd） */
     private String releaseDate;
+
+    /** この映画が保存されているかどうか（ログインユーザーのお気に入り） */
+    private Boolean isSaved; // 初期値false
 }

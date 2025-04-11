@@ -6,7 +6,7 @@
         :class="{ active: current === 'main' }"
         @click.prevent="emit('click-main')"
     >
-      メイン
+      <HomeIcon class="icon" />
     </NuxtLink>
 
     <a
@@ -14,11 +14,24 @@
         class="tab-button"
         :class="{ active: current === 'recommend' }"
         @click.prevent="handleRecommendClick"
-    >レコメンド</a>
+    >
+      <FilmIcon class="icon" />
+    </a>
+
+    <a
+        href="#"
+        class="tab-button"
+        :class="{ active: current === 'save' }"
+        @click.prevent="handleSaveClick"
+    >
+      <BookmarkIcon class="icon" />
+    </a>
   </div>
 </template>
 
 <script setup>
+import { HomeIcon, FilmIcon, BookmarkIcon } from '@heroicons/vue/24/outline'
+
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 const props = defineProps({
@@ -28,24 +41,39 @@ const props = defineProps({
 const emit = defineEmits(['require-login', 'click-main'])
 
 const handleRecommendClick = async () => {
-  // すでに recommend にいるなら何もしない
   if (props.current === 'recommend') return
 
   try {
     const res = await fetch(`${apiBase}/api/users/me`, {
       method: 'GET',
-      credentials: 'include', // ✅ Cookie送信
+      credentials: 'include',
     })
 
     if (res.ok) {
-      // ログイン済み → 遷移
       window.location.href = '/recommend'
     } else {
-      // 未ログイン → モーダル表示
-      emit('require-login')
+      emit('require-login', 'recommend')
     }
   } catch (err) {
-    emit('require-login')
+    emit('require-login', 'recommend')
+  }
+}
+
+const handleSaveClick = async () => {
+  if (props.current === 'save') return
+
+  try {
+    const res = await fetch(`${apiBase}/api/users/me`, {
+      credentials: 'include',
+    })
+
+    if (res.ok) {
+      window.location.href = '/savedMovies'
+    } else {
+      emit('require-login', 'save')
+    }
+  } catch {
+    emit('require-login', 'save')
   }
 }
 </script>
@@ -73,4 +101,12 @@ const handleRecommendClick = async () => {
   color: #2196F3;
   border-bottom: 3px solid #2196F3;
 }
+
+.icon {
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+}
+
+
 </style>

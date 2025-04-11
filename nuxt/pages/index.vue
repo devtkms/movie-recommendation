@@ -3,12 +3,27 @@
       <div class="header-fixed">
         <Header />
         <TabBar
-            :current="'main'"
-            @require-login="showLoginRequiredModal = true"
+            :current="currentTab"
             @click-main="resetToSearch"
+            @click-recommend="handleClickRecommendTab"
+            @click-save="handleClickSaveTab"
+            @require-login="handleRequireLogin"
         />
       </div>
       <IntroModal v-if="showIntroModal" @close="closeIntroModal" />
+
+      <div v-if="showLoginModal" class="modal-overlay" @click.self="showLoginModal = false">
+        <div class="login-alert-card" @click.stop>
+          <h3>保存機能を使うにはログインが必要です 🔐</h3>
+          <p>
+            あなた専用の「気になる映画リスト」を作るには、<br />
+            <strong>ユーザー登録</strong>または<strong>ログイン</strong>してください。
+          </p>
+          <button class="login-alert-button" @click="redirectToLogin">
+            登録 / ログインする
+          </button>
+        </div>
+      </div>
 
       <div v-if="!currentMovie">
         <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
@@ -77,12 +92,16 @@
             <button class="overview-button action fixed-width" @click="showProviders">
               配信
             </button>
+            <!-- 保存ボタン部分 -->
             <button
-                class="overview-button fixed-width"
-                style="background-color: #ffcc00; color: #333"
+                class="overview-button fixed-width icon-button"
+                :style="currentMovie.isSaved
+           ? 'background-color: #ccc; color: #999; cursor: default;'
+           : 'background-color: #ffcc00; color: #333;'"
                 @click="handleSaveMovie"
+                :disabled="currentMovie.isSaved"
             >
-              📌
+              <BookmarkIcon class="icon" />
             </button>
           </div>
         </div>
@@ -97,54 +116,35 @@
           @close="showProviderModal = false"
       />
 
-      <div
-          v-if="showLoginRequiredModal"
-          class="modal-overlay"
-          @click.self="showLoginRequiredModal = false"
-      >
+      <div v-if="showLoginModal" class="modal-overlay" @click.self="showLoginModal = false">
         <div class="login-alert-card" @click.stop>
-          <h3>ようこそ MoviReco へ 👋</h3>
-          <p>ログインすると、こんなことができます：</p>
+          <template v-if="loginModalType === 'recommend'">
+            <h3>ようこそ MoviReco へ 👋</h3>
+            <p>ログインすると、こんなことができます：</p>
+            <div class="login-alert-feature">
+              🎬 好きな映画に似た作品を<br />自動でレコメンド
+            </div>
+            <div class="login-alert-feature">
+              ✨ 質問に答えなくても、あなたに<br />合った映画をすぐにチェック
+            </div>
+            <p><strong>ユーザーID</strong> と <strong>パスワード</strong> を入力するだけで、すぐに使えます！</p>
+            <button class="login-alert-button" @click="redirectToLogin">登録 / ログインする</button>
+          </template>
 
-          <div class="login-alert-feature">
-            🎬 好きな映画に似た作品を<br />
-            自動でレコメンド
-          </div>
-
-          <div class="login-alert-feature">
-            ✨ 質問に答えなくても、あなたに<br />
-            合った映画をすぐにチェック
-          </div>
-
-          <p>
-            <strong>ユーザーID</strong> と <strong>パスワード</strong> を入力するだけで、すぐに使えます！
-          </p>
-
-          <button class="login-alert-button" @click="redirectToLogin">
-            登録 / ログインする
-          </button>
-        </div>
-      </div>
-
-      <div
-          v-if="showSaveLoginModal"
-          class="modal-overlay"
-          @click.self="showSaveLoginModal = false"
-      >
-        <div class="login-alert-card" @click.stop>
-          <h3>保存機能を使うにはログインが必要です 🔐</h3>
-          <p>
-            あなた専用の「気になる映画リスト」を作るには、<br />
-            <strong>ユーザー登録</strong>または<strong>ログイン</strong>してください。
-          </p>
-          <button class="login-alert-button" @click="redirectToLogin">
-            登録 / ログインする
-          </button>
+          <template v-else>
+            <h3>保存機能を使うにはログインが必要です 🔐</h3>
+            <p>
+              あなた専用の「気になる映画リスト」を作るには、<br />
+              <strong>ユーザー登録</strong>または<strong>ログイン</strong>してください。
+            </p>
+            <button class="login-alert-button" @click="redirectToLogin">登録 / ログインする</button>
+          </template>
         </div>
       </div>
 
 
         <Footer />
+      <div v-if="showToast" class="toast">保存しました！</div>
     </div>
   </template>
 
@@ -157,6 +157,7 @@
     import TabBar from '~/components/TabBar.vue';
     import { useRouter } from 'vue-router'
     import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
+    import {BookmarkIcon} from "@heroicons/vue/24/outline/index.js";
 
     /* ------------------------------
       初期状態
@@ -176,9 +177,15 @@
     const showProviderModal = ref(false);
 
     const router = useRouter()
-    const showLoginRequiredModal = ref(false)
+    const showLoginRequiredModal = ref(false);
 
-    const showSaveLoginModal = ref(false)
+    const showLoginModal = ref(false);
+    const loginModalType = ref(null);
+
+    const currentTab = ref('main');
+    const showToast = ref(false)
+
+
 
     const config = useRuntimeConfig()
     const apiBase = config.public.apiBase
@@ -271,7 +278,7 @@
     };
 
     const handleSaveMovie = async () => {
-      if (!currentMovie.value?.id) return;
+      if (!currentMovie.value?.id || currentMovie.value.isSaved) return; // ← isSavedなら何もしない
 
       try {
         const res = await fetch(`${apiBase}/api/movies/save`, {
@@ -286,17 +293,65 @@
         });
 
         if (res.status === 401) {
-          showSaveLoginModal.value = true;
+          handleRequireLogin('save');
           return;
         }
 
         if (!res.ok) throw new Error('保存に失敗しました');
-        alert('保存しました！');
+
+        currentMovie.value.isSaved = true; // ← 保存済みに反映！
+        showToast.value = true;
+        setTimeout(() => {
+          showToast.value = false;
+        }, 2000);
       } catch (e) {
         console.error('❌ 保存失敗:', e);
-        showSaveLoginModal.value = true;
+        handleRequireLogin('save');
       }
     };
+
+    const handleClickSaveTab = async () => {
+      try {
+        const res = await fetch(`${apiBase}/api/users/me`, {
+          credentials: 'include'
+        });
+
+        if (res.status === 200) {
+          currentTab.value = 'save';
+        } else {
+          handleRequireLogin('save');
+        }
+      } catch (e) {
+        console.error("ログインチェック失敗:", e);
+      }
+    };
+
+    const handleRequireLogin = (type = 'recommend') => {
+      loginModalType.value = type;
+      showLoginModal.value = true;
+    };
+
+    const saveMovie = async (movie) => {
+      try {
+        const res = await fetch(`${apiBase}/api/movies/save`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(movie),
+        })
+
+        if (res.ok) {
+          showToast.value = true
+          setTimeout(() => {
+            showToast.value = false
+          }, 2000)
+        }
+      } catch (e) {
+        console.error('❌ 保存エラー:', e)
+      }
+    }
 
     /* ------------------------------
       スワイプ操作
@@ -329,6 +384,10 @@
       touchStartX.value = 0;
       touchCurrentX.value = 0;
     };
+
+    const handleClickRecommendTab = () => {
+      router.push('/recommend')
+    }
 
     /* ------------------------------
       質問定義
@@ -736,66 +795,6 @@
       gap: 12px;
     }
 
-    /* ✅ チェックボックス表示用追加 */
-    .checkbox-wrapper {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 12px;
-      font-size: 14px;
-    }
-
-    .checkbox-wrapper.providers,
-    .checkbox-wrapper.languages {
-      display: grid;
-      grid-template-columns: 140px 140px;
-      column-gap: 20px;
-      row-gap: 8px;
-      justify-content: center;
-      margin-top: 24px;
-      padding-top: 4px;
-      max-width: 300px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    /* ✅ 各チェックボックス：左揃え */
-    .checkbox-label {
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      justify-content: flex-start;
-      white-space: nowrap;
-    }
-
-    .filter-toggle {
-      text-align: left;          /* ← 左寄せに変更 */
-      font-weight: bold;
-      font-size: 16px;
-      margin: 24px auto 10px;
-      padding-left: 20px;        /* ← 左に少し余白 */
-      cursor: pointer;
-      color: #333;
-      user-select: none;
-      max-width: 300px;          /* ← 中央寄せの最大幅に合わせる */
-    }
-
-    .filter-toggle:hover {
-      opacity: 0.8;
-    }
-
-    .bottom-bar {
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background-color: #fff;
-      border-top: 1px solid #ccc;
-      z-index: 100;
-      margin-top: 40px; /* ← この行を追加 */
-    }
-
     .login-alert-card {
       position: fixed;
       bottom: 100px;
@@ -881,5 +880,42 @@
       cursor: pointer;
       white-space: nowrap;
     }
+
+    .icon {
+      width: 20px;
+      height: 20px;
+      display: inline-block;
+      display: inline-block;
+    }
+
+    .icon-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #323232;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      animation: fadeInOut 2s ease-in-out forwards;
+    }
+    @keyframes fadeInOut {
+      0%   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      10%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+      90%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    }
+
+
 
     </style>

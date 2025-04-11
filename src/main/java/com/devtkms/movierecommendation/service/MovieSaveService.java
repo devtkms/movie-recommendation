@@ -5,6 +5,8 @@ import com.devtkms.movierecommendation.mapper.FavoriteMapper;
 import com.devtkms.movierecommendation.dto.MovieSaveRequestDto;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class MovieSaveService {
 
@@ -22,5 +24,13 @@ public class MovieSaveService {
         entity.setPosterPath(dto.getPosterPath());
 
         favoriteMapper.insertFavorite(entity);
+    }
+
+    public List<FavoriteEntity> getFavorites(String userId) {
+        return favoriteMapper.selectByUserId(userId);
+    }
+
+    public void deleteFavorite(String userId, Long movieId) {
+        favoriteMapper.deleteByUserIdAndMovieId(userId, movieId);
     }
 }

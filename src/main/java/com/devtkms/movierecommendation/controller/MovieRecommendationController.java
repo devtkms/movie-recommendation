@@ -35,12 +35,14 @@ public class MovieRecommendationController {
      */
     @PostMapping
     public ResponseEntity<MovieRecommendationResultDto> getRecommendations(
-            @RequestBody MovieRecommendationRequestDto requestDto) {
+            @RequestBody MovieRecommendationRequestDto requestDto,
+            Authentication authentication // ← 追加
+    ) {
+        String userId = (authentication != null) ? authentication.getName() : null;
 
-        // 質問回答を元に映画推薦ロジックを実行
-        MovieRecommendationResultDto response = recommendationService.recommendMovies(requestDto);
+        // userId を渡して isSaved 判定を可能にする
+        MovieRecommendationResultDto response = recommendationService.recommendMovies(requestDto, userId);
 
-        // 結果をレスポンスとして返却
         return ResponseEntity.ok(response);
     }
 
@@ -57,7 +59,7 @@ public class MovieRecommendationController {
         String userId = authentication.getName();
         UserEntity user = userService.findByUserId(userId);
 
-        MovieRecommendationResultDto response = recommendationService.getPersonalizeMovies(user.getId());
+        MovieRecommendationResultDto response = recommendationService.getPersonalizeMovies(user.getId(), userId);
 
         return ResponseEntity.ok(response);
     }

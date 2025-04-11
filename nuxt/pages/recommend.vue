@@ -32,11 +32,14 @@
             配信
           </button>
           <button
-              class="overview-button fixed-width"
-              style="background-color: #ffcc00; color: #333"
+              class="overview-button fixed-width icon-button"
+              :style="currentMovie.isSaved
+           ? 'background-color: #ccc; color: #999; cursor: default;'
+           : 'background-color: #ffcc00; color: #333;'"
               @click="handleSaveMovie"
+              :disabled="currentMovie.isSaved"
           >
-            📌
+            <BookmarkIcon class="icon" />
           </button>
         </div>
       </div>
@@ -66,7 +69,8 @@ import OverviewModal from '~/components/OverviewModal.vue';
 import WatchProvidersModal from '~/components/WatchProvidersModal.vue';
 import TabBar from '~/components/TabBar.vue';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
-import { useRouter } from 'vue-router' // ✅ 追加
+import { useRouter } from 'vue-router'
+import {BookmarkIcon} from "@heroicons/vue/24/outline/index.js"; // ✅ 追加
 const router = useRouter()
 
 // 映画リストの管理
@@ -261,6 +265,39 @@ const redirectToLogin = () => {
   router.push('/login')
 }
 
+const handleSaveMovie = async () => {
+  if (!currentMovie.value?.id || currentMovie.value.isSaved) return; // ← isSavedなら何もしない
+
+  try {
+    const res = await fetch(`${apiBase}/api/movies/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        movieId: currentMovie.value.id,
+        title: currentMovie.value.title,
+        posterPath: currentMovie.value.posterPath
+      })
+    });
+
+    if (res.status === 401) {
+      handleRequireLogin('save');
+      return;
+    }
+
+    if (!res.ok) throw new Error('保存に失敗しました');
+
+    currentMovie.value.isSaved = true; // ← 保存済みに反映！
+    showToast.value = true;
+    setTimeout(() => {
+      showToast.value = false;
+    }, 2000);
+  } catch (e) {
+    console.error('❌ 保存失敗:', e);
+    handleRequireLogin('save');
+  }
+};
+
 </script>
 
 <style scoped>
@@ -436,5 +473,11 @@ const redirectToLogin = () => {
   border: none;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
 }
 </style>

@@ -6,6 +6,7 @@ import com.devtkms.movierecommendation.dto.MovieRecommendationResponseDto;
 import com.devtkms.movierecommendation.dto.MovieRecommendationResultDto;
 import com.devtkms.movierecommendation.entity.QuestionButtonLogEntity;
 import com.devtkms.movierecommendation.entity.UserEntity;
+import com.devtkms.movierecommendation.mapper.FavoriteMapper;
 import com.devtkms.movierecommendation.mapper.QuestionButtonLogMapper;
 import com.devtkms.movierecommendation.mapper.TagMasterMapper;
 import com.devtkms.movierecommendation.mapper.UserMapper;
@@ -13,7 +14,10 @@ import com.devtkms.movierecommendation.response.TmdbResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 映画推薦に関するビジネスロジックを担当するサービスクラス
@@ -26,17 +30,20 @@ public class MovieRecommendationService {
     private final MovieSelectorService movieSelector;
     private final QuestionButtonLogMapper questionButtonLogMapper;
     private final UserMapper userMapper;
+    private final FavoriteMapper favoriteMapper;
 
     public MovieRecommendationService(TagMasterMapper tagMasterMapper,
                                       TmdbApiClient tmdbApiClient,
                                       MovieSelectorService movieSelector,
                                       QuestionButtonLogMapper questionButtonLogMapper,
-                                      UserMapper userMapper) {
+                                      UserMapper userMapper,
+                                      FavoriteMapper favoriteMapper) {
         this.tagMasterMapper = tagMasterMapper;
         this.tmdbApiClient = tmdbApiClient;
         this.movieSelector = movieSelector;
         this.questionButtonLogMapper = questionButtonLogMapper;
         this.userMapper = userMapper;
+        this.favoriteMapper = favoriteMapper;
     }
 
     /**
@@ -45,8 +52,7 @@ public class MovieRecommendationService {
      * @param requestDto ユーザーの質問回答（mood, tone, after）
      * @return 推薦された映画リストを含む結果DTO
      */
-    public MovieRecommendationResultDto recommendMovies(MovieRecommendationRequestDto requestDto) {
-        // 質問回答のログをDBに保存（後で分析可能）
+    public MovieRecommendationResultDto recommendMovies(MovieRecommendationRequestDto requestDto, String userId) {
         if (Boolean.FALSE.equals(requestDto.getIsMyData())) {
             QuestionButtonLogEntity log = new QuestionButtonLogEntity();
             log.setMood(requestDto.getMood());
@@ -55,23 +61,25 @@ public class MovieRecommendationService {
             questionButtonLogMapper.insert(log);
         }
 
-        // 質問の組み合わせからTMDbキーワードIDリストを取得
         List<String> keywordIds = tagMasterMapper.findKeywordIdsByConditions(
                 requestDto.getMood(),
                 requestDto.getTone(),
                 requestDto.getAfter()
         );
 
-        // TMDb APIを呼び出して映画データを取得
         TmdbResponse response = tmdbApiClient.fetchMoviesByKeywords(keywordIds);
-
-        // レスポンスをDTOのリストに変換
         List<MovieRecommendationResponseDto> allMovies = response.toMovieDtoList();
-
-        // 映画リストから重複なしで20件に絞り込み
         List<MovieRecommendationResponseDto> selectedMovies = movieSelector.selectUniqueMovies(allMovies, 20);
 
-        // 推薦結果DTOとして返却
+        if (userId != null) {
+            Set<Long> savedIds = new HashSet<>(favoriteMapper.selectMovieIdsByUserId(userId));
+            for (MovieRecommendationResponseDto movie : selectedMovies) {
+                if (savedIds.contains(movie.getId())) {
+                    movie.setIsSaved(true);
+                }
+            }
+        }
+
         return new MovieRecommendationResultDto(selectedMovies);
     }
 
@@ -80,7 +88,7 @@ public class MovieRecommendationService {
      *
      * @return トレンド映画のリストを含む結果DTO
      */
-    public MovieRecommendationResultDto getPersonalizeMovies(Long userId) {
+    public MovieRecommendationResultDto getPersonalizeMovies(Long userId, String usrId) {
         UserEntity user = userMapper.findById(userId);
         Long favoriteMovieId = user.getFavoriteMovieId();
 
@@ -104,6 +112,15 @@ public class MovieRecommendationService {
         // 合体 & シャッフル
         recommended.addAll(trending);
         Collections.shuffle(recommended);
+
+        if (userId != null) {
+            Set<Long> savedIds = new HashSet<>(favoriteMapper.selectMovieIdsByUserId(usrId));
+            for (MovieRecommendationResponseDto recommend : recommended) {
+                if (savedIds.contains(recommend.getId())) {
+                    recommend.setIsSaved(true);
+                }
+            }
+        }
 
         return new MovieRecommendationResultDto(recommended);
     }

@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/logout").permitAll()
                         .requestMatchers("/api/movie/overview").permitAll()
                         .requestMatchers("/api/movies/save").permitAll()
+                        .requestMatchers("/api/movies/delete/{movieId}").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf((csrf) -> csrf.disable())
