@@ -22,11 +22,24 @@
       </div>
       <div v-else class="movie-list">
         <div v-for="movie in movies" :key="movie.movieId" class="movie-card">
-          <img :src="getMoviePoster(movie.posterPath)" alt="poster" class="poster" />
+          <img
+              :src="getMoviePoster(movie.posterPath)"
+              alt="poster"
+              class="poster"
+              @click="handleMovieClick(movie.movieId)"
+          />
           <div class="title">{{ movie.title }}</div>
           <BookmarkSlashIcon class="bookmark-icon" @click="deleteMovie(movie.movieId)" />
         </div>
       </div>
+
+      <MovieDetailModal
+          :show="showDetailModal"
+          :overview="modalOverview"
+          :providers="modalProviders"
+          @close="showDetailModal = false"
+      />
+
         <Footer />
     </div>
   </div>
@@ -39,12 +52,17 @@ import Footer from '~/components/Footer.vue';
 import { useRouter } from 'vue-router';
 import TabBar from "~/components/TabBar.vue";
 import { BookmarkSlashIcon } from '@heroicons/vue/24/outline'
+import MovieDetailModal from '~/components/MovieDetailModal.vue'
 
 const movies = ref([]);
 const loading = ref(true);
 const config = useRuntimeConfig();
 const apiBase = config.public.apiBase;
 const router = useRouter();
+
+const showDetailModal = ref(false)
+const modalOverview = ref({})
+const modalProviders = ref([])
 
 const currentTab = ref('save')  // 例として現在タブを "save" に
 
@@ -103,6 +121,22 @@ const deleteMovie = async (movieId) => {
   }
 };
 
+const handleMovieClick = async (movieId) => {
+  try {
+    const res = await fetch(`${apiBase}/api/movies/${movieId}/detail`, {
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error('API失敗');
+
+    const data = await res.json();
+    modalOverview.value = data.overview;
+    modalProviders.value = data.providers;
+    showDetailModal.value = true;
+  } catch (e) {
+    console.error("❌ 詳細取得エラー:", e);
+  }
+};
+
 const getMoviePoster = (path) =>
     path ? `https://image.tmdb.org/t/p/w500${path}` : 'https://via.placeholder.com/300x450';
 </script>
@@ -134,16 +168,15 @@ const getMoviePoster = (path) =>
   box-sizing: border-box;
   padding: 20px;
   padding-bottom: 150px;
-  padding-left: 12px;
-  padding-right: 12px;
+  padding-left: 8px;
+  padding-right: 8px;
   overflow-x: hidden;
 }
 
 .movie-list {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  box-sizing: border-box;
+  grid-template-columns: repeat(2, 1fr);  /* ← 2列を等幅に */
+  gap: 12px;
 }
 
 .loading,
@@ -154,20 +187,22 @@ const getMoviePoster = (path) =>
   text-align: center;
 }
 
+
 .movie-card {
-  background-color: #fff;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
   border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  padding: 12px;
+  background-color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 100%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 .poster {
-  width: 100%;           /* ←カード幅にフィット */
-  max-width: 120px;
-  height: 210px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 3;
   object-fit: cover;
   border-radius: 6px;
 }

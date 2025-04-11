@@ -25,7 +25,7 @@
         </div>
       </div>
 
-      <div v-if="!currentMovie">
+      <div v-if="!currentMovie" class="recommend-question-block">
         <div class="form-group" v-for="(label, key) in searchOptions" :key="key">
           <label>{{ label }}</label>
           <div class="button-group">
@@ -278,7 +278,7 @@
     };
 
     const handleSaveMovie = async () => {
-      if (!currentMovie.value?.id || currentMovie.value.isSaved) return; // ← isSavedなら何もしない
+      if (!currentMovie.value?.id || currentMovie.value.isSaved) return;
 
       try {
         const res = await fetch(`${apiBase}/api/movies/save`, {
@@ -299,7 +299,17 @@
 
         if (!res.ok) throw new Error('保存に失敗しました');
 
-        currentMovie.value.isSaved = true; // ← 保存済みに反映！
+        currentMovie.value.isSaved = true;
+
+        // ✅ localStorageキャッシュも更新
+        const storageKey = generateStorageKey();
+        const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        if (stored.pool) {
+          const target = stored.pool.find(m => m.id === currentMovie.value.id);
+          if (target) target.isSaved = true;
+          localStorage.setItem(storageKey, JSON.stringify(stored));
+        }
+
         showToast.value = true;
         setTimeout(() => {
           showToast.value = false;
@@ -471,6 +481,7 @@
       const today = new Date().toISOString().slice(0, 10);
       const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
 
+      // ✅ キャッシュがある場合はそれを使う
       if (stored.pool && stored.savedDate === today) {
         moviePool.value = stored.pool;
         currentIndex.value = stored.index || 0;
@@ -479,6 +490,7 @@
         return;
       }
 
+      // ✅ APIから取得
       try {
         const response = await fetch(`${apiBase}/api/recommendations`, {
           method: 'POST',
@@ -495,6 +507,7 @@
         const data = await response.json();
         const combined = [...(data.combined || [])];
 
+        // ランダムシャッフル
         for (let i = combined.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [combined[i], combined[j]] = [combined[j], combined[i]];
@@ -504,7 +517,12 @@
         currentIndex.value = 0;
         currentMovie.value = moviePool.value[0];
 
-        localStorage.setItem(storageKey, JSON.stringify({ pool: combined, index: 0, savedDate: today }));
+        // ✅ 保存状態を保持したままキャッシュに保存（あとで上書き用にも使える）
+        localStorage.setItem(storageKey, JSON.stringify({
+          pool: combined,
+          index: 0,
+          savedDate: today
+        }));
       } catch (error) {
         console.error("❌ 映画データの取得に失敗:", error);
         errorMessage.value = "映画データの取得に失敗しました。しばらくしてから再試行してください。";
@@ -623,6 +641,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      padding-top: 14px;
     }
 
     .movie-card {
@@ -630,7 +649,7 @@
       border-radius: 12px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       padding: 15px;
-      width: 280px;
+      width: 100%;
       max-width: 320px;
       height: auto;
       display: flex;
@@ -638,6 +657,7 @@
       align-items: center;
       gap: 12px;
       transition: transform 0.3s ease;
+
     }
 
     .movie-poster.fixed-size {
@@ -681,7 +701,6 @@
       border: none;
       cursor: pointer;
       transition: background-color 0.2s ease-in-out;
-      margin-top: 20px;
     }
 
     .search-button:hover {
@@ -739,28 +758,25 @@
     .selected-options {
       display: flex;
       justify-content: space-between;
+      gap: 4px;                      /* ← ボタン間の隙間を最小限に */
       width: 100%;
       max-width: 600px;
-      margin: 0 auto 15px;
+      margin: 0 auto 16px;
+      padding: 0 4px;                /* ← 端との余白も最小限に */
+      box-sizing: border-box;
     }
 
     .selected-option {
       flex: 1;
-      max-width: 200px;
-      min-width: 100px;
-      padding: 8px 12px;
-      color: white;
-      font-size: 12px;
+      padding: 4px 2px;
+      font-size: 10px;               /* ← 小さめで1行に収める */
       font-weight: bold;
-      border-radius: 8px;
+      border-radius: 6px;
       text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: default;
-      opacity: 0.9;
-      border: none;
-      white-space: nowrap;
+      color: white;
+      white-space: nowrap;          /* ← 折り返し禁止 */
+      overflow: hidden;             /* ← はみ出し防止 */
+      text-overflow: ellipsis;      /* ← 入り切らなければ末尾...（必要に応じてunsetに） */
     }
 
     /* 🎨 mood（気分） */
@@ -885,7 +901,6 @@
       width: 20px;
       height: 20px;
       display: inline-block;
-      display: inline-block;
     }
 
     .icon-button {
@@ -914,6 +929,10 @@
       10%  { opacity: 1; transform: translateX(-50%) translateY(0); }
       90%  { opacity: 1; transform: translateX(-50%) translateY(0); }
       100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    }
+
+    .recommend-question-block {
+      margin-top: 14px;
     }
 
 
