@@ -67,15 +67,22 @@
             <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
             <ArrowRightCircleIcon class="icon-right" />
           </div>
-          <div class="overview-container">
+          <div class="overview-container button-row">
             <button
-                class="overview-button"
+                class="overview-button fixed-width"
                 @click="showOverview(currentMovie.overview)"
             >
               概要
             </button>
-            <button class="overview-button action" @click="showProviders">
+            <button class="overview-button action fixed-width" @click="showProviders">
               配信
+            </button>
+            <button
+                class="overview-button fixed-width"
+                style="background-color: #ffcc00; color: #333"
+                @click="handleSaveMovie"
+            >
+              📌
             </button>
           </div>
         </div>
@@ -119,6 +126,23 @@
         </div>
       </div>
 
+      <div
+          v-if="showSaveLoginModal"
+          class="modal-overlay"
+          @click.self="showSaveLoginModal = false"
+      >
+        <div class="login-alert-card" @click.stop>
+          <h3>保存機能を使うにはログインが必要です 🔐</h3>
+          <p>
+            あなた専用の「気になる映画リスト」を作るには、<br />
+            <strong>ユーザー登録</strong>または<strong>ログイン</strong>してください。
+          </p>
+          <button class="login-alert-button" @click="redirectToLogin">
+            登録 / ログインする
+          </button>
+        </div>
+      </div>
+
 
         <Footer />
     </div>
@@ -153,6 +177,8 @@
 
     const router = useRouter()
     const showLoginRequiredModal = ref(false)
+
+    const showSaveLoginModal = ref(false)
 
     const config = useRuntimeConfig()
     const apiBase = config.public.apiBase
@@ -241,6 +267,34 @@
         providerList.value = [];
       } finally {
         showProviderModal.value = true;
+      }
+    };
+
+    const handleSaveMovie = async () => {
+      if (!currentMovie.value?.id) return;
+
+      try {
+        const res = await fetch(`${apiBase}/api/movies/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            movieId: currentMovie.value.id,
+            title: currentMovie.value.title,
+            posterPath: currentMovie.value.posterPath
+          })
+        });
+
+        if (res.status === 401) {
+          showSaveLoginModal.value = true;
+          return;
+        }
+
+        if (!res.ok) throw new Error('保存に失敗しました');
+        alert('保存しました！');
+      } catch (e) {
+        console.error('❌ 保存失敗:', e);
+        showSaveLoginModal.value = true;
       }
     };
 
@@ -807,6 +861,25 @@
       justify-content: center;
       align-items: flex-end;
       z-index: 9998;
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: nowrap;
+    }
+
+    .fixed-width {
+      min-width: 90px;
+      max-width: 90px;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
     }
 
     </style>

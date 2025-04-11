@@ -21,15 +21,22 @@
           <img :src="getMoviePoster(currentMovie.posterPath)" alt="映画ポスター" class="movie-poster fixed-size" />
           <ArrowRightCircleIcon class="icon-right" @click="nextMovie" />
         </div>
-        <div class="overview-container">
+        <div class="overview-container button-row">
           <button
-              class="overview-button"
+              class="overview-button fixed-width"
               @click="showOverview(currentMovie.overview)"
           >
             概要
           </button>
-          <button class="overview-button action" @click="showProviders">
+          <button class="overview-button action fixed-width" @click="showProviders">
             配信
+          </button>
+          <button
+              class="overview-button fixed-width"
+              style="background-color: #ffcc00; color: #333"
+              @click="handleSaveMovie"
+          >
+            📌
           </button>
         </div>
       </div>
@@ -410,5 +417,24 @@ const redirectToLogin = () => {
   font-weight: bold;
   margin-bottom: 16px;
   color: #333;
+}
+
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.fixed-width {
+  min-width: 90px;
+  max-width: 90px;
+  text-align: center;
+  padding: 8px 0;
+  font-size: 14px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
 }
 </style>
