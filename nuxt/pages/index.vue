@@ -98,13 +98,21 @@
         <div class="login-alert-card" @click.stop>
           <h3>ようこそ MoviReco へ 👋</h3>
           <p>ログインすると、こんなことができます：</p>
-          <ul>
-            <li>🎬 好きな映画に似た作品を<br>自動でレコメンド</li>
-            <li>✨ 質問に答えなくても、あなたに<br>合った映画をすぐにチェック</li>
-          </ul>
+
+          <div class="login-alert-feature">
+            🎬 好きな映画に似た作品を<br />
+            自動でレコメンド
+          </div>
+
+          <div class="login-alert-feature">
+            ✨ 質問に答えなくても、あなたに<br />
+            合った映画をすぐにチェック
+          </div>
+
           <p>
             <strong>ユーザーID</strong> と <strong>パスワード</strong> を入力するだけで、すぐに使えます！
           </p>
+
           <button class="login-alert-button" @click="redirectToLogin">
             登録 / ログインする
           </button>
