@@ -11,7 +11,7 @@
     </p>
 
     <!-- 🔢 バージョン表記 -->
-    <p class="version-info">© 2025 MoviReco - ver. 2.2.0</p>
+    <p class="version-info">© 2025 MoviReco - ver. 2.2.1</p>
   </footer>
 </template>
 
