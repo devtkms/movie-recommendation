@@ -292,15 +292,6 @@ const handleSaveMovie = async () => {
 
     currentMovie.value.isSaved = true;
 
-    // ✅ localStorageキャッシュも更新
-    const storageKey = generateStorageKey();
-    const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
-    if (stored.pool) {
-      const target = stored.pool.find(m => m.id === currentMovie.value.id);
-      if (target) target.isSaved = true;
-      localStorage.setItem(storageKey, JSON.stringify(stored));
-    }
-
     toastMessage.value = "保存しました！";
     showToast.value = true;
     setTimeout(() => {
