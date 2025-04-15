@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.devtkms.movierecommendation.mapper.FavoriteMapper">
+    <insert id="insertFavorite" parameterType="com.devtkms.movierecommendation.entity.FavoriteEntity">
+        INSERT INTO favorites (user_id, movie_id, title, poster_path)
+        VALUES (#{userId}, #{movieId}, #{title}, #{posterPath})
+    </insert>
+
+    <select id="selectByUserId" parameterType="string" resultType="com.devtkms.movierecommendation.entity.FavoriteEntity">
+        SELECT id, user_id, movie_id, title, poster_path, created_at
+        FROM favorites
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <delete id="deleteByUserIdAndMovieId" parameterType="map">
+        DELETE FROM favorites
+        WHERE user_id = #{userId} AND movie_id = #{movieId}
+    </delete>
+
+    <select id="selectMovieIdsByUserId" parameterType="string" resultType="long">
+        SELECT movie_id
+        FROM favorites
+        WHERE user_id = #{userId}  <!-- ✅ 修正済み -->
+    </select>
+</mapper>
+
+

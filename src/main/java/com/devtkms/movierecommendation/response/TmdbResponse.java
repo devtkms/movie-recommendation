@@ -39,7 +39,8 @@ public class TmdbResponse {
                         result.getTitle(),      // タイトル
                         result.getOverview(),   // 概要
                         result.getPosterPath(), // ポスター画像パス
-                        result.getReleaseDate() // 公開日
+                        result.getReleaseDate(), // 公開日
+                        false
                 ))
                 .collect(Collectors.toList());
     }
