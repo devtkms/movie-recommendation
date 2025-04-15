@@ -6,12 +6,11 @@
     <p class="developer-credit">
       Created by
       <a href="https://twitter.com/MoviReco" target="_blank" rel="noopener noreferrer" class="social-link">
-        @MoviReco
+        <img src="/images/logo-black.png" alt="X Logo" width="16" height="16" style="vertical-align: middle; margin-left: 4px;" />
       </a>
     </p>
 
-    <!-- 🔢 バージョン表記 -->
-    <p class="version-info">© 2025 MoviReco - ver. 2.2.1</p>
+    <p class="version-info">© 2025 MoviReco - ver. 2.3.0</p>
   </footer>
 </template>
 

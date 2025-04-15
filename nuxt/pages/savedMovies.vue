@@ -29,7 +29,7 @@
               @click="handleMovieClick(movie.movieId)"
           />
           <div class="title">{{ movie.title }}</div>
-          <BookmarkSlashIcon class="bookmark-icon" @click="deleteMovie(movie.movieId)" />
+          <BookmarkSlashIcon class="bookmark-icon" @click="openConfirmModal(movie.movieId)" />
         </div>
       </div>
 
@@ -39,6 +39,17 @@
           :providers="modalProviders"
           @close="showDetailModal = false"
       />
+
+      <!-- 削除確認モーダル -->
+      <div v-if="showConfirmModal" class="confirm-modal-backdrop" @click.self="showConfirmModal = false">
+        <div class="confirm-modal">
+          <p>気になるリストから解除しますか？</p>
+          <div class="modal-buttons">
+            <button @click="executeDelete">はい</button>
+            <button @click="showConfirmModal = false">キャンセル</button>
+          </div>
+        </div>
+      </div>
 
         <Footer />
     </div>
@@ -63,6 +74,9 @@ const router = useRouter();
 const showDetailModal = ref(false)
 const modalOverview = ref({})
 const modalProviders = ref([])
+
+const showConfirmModal = ref(false);
+const targetMovieId = ref(null);
 
 const currentTab = ref('save')  // 例として現在タブを "save" に
 
@@ -108,13 +122,26 @@ onMounted(async () => {
   }
 });
 
+const openConfirmModal = (movieId) => {
+  targetMovieId.value = movieId;
+  showConfirmModal.value = true;
+};
+
+const executeDelete = async () => {
+  if (targetMovieId.value !== null) {
+    await deleteMovie(targetMovieId.value);
+    showConfirmModal.value = false;
+    targetMovieId.value = null;
+  }
+};
+
+// 削除処理本体
 const deleteMovie = async (movieId) => {
   try {
     await fetch(`${apiBase}/api/movies/delete/${movieId}`, {
       method: 'DELETE',
       credentials: 'include',
     });
-    // ローカル状態からも削除
     movies.value = movies.value.filter(movie => movie.movieId !== movieId);
   } catch (e) {
     console.error('❌ 削除エラー:', e);
@@ -236,6 +263,53 @@ const getMoviePoster = (path) =>
   color: #c62828;
   border-color: #f5c6cb;
 }
+
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.confirm-modal {
+  background: white;
+  padding: 20px 24px;
+  border-radius: 12px;
+  text-align: center;
+  width: 280px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+.modal-buttons {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.modal-buttons button:first-child {
+  background-color: #c62828;
+  color: white;
+}
+
+.modal-buttons button:last-child {
+  background-color: #eee;
+  color: #333;
+}
+
+
 </style>
 
 <style>
