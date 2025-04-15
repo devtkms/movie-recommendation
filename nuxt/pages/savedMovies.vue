@@ -142,7 +142,24 @@ const deleteMovie = async (movieId) => {
       method: 'DELETE',
       credentials: 'include',
     });
+
+    // UI上の一覧から削除
     movies.value = movies.value.filter(movie => movie.movieId !== movieId);
+
+    // ✅ 全ての localStorage キャッシュを対象に isSaved を false に更新
+    const allKeys = Object.keys(localStorage);
+    allKeys.forEach((key) => {
+      if (key.startsWith('movies_mood_')) {
+        const stored = JSON.parse(localStorage.getItem(key) || '{}');
+        if (stored.pool) {
+          const target = stored.pool.find(m => m.id === movieId);
+          if (target) {
+            target.isSaved = false;
+            localStorage.setItem(key, JSON.stringify(stored));
+          }
+        }
+      }
+    });
   } catch (e) {
     console.error('❌ 削除エラー:', e);
   }
@@ -217,6 +234,7 @@ const getMoviePoster = (path) =>
 
 .movie-card {
   width: 100%;
+  max-width: 100%; /* ← 拡張防止 */
   box-sizing: border-box;
   padding: 8px;
   border-radius: 10px;
@@ -225,11 +243,12 @@ const getMoviePoster = (path) =>
   flex-direction: column;
   align-items: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  height: 340px; /* ← 高さを固定 */
+  justify-content: space-between; /* ← 上下に均等配置 */
 }
 .poster {
   width: 100%;
-  height: auto;
-  aspect-ratio: 2 / 3;
+  height: 225px;
   object-fit: cover;
   border-radius: 6px;
 }
@@ -239,11 +258,15 @@ const getMoviePoster = (path) =>
   font-weight: bold;
   color: #333;
   text-align: center;
+  min-height: 28px; /* ← タイトル高さを確保 */
 
-  white-space: nowrap;      /* 改行させない */
-  overflow: hidden;         /* はみ出し部分を非表示 */
-  text-overflow: ellipsis;  /* 「…」を表示 */
-  max-width: 100%;          /* 幅制限（親にフィット） */
+  white-space: normal;         /* ← nowrap を解除して折り返し許可 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: -webkit-box;        /* ← 行数制限 */
+  -webkit-line-clamp: 2;       /* ← 2行まで表示 */
+  -webkit-box-orient: vertical;
 }
 
 .bookmark-icon {

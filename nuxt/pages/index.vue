@@ -96,10 +96,9 @@
             <button
                 class="overview-button fixed-width icon-button"
                 :style="currentMovie.isSaved
-           ? 'background-color: #ccc; color: #999; cursor: default;'
-           : 'background-color: #ffcc00; color: #333;'"
-                @click="handleSaveMovie"
-                :disabled="currentMovie.isSaved"
+    ? 'background-color: #ccc; color: #999;'
+    : 'background-color: #ffcc00; color: #333;'"
+                @click="currentMovie.isSaved ? handleUnsaveMovie() : handleSaveMovie()"
             >
               <BookmarkIcon class="icon" />
             </button>
@@ -143,8 +142,8 @@
       </div>
 
 
-        <Footer />
-      <div v-if="showToast" class="toast">保存しました！</div>
+      <Footer />
+      <div v-if="showToast" class="toast">{{ toastMessage }}</div>
     </div>
   </template>
 
@@ -183,7 +182,8 @@
     const loginModalType = ref(null);
 
     const currentTab = ref('main');
-    const showToast = ref(false)
+    const showToast = ref(false);
+    const toastMessage = ref("保存しました！");
 
 
 
@@ -341,27 +341,38 @@
       showLoginModal.value = true;
     };
 
-    const saveMovie = async (movie) => {
-      try {
-        const res = await fetch(`${apiBase}/api/movies/save`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(movie),
-        })
+    const handleUnsaveMovie = async () => {
+      if (!currentMovie.value?.id || !currentMovie.value.isSaved) return;
 
-        if (res.ok) {
-          showToast.value = true
-          setTimeout(() => {
-            showToast.value = false
-          }, 2000)
+      try {
+        const res = await fetch(`${apiBase}/api/movies/delete/${currentMovie.value.id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+
+        if (!res.ok) throw new Error('削除に失敗');
+
+        currentMovie.value.isSaved = false;
+
+        // localStorage 更新
+        const storageKey = generateStorageKey();
+        const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        if (stored.pool) {
+          const target = stored.pool.find(m => m.id === currentMovie.value.id);
+          if (target) target.isSaved = false;
+          localStorage.setItem(storageKey, JSON.stringify(stored));
         }
+
+        // ✅ トースト文言を「解除しました！」に変更
+        toastMessage.value = "解除しました！";
+        showToast.value = true;
+        setTimeout(() => {
+          showToast.value = false;
+        }, 2000);
       } catch (e) {
-        console.error('❌ 保存エラー:', e)
+        console.error('❌ 削除失敗:', e);
       }
-    }
+    };
 
     /* ------------------------------
       スワイプ操作
