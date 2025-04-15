@@ -34,12 +34,11 @@
           <button
               class="overview-button fixed-width icon-button"
               :style="currentMovie.isSaved
-           ? 'background-color: #ccc; color: #999; cursor: default;'
-           : 'background-color: #ffcc00; color: #333;'"
-              @click="handleSaveMovie"
-              :disabled="currentMovie.isSaved"
+    ? 'background-color: #ccc; color: #999;'
+    : 'background-color: #ffcc00; color: #333;'"
+              @click="currentMovie.isSaved ? handleUnsaveMovie() : handleSaveMovie()"
           >
-            <BookmarkIcon class="icon" />
+            <component :is="currentMovie.isSaved ? BookmarkSlashIcon : BookmarkIcon" class="icon" />
           </button>
         </div>
       </div>
@@ -58,6 +57,7 @@
     </div>
 
       <Footer />
+    <div v-if="showToast" class="toast">{{ toastMessage }}</div>
   </div>
 </template>
 
@@ -71,6 +71,7 @@ import TabBar from '~/components/TabBar.vue';
 import { ArrowLeftCircleIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid';
 import { useRouter } from 'vue-router'
 import {BookmarkIcon} from "@heroicons/vue/24/outline/index.js"; // ✅ 追加
+import { BookmarkSlashIcon } from '@heroicons/vue/24/outline'
 const router = useRouter()
 
 // 映画リストの管理
@@ -82,6 +83,8 @@ const providerList = ref([]);
 const showProviderModal = ref(false);
 const showLoginRequiredModal = ref(false)
 const isAuthenticated = ref(false)
+const showToast = ref(false);
+const toastMessage = ref("保存しました！");
 
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
@@ -266,7 +269,7 @@ const redirectToLogin = () => {
 }
 
 const handleSaveMovie = async () => {
-  if (!currentMovie.value?.id || currentMovie.value.isSaved) return; // ← isSavedなら何もしない
+  if (!currentMovie.value?.id || currentMovie.value.isSaved) return;
 
   try {
     const res = await fetch(`${apiBase}/api/movies/save`, {
@@ -287,7 +290,18 @@ const handleSaveMovie = async () => {
 
     if (!res.ok) throw new Error('保存に失敗しました');
 
-    currentMovie.value.isSaved = true; // ← 保存済みに反映！
+    currentMovie.value.isSaved = true;
+
+    // ✅ localStorageキャッシュも更新
+    const storageKey = generateStorageKey();
+    const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    if (stored.pool) {
+      const target = stored.pool.find(m => m.id === currentMovie.value.id);
+      if (target) target.isSaved = true;
+      localStorage.setItem(storageKey, JSON.stringify(stored));
+    }
+
+    toastMessage.value = "保存しました！";
     showToast.value = true;
     setTimeout(() => {
       showToast.value = false;
@@ -295,6 +309,30 @@ const handleSaveMovie = async () => {
   } catch (e) {
     console.error('❌ 保存失敗:', e);
     handleRequireLogin('save');
+  }
+};
+
+const handleUnsaveMovie = async () => {
+  if (!currentMovie.value?.id || !currentMovie.value.isSaved) return;
+
+  try {
+    const res = await fetch(`${apiBase}/api/movies/delete/${currentMovie.value.id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!res.ok) throw new Error('削除に失敗');
+
+    currentMovie.value.isSaved = false;
+
+    // ✅ トースト文言を「解除しました！」に変更
+    toastMessage.value = "解除しました！";
+    showToast.value = true;
+    setTimeout(() => {
+      showToast.value = false;
+    }, 2000);
+  } catch (e) {
+    console.error('❌ 削除失敗:', e);
   }
 };
 
@@ -479,5 +517,26 @@ const handleSaveMovie = async () => {
   width: 20px;
   height: 20px;
   display: inline-block;
+}
+
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #323232;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: fadeInOut 2s ease-in-out forwards;
+}
+@keyframes fadeInOut {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  10%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  90%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
 }
 </style>
