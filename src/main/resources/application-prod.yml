@@ -2,9 +2,9 @@ spring:
   application:
     name: movie-recommendation
   datasource:
-    url: jdbc:postgresql://${POSTGRES_ENDPOINT_DEV}:${POSTGRES_PORT_DEV}/${POSTGRES_DATABASE_NAME_DEV}
-    username: ${POSTGRES_USER_DEV}
-    password: ${POSTGRES_PASSWORD_DEV}
+    url: jdbc:postgresql://${POSTGRES_ENDPOINT}:${POSTGRES_PORT}/${POSTGRES_DATABASE_NAME}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
 logging:
