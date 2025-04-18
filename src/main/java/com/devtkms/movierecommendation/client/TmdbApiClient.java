@@ -29,6 +29,12 @@ public class TmdbApiClient {
         this.restTemplate = builder.build();
     }
 
+    /**
+     * 指定されたキーワードIDのリストを使って映画を検索し、ランダムに2ページ分の結果を取得する。
+     *
+     * @param keywordIds TMDbのキーワードIDのリスト
+     * @return 検索結果をまとめた {@link TmdbResponse}
+     */
     public TmdbResponse fetchMoviesByKeywords(List<String> keywordIds) {
         String keywordParam = String.join(",", keywordIds);
         List<TmdbResponse.MovieResult> allResults = new java.util.ArrayList<>();
@@ -61,6 +67,12 @@ public class TmdbApiClient {
         return mergedResponse;
     }
 
+    /**
+     * 指定された映画IDに対応する配信サービス情報を取得する。
+     *
+     * @param movieId TMDbの映画ID
+     * @return 配信サービスの情報を含む {@link TmdbWatchProviderResponse}
+     */
     public TmdbWatchProviderResponse fetchWatchProviders(Long movieId) {
         String url = UriComponentsBuilder
                 .fromHttpUrl("https://api.themoviedb.org/3/movie/" + movieId + "/watch/providers")
@@ -76,9 +88,10 @@ public class TmdbApiClient {
     }
 
     /**
+     * 指定された映画IDをもとに、TMDbのレコメンドAPIから関連映画の情報を取得する。
      *
-     *
-     * @return
+     * @param movieId TMDbの映画ID
+     * @return レコメンドされた映画のリストを含む {@link TmdbResponse}
      */
     public TmdbResponse fetchRecommendationsByMovieId(Long movieId) {
         String url = UriComponentsBuilder
@@ -94,6 +107,12 @@ public class TmdbApiClient {
         return response.getBody();
     }
 
+    /**
+     * 映画タイトルでTMDbを検索する。
+     *
+     * @param title 映画タイトル（部分一致）
+     * @return 該当する映画の検索結果 {@link TmdbResponse}
+     */
     public TmdbResponse searchMoviesByTitle(String title) {
         String url = UriComponentsBuilder.fromHttpUrl("https://api.themoviedb.org/3/search/movie")
                 .queryParam("api_key", apiKey)
@@ -108,6 +127,11 @@ public class TmdbApiClient {
         return response.getBody();
     }
 
+    /**
+     * ランダムなトレンド映画（day/week × 1〜3ページ目）を取得する。
+     *
+     * @return トレンド映画の一覧 {@link TmdbResponse}
+     */
     public TmdbResponse fetchRandomTrendingMovies() {
         String timeWindow = ThreadLocalRandom.current().nextBoolean() ? "day" : "week";
         int page = ThreadLocalRandom.current().nextInt(1, 4); // 1〜3
@@ -126,6 +150,12 @@ public class TmdbApiClient {
         return response.getBody();
     }
 
+    /**
+     * 指定された映画IDの概要、公開日、上映時間、制作国情報を取得する。
+     *
+     * @param movieId TMDbの映画ID
+     * @return 映画の概要情報 {@link MovieOverviewResponseDto}
+     */
     @SuppressWarnings("unchecked")
     public MovieOverviewResponseDto fetchMovieOverview(Long movieId) {
         String url = UriComponentsBuilder
