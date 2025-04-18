@@ -21,6 +21,14 @@ services:
       dockerfile: src/Dockerfile.dev
     ports:
       - "8080:8080"
+    environment:
+      POSTGRES_ENDPOINT_DEV: ${POSTGRES_ENDPOINT_DEV}
+      POSTGRES_PORT_DEV: ${POSTGRES_PORT_DEV}
+      POSTGRES_DATABASE_NAME_DEV: ${POSTGRES_DATABASE_NAME_DEV}
+      POSTGRES_USER: ${POSTGRES_USER_DEV}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_DEV}
+    depends_on:
+      - db
     networks:
       - app-network
     env_file:
@@ -44,3 +52,5 @@ services:
 
 networks:
   app-network:
+volumes:
+  movie-recommendation_postgres_data:
