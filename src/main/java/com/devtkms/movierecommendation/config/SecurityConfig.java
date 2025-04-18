@@ -22,16 +22,27 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Arrays;
 
+/**
+ * Spring Security の設定クラス。
+ * JWT 認証、CORS、認可、パスワードエンコーディング、セッション管理などを構成する。
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    /**
-     * JWT認証フィルター
-     */
+    /** JWT 認証フィルター */
     private final JwtAuthenticationFilter jwtAuthFilter;
 
+    /**
+     * アプリケーション全体のセキュリティルールを定義。
+     *
+     * @param http HttpSecurityインスタンス
+     * @param userDetailsService カスタムユーザーデータ取得サービス
+     * @param passwordEncoder パスワードエンコーダー
+     * @return セキュリティフィルターチェーン
+     * @throws Exception セキュリティ構成エラー
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    CustomUserDetailsService userDetailsService,
@@ -70,6 +81,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * 認証マネージャーを定義。
+     *
+     * @param userDetailsService ユーザー情報を取得するサービス
+     * @param passwordEncoder パスワードハッシュ化エンジン
+     * @return 認証マネージャー
+     */
     @Bean
     public AuthenticationManager authenticationManager(
             CustomUserDetailsService userDetailsService,
@@ -85,6 +103,13 @@ public class SecurityConfig {
         return providerManager; // Return the configured AuthenticationManager
     }
 
+    /**
+     * Dao 認証プロバイダーの設定。
+     *
+     * @param userDetailsService ユーザー情報取得サービス
+     * @param passwordEncoder パスワードエンコーダー
+     * @return 認証プロバイダー
+     */
     @Bean
     public AuthenticationProvider authenticationProvider(CustomUserDetailsService userDetailsService,
                                                          PasswordEncoder passwordEncoder) {
@@ -95,6 +120,11 @@ public class SecurityConfig {
     }
 
 
+    /**
+     * パスワードエンコーダーとして BCrypt を使用。
+     *
+     * @return BCrypt パスワードエンコーダー
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(); // Return a new BCryptPasswordEncoder

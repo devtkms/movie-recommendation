@@ -18,6 +18,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * ユーザーの認証・登録・ログアウト・自身の情報取得を行うコントローラー。
+ * JWTベースの認証を用いてセッションレスで管理される。
+ */
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -28,7 +32,11 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
 
     /**
-     * ユーザー登録 + 自動ログイン（JWT発行）
+     * ユーザー登録と同時にログインし、JWTをHttpOnly Cookieに発行する。
+     *
+     * @param userDto ユーザー登録用リクエストDTO
+     * @param response レスポンス（クッキー追加のために使用）
+     * @return 登録されたユーザー情報（ニックネーム付き）
      */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody UserRegisterRequestDto userDto, HttpServletResponse response) {
@@ -52,7 +60,9 @@ public class UserController {
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-            return ResponseEntity.ok(new UserRegisterResponseDto(user.getId(), null, user.getNickname()));
+
+            UserRegisterResponseDto dto = new UserRegisterResponseDto(user.getId(), user.getNickname());
+            return ResponseEntity.ok(dto);
 
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -60,7 +70,11 @@ public class UserController {
     }
 
     /**
-     * ログイン（JWT発行）
+     * ユーザー認証を行い、JWTをHttpOnly Cookieに発行する。
+     *
+     * @param loginRequestDto ログイン情報（ユーザーIDとパスワード）
+     * @param response レスポンス（クッキー追加のために使用）
+     * @return 認証成功時：ユーザー情報、失敗時：401エラー
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto, HttpServletResponse response) {
@@ -76,27 +90,31 @@ public class UserController {
 
             String token = jwtService.generateToken(userDetails).token();
 
-            // ✅ HttpOnly Cookie にトークンをセット
+            // HttpOnly Cookie にトークンをセット
             ResponseCookie cookie = ResponseCookie.from("token", token)
                     .httpOnly(true)
                     .secure(true) // 本番環境は true（HTTPSのみ）
-//                    .secure(false) // ローカルは false（HTTPSのみ）
                     .path("/")
                     .maxAge(60 * 60 * 24 * 7) // 7日間
                     .sameSite("None") // 本番環境は None（HTTPSのみ）
-//                    .sameSite("Lax") // 本番環境は Lax（HTTPSのみ）
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-            // トークンは返さず、IDとニックネームのみ返す（セキュリティ強化）
-            return ResponseEntity.ok(new LoginResponseDto(user.getId(), null, user.getNickname()));
+            LoginResponseDto dto = new LoginResponseDto(user.getId(), user.getNickname());
+            return ResponseEntity.ok(dto);
 
         } catch (Exception e) {
             return ResponseEntity.status(401).body("認証に失敗しました: " + e.getMessage());
         }
     }
 
+    /**
+     * JWT Cookie を無効化し、ログアウト処理を行う。
+     *
+     * @param response レスポンス（Cookieの削除用）
+     * @return HTTP 200 OK（空のレスポンス）
+     */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from("token", "")
@@ -111,6 +129,12 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * 認証中のユーザー情報を取得する。
+     *
+     * @param authentication Spring Security が管理する認証情報
+     * @return ログインユーザーの情報（ニックネーム付き）、未認証時は401
+     */
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -119,6 +143,6 @@ public class UserController {
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         UserEntity user = userService.findByUserId(userDetails.getUsername());
-        return ResponseEntity.ok(new LoginResponseDto(user.getId(), null, user.getNickname()));
+        return ResponseEntity.ok(new LoginResponseDto(user.getId(), user.getNickname()));
     }
 }
