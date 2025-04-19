@@ -1,4 +1,18 @@
 services:
+  db:
+    container_name: movie-recommendation-postgres-container
+    image: postgres:17.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE_NAME_DEV}
+      POSTGRES_USER: ${POSTGRES_USER_DEV}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_DEV}
+    ports:
+      - "5432:5432"
+    volumes:
+      - movie-recommendation_postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
   app:
     container_name: movie-recommendation-sb-container
     image: movie-recommendation-sb-image:dev
@@ -7,6 +21,14 @@ services:
       dockerfile: src/Dockerfile.dev
     ports:
       - "8080:8080"
+    environment:
+      POSTGRES_ENDPOINT_DEV: ${POSTGRES_ENDPOINT_DEV}
+      POSTGRES_PORT_DEV: ${POSTGRES_PORT_DEV}
+      POSTGRES_DATABASE_NAME_DEV: ${POSTGRES_DATABASE_NAME_DEV}
+      POSTGRES_USER: ${POSTGRES_USER_DEV}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_DEV}
+    depends_on:
+      - db
     networks:
       - app-network
     env_file:
@@ -30,3 +52,5 @@ services:
 
 networks:
   app-network:
+volumes:
+  movie-recommendation_postgres_data:

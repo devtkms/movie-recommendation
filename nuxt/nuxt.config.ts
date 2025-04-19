@@ -14,6 +14,21 @@ export default defineNuxtConfig({
       // apiBase: 'https://movie-recommendation-uybc.onrender.com'　// 本番環境
       apiBase: 'https://api.movireco.com'　// 本番環境
     }
+  },
+  app: {
+    head: {
+      link: [
+        {
+          rel: 'apple-touch-icon',
+          href: '/images/apple-touch-icon.png',
+          sizes: '180x180'
+        }
+      ],
+      meta: [
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' }
+      ]
+    }
   }
 });
 
