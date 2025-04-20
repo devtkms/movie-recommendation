@@ -6,11 +6,13 @@ import com.devtkms.movierecommendation.dto.MovieSaveRequestDto;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 @Service
 public class MovieSaveService {
 
     private final FavoriteMapper favoriteMapper;
+    private static final Logger logger = Logger.getLogger(MovieSaveService.class.getName());
 
     public MovieSaveService(FavoriteMapper favoriteMapper) {
         this.favoriteMapper = favoriteMapper;
@@ -27,6 +29,8 @@ public class MovieSaveService {
     }
 
     public List<FavoriteEntity> getFavorites(String userId) {
+        logger.info("ユーザーID: " + userId + "さんが、気になる機能を使用");
+
         return favoriteMapper.selectByUserId(userId);
     }
 

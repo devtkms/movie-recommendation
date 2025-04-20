@@ -54,7 +54,7 @@ public class TmdbApiClient {
                     .build()
                     .toUriString();
 
-            logger.info("🎲 TMDb ランダムページ取得 (page=" + page + "): " + url);
+            logger.info("🎲 TMDb メイン画面から取得 (page=" + page + "): " + url);
 
             ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
             if (response.getBody() != null && response.getBody().getResults() != null) {
@@ -80,7 +80,7 @@ public class TmdbApiClient {
                 .build()
                 .toUriString();
 
-        logger.info("📺 TMDb 配信情報 URL: " + url);
+        logger.info("📺 TMDb 配信情報を取得 URL: " + url);
 
         ResponseEntity<TmdbWatchProviderResponse> response =
                 restTemplate.getForEntity(url, TmdbWatchProviderResponse.class);
@@ -101,7 +101,7 @@ public class TmdbApiClient {
                 .build()
                 .toUriString();
 
-        logger.info("🎯 TMDb レコメンド URL: " + url);
+        logger.info("🎯 TMDb 登録者専用のレコメンド画面から取得 URL: " + url);
 
         ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
         return response.getBody();
@@ -121,7 +121,7 @@ public class TmdbApiClient {
                 .build()
                 .toUriString();
 
-        logger.info("🔍 TMDb 映画タイトル検索 URL: " + url);
+        logger.info("🔍 TMDb 会員登録画面の映画タイトル検索 URL: " + url);
 
         ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
         return response.getBody();
@@ -144,7 +144,7 @@ public class TmdbApiClient {
                 .build()
                 .toUriString();
 
-        logger.info("🔥 TMDb ランダムトレンド URL: " + url);
+        logger.info("🔥 TMDb 登録者専用のレコメンド画面からランダムトレンド取得 URL: " + url);
 
         ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
         return response.getBody();

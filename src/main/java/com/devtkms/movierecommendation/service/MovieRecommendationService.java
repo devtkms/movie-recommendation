@@ -4,7 +4,6 @@ import com.devtkms.movierecommendation.client.TmdbApiClient;
 import com.devtkms.movierecommendation.dto.MovieRecommendationRequestDto;
 import com.devtkms.movierecommendation.dto.MovieRecommendationResponseDto;
 import com.devtkms.movierecommendation.dto.MovieRecommendationResultDto;
-import com.devtkms.movierecommendation.entity.QuestionButtonLogEntity;
 import com.devtkms.movierecommendation.entity.UserEntity;
 import com.devtkms.movierecommendation.mapper.FavoriteMapper;
 import com.devtkms.movierecommendation.mapper.QuestionButtonLogMapper;
@@ -17,7 +16,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 /**
  * 映画推薦に関するビジネスロジックを担当するサービスクラス
@@ -28,9 +27,9 @@ public class MovieRecommendationService {
     private final TagMasterMapper tagMasterMapper;
     private final TmdbApiClient tmdbApiClient;
     private final MovieSelectorService movieSelector;
-    private final QuestionButtonLogMapper questionButtonLogMapper;
     private final UserMapper userMapper;
     private final FavoriteMapper favoriteMapper;
+    private static final Logger logger = Logger.getLogger(MovieRecommendationService.class.getName());
 
     public MovieRecommendationService(TagMasterMapper tagMasterMapper,
                                       TmdbApiClient tmdbApiClient,
@@ -41,7 +40,6 @@ public class MovieRecommendationService {
         this.tagMasterMapper = tagMasterMapper;
         this.tmdbApiClient = tmdbApiClient;
         this.movieSelector = movieSelector;
-        this.questionButtonLogMapper = questionButtonLogMapper;
         this.userMapper = userMapper;
         this.favoriteMapper = favoriteMapper;
     }
@@ -53,13 +51,9 @@ public class MovieRecommendationService {
      * @return 推薦された映画リストを含む結果DTO
      */
     public MovieRecommendationResultDto recommendMovies(MovieRecommendationRequestDto requestDto, String userId) {
-        if (Boolean.FALSE.equals(requestDto.getIsMyData())) {
-            QuestionButtonLogEntity log = new QuestionButtonLogEntity();
-            log.setMood(requestDto.getMood());
-            log.setTone(requestDto.getTone());
-            log.setAfter(requestDto.getAfter());
-            questionButtonLogMapper.insert(log);
-        }
+
+        logger.info("ユーザーID: " + userId + "今の気分: " + requestDto.getMood() + "映画の雰囲気: " + requestDto.getTone()
+                + "観終わった後: " + requestDto.getAfter());
 
         List<String> keywordIds = tagMasterMapper.findKeywordIdsByConditions(
                 requestDto.getMood(),
@@ -89,6 +83,9 @@ public class MovieRecommendationService {
      * @return トレンド映画のリストを含む結果DTO
      */
     public MovieRecommendationResultDto getPersonalizeMovies(Long userId, String usrId) {
+
+        logger.info("ユーザーID: " + userId + "さんが、レコメンド機能を使用");
+
         UserEntity user = userMapper.findById(userId);
         Long favoriteMovieId = user.getFavoriteMovieId();
 
