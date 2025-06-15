@@ -3,7 +3,7 @@ package com.devtkms.movierecommendation.controller;
 import com.devtkms.movierecommendation.dto.MovieRecommendationRequestDto;
 import com.devtkms.movierecommendation.dto.MovieRecommendationResultDto;
 import com.devtkms.movierecommendation.entity.UserEntity;
-import com.devtkms.movierecommendation.service.MovieRecommendationService;
+import com.devtkms.movierecommendation.service.impl.MovieRecommendationServiceImpl;
 import com.devtkms.movierecommendation.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/recommendations")
 public class MovieRecommendationController {
 
-    private final MovieRecommendationService recommendationService;
+    private final MovieRecommendationServiceImpl recommendationService;
     private final UserService userService;
 
-    public MovieRecommendationController(MovieRecommendationService recommendationService, UserService userService) {
+    public MovieRecommendationController(MovieRecommendationServiceImpl recommendationService, UserService userService) {
         this.recommendationService = recommendationService;
         this.userService = userService;
     }
