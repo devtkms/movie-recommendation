@@ -10,7 +10,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 /**
- * お問い合わせに関するビジネスロジックを担当するサービスクラス
+ * Service class responsible for handling contact form business logic.
  */
 @Service
 public class ContactService {
@@ -22,24 +22,23 @@ public class ContactService {
     }
 
     /**
-     * お問い合わせ情報を保存する
+     * Save contact information to the database.
      *
-     * @param dto フロントエンドから送られたお問い合わせ内容
-     * @return 保存完了後のレスポンスDTO（現在は空）
+     * @param dto Contact form data submitted from frontend
+     * @return Response DTO after saving (currently empty)
      */
     public ContactResponseDto save(ContactRequestDto dto) {
-        // DTOの値をEntityに変換
+        // Convert DTO to Entity
         ContactEntity entity = new ContactEntity();
         entity.setNickname(dto.getNickname());
         entity.setCategory(dto.getCategory());
         entity.setMessage(dto.getMessage());
 
-        // createdAtなどはMyBatisのMapperで自動付与される想定（またはDB側のデフォルト）
+        // Note: createdAt will be set automatically by MyBatis or DB defaults
 
-        // DBに問い合わせ情報を保存
+        // Save to DB
         contactMapper.insert(entity);
 
-        // TODO: 必要に応じてレスポンス内容をセットする（IDや登録時刻など）
         return new ContactResponseDto();
     }
 }

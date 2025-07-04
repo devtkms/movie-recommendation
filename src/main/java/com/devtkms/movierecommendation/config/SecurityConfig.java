@@ -23,25 +23,24 @@ import lombok.RequiredArgsConstructor;
 import java.util.Arrays;
 
 /**
- * Spring Security の設定クラス。
- * JWT 認証、CORS、認可、パスワードエンコーディング、セッション管理などを構成する。
+ * Spring Security configuration class.
+ * Configures JWT authentication, CORS, authorization, password encoding, session management, etc.
  */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    /** JWT 認証フィルター */
     private final JwtAuthenticationFilter jwtAuthFilter;
 
     /**
-     * アプリケーション全体のセキュリティルールを定義。
+     * Defines security rules for the application.
      *
-     * @param http HttpSecurityインスタンス
-     * @param userDetailsService カスタムユーザーデータ取得サービス
-     * @param passwordEncoder パスワードエンコーダー
-     * @return セキュリティフィルターチェーン
-     * @throws Exception セキュリティ構成エラー
+     * @param http HttpSecurity instance
+     * @param userDetailsService Service to load user-specific data
+     * @param passwordEncoder Password encoder
+     * @return Configured security filter chain
+     * @throws Exception on configuration errors
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -74,7 +73,6 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // ✅ JWTフィルターを認証前に差し込む
                 .authenticationProvider(authenticationProvider(userDetailsService, passwordEncoder))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -82,11 +80,11 @@ public class SecurityConfig {
     }
 
     /**
-     * 認証マネージャーを定義。
+     * Defines the authentication manager.
      *
-     * @param userDetailsService ユーザー情報を取得するサービス
-     * @param passwordEncoder パスワードハッシュ化エンジン
-     * @return 認証マネージャー
+     * @param userDetailsService Service to load user-specific data
+     * @param passwordEncoder Password encoder
+     * @return Authentication manager
      */
     @Bean
     public AuthenticationManager authenticationManager(
@@ -104,11 +102,11 @@ public class SecurityConfig {
     }
 
     /**
-     * Dao 認証プロバイダーの設定。
+     * Configuration for DaoAuthenticationProvider.
      *
-     * @param userDetailsService ユーザー情報取得サービス
-     * @param passwordEncoder パスワードエンコーダー
-     * @return 認証プロバイダー
+     * @param userDetailsService Service to load user-specific data
+     * @param passwordEncoder Password encoder
+     * @return Authentication provider
      */
     @Bean
     public AuthenticationProvider authenticationProvider(CustomUserDetailsService userDetailsService,
@@ -119,30 +117,36 @@ public class SecurityConfig {
         return provider;
     }
 
-
     /**
-     * パスワードエンコーダーとして BCrypt を使用。
+     * Uses BCrypt as the password encoder.
      *
-     * @return BCrypt パスワードエンコーダー
+     * @return BCrypt password encoder
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(); // Return a new BCryptPasswordEncoder
     }
 
+    /**
+     * Defines CORS configuration for API.
+     *
+     * @return CORS configuration source
+     */
     @Bean
     CorsConfigurationSource apiConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080", "http://localhost:3000"
-                ,"https://movireco.onrender.com","https://movireco.com"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 必要なメソッドを許可
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cookie")); // 必要なヘッダーを許可
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:8080",
+                "http://localhost:3000",
+                "https://movireco.onrender.com",
+                "https://movireco.com"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cookie"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 }
 
 

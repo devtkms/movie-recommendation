@@ -7,10 +7,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * Custom implementation of Spring Security's UserDetails interface.
+ * Wraps the application's UserEntity for authentication purposes.
+ */
 public class CustomUserDetails implements UserDetails {
 
-    private final String userId;  // ユーザーのユーザーID
-    private final String password; // ユーザーのパスワード
+    private final String userId;   // User ID (used for login)
+    private final String password; // User password (should be hashed)
 
     public CustomUserDetails(UserEntity user) {
         if (user == null || user.getUserId() == null || user.getPassword() == null) {
@@ -22,7 +26,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList(); // 権限なし
+        return Collections.emptyList(); // No roles or authorities assigned
     }
 
     @Override
@@ -32,26 +36,26 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return userId; // Spring Security のユーザー名は userId を返す
+        return userId;
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;
+        return true; // Account is always active
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return true; // Account is never locked
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true;
+        return true; // Credentials never expire
     }
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return true; // User is always enabled
     }
 }

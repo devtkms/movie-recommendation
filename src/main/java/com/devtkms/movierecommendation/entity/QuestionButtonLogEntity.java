@@ -3,19 +3,18 @@ package com.devtkms.movierecommendation.entity;
 import lombok.Data;
 
 /**
- * 映画推薦質問に対するユーザーの回答ログを記録するエンティティ
- * question_button_log テーブルに対応
+ * Entity that logs user responses to movie recommendation questions.
+ * Maps to the 'question_button_log' table.
  */
 @Data
 public class QuestionButtonLogEntity {
 
-    /** 質問1：気分の選択（例：light, emotional） */
+    /** Q1: User's current mood (e.g., light, emotional) */
     private String mood;
 
-    /** 質問2：映画の雰囲気（例：fast, deep） */
+    /** Q2: Movie tone (e.g., fast, deep) */
     private String tone;
 
-    /** 質問3：観終わった後の気持ち（例：refresh, think） */
+    /** Q3: Feeling after watching (e.g., refresh, think) */
     private String after;
-
 }

@@ -3,11 +3,11 @@ package com.devtkms.movierecommendation.dto;
 import lombok.Data;
 
 /**
- * お問い合わせ送信完了後に返却されるレスポンスDTO
+ * DTO returned after a successful inquiry submission.
  */
 @Data
 public class ContactResponseDto {
 
-    /** 成功メッセージ */
-    private String message = "お問い合わせが送信されました";
+    /** Success message */
+    private String message = "Your inquiry has been submitted successfully.";
 }

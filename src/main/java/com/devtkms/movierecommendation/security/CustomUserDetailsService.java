@@ -8,27 +8,29 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service to load user details from the database for Spring Security authentication.
+ */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
     @Autowired
-    private UserMapper userMapper; // DAO for accessing user data
+    private UserMapper userMapper;
 
     /**
-     * Loads user details by username (user ID).
+     * Loads the user by their user ID.
      *
-     * @param userId the username (user ID) of the user to be loaded
-     * @return UserDetails containing the user's information
-     * @throws UsernameNotFoundException if the user cannot be found
+     * @param userId the ID of the user to look up
+     * @return UserDetails object used by Spring Security
+     * @throws UsernameNotFoundException if no user is found
      */
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
         try {
-            UserEntity user = userMapper.selectUser(userId); // Retrieve user from the database
+            UserEntity user = userMapper.selectUser(userId);
             if (user == null) {
                 throw new UsernameNotFoundException("User not found with userId: " + userId);
             }
-
             return new CustomUserDetails(user);
 
         } catch (NumberFormatException e) {

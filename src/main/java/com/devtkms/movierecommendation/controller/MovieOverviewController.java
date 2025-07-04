@@ -7,21 +7,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 映画の概要情報を取得するAPIコントローラー。
+ * REST controller for retrieving movie overview information.
  */
 @RestController
 @RequestMapping("/api/movie")
 @RequiredArgsConstructor
 public class MovieOverviewController {
 
-    /** 映画概要取得サービス */
+    /** Service for retrieving movie overview data */
     private final MovieOverviewService movieOverviewService;
 
     /**
-     * 指定された映画IDに基づいて映画の概要情報を取得するエンドポイント。
+     * Endpoint to retrieve movie overview information based on the specified movie ID.
      *
-     * @param request 映画IDを含むリクエストDTO
-     * @return 映画の概要情報を含むレスポンスDTO
+     * @param request Request DTO containing the movie ID
+     * @return Response DTO containing movie overview information
      */
     @PostMapping("/overview")
     public MovieOverviewResponseDto getMovieOverview(@RequestBody MovieOverviewRequestDto request) {

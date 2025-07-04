@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * Service responsible for saving and retrieving user's favorite movies.
+ */
 @Service
 public class MovieSaveService {
 
@@ -18,6 +21,12 @@ public class MovieSaveService {
         this.favoriteMapper = favoriteMapper;
     }
 
+    /**
+     * Save a movie to the user's favorites list.
+     *
+     * @param userId User's unique ID
+     * @param dto    Movie data to be saved
+     */
     public void saveFavorite(String userId, MovieSaveRequestDto dto) {
         FavoriteEntity entity = new FavoriteEntity();
         entity.setUserId(userId);
@@ -28,12 +37,23 @@ public class MovieSaveService {
         favoriteMapper.insertFavorite(entity);
     }
 
+    /**
+     * Retrieve all movies saved by the user.
+     *
+     * @param userId User's unique ID
+     * @return List of saved movies
+     */
     public List<FavoriteEntity> getFavorites(String userId) {
-        logger.info("ユーザーID: " + userId + "さんが、気になる機能を使用");
-
+        logger.info("User ID: " + userId + " accessed the favorites feature");
         return favoriteMapper.selectByUserId(userId);
     }
 
+    /**
+     * Delete a movie from the user's favorites list.
+     *
+     * @param userId  User's unique ID
+     * @param movieId ID of the movie to be removed
+     */
     public void deleteFavorite(String userId, Long movieId) {
         favoriteMapper.deleteByUserIdAndMovieId(userId, movieId);
     }

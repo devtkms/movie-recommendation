@@ -5,18 +5,18 @@ import org.apache.ibatis.annotations.Mapper;
 import java.util.List;
 
 /**
- * 質問の回答内容に応じたTMDbキーワードIDを取得するマッパー
+ * Mapper for retrieving TMDb keyword IDs based on user's question answers.
  */
 @Mapper
 public interface TagMasterMapper {
 
     /**
-     * 気分・雰囲気・観終わった気持ちの組み合わせに対応するキーワードIDを取得する
+     * Finds TMDb keyword IDs based on a combination of mood, tone, and after.
      *
-     * @param mood  質問1：気分
-     * @param tone  質問2：映画の雰囲気
-     * @param after 質問3：観終わった後の気持ち
-     * @return TMDbのキーワードIDリスト（文字列）
+     * @param mood  The user's current mood.
+     * @param tone  The tone of the movie.
+     * @param after The feeling after watching.
+     * @return List of keyword ID strings.
      */
     List<String> findKeywordIdsByConditions(String mood, String tone, String after);
 }

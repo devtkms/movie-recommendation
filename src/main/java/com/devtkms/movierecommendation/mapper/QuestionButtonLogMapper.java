@@ -4,15 +4,15 @@ import com.devtkms.movierecommendation.entity.QuestionButtonLogEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 質問ボタンの選択ログを記録するマッパー
+ * Mapper for logging user responses to movie recommendation questions.
  */
 @Mapper
 public interface QuestionButtonLogMapper {
 
     /**
-     * ユーザーが選択した質問の組み合わせをログとして保存する
+     * Inserts a log of the user's answers to the recommendation questions.
      *
-     * @param entity mood, tone, after の選択肢を含んだエンティティ
+     * @param entity The entity containing mood, tone, and after values.
      */
     void insert(QuestionButtonLogEntity entity);
 }

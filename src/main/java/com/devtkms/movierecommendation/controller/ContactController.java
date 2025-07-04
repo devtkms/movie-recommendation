@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * お問い合わせフォームに関するRESTコントローラー
+ * REST controller for handling contact form submissions.
  */
 @RestController
 @RequestMapping("/api/contact")
@@ -20,10 +20,10 @@ public class ContactController {
     }
 
     /**
-     * お問い合わせ内容の送信エンドポイント
+     * Endpoint for submitting contact form content.
      *
-     * @param dto フロントから送信されるお問い合わせ内容
-     * @return お問い合わせ受付メッセージ
+     * @param dto Contact form data sent from the frontend
+     * @return Response message indicating the contact was received
      */
     @PostMapping("/submit")
     public ContactResponseDto submit(@RequestBody ContactRequestDto dto) {
@@ -31,12 +31,10 @@ public class ContactController {
     }
 
     /**
-     * お問い合わせ内容のバリデーション確認用エンドポイント
-     * - 主に開発時のバリデーションチェックやフォーム確認に使用
-     * - 実運用では通常不要（または管理者向け）
+     * Endpoint for validating contact form input.
      *
-     * @param dto バリデーション対象のリクエストDTO
-     * @return バリデーション後のリクエストDTO（そのまま返却）
+     * @param dto Request DTO to validate
+     * @return The same DTO after validation
      */
     @PostMapping("/validate")
     public ContactRequestDto validate(@Valid @RequestBody ContactRequestDto dto) {
