@@ -7,43 +7,43 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * TMDb APIの「Watch Providers（配信サービス情報）」レスポンスを受け取るモデル
+ * Model for receiving response from TMDb's "Watch Providers" API.
  *
- * 例：https://api.themoviedb.org/3/movie/{movie_id}/watch/providers
+ * Example: https://api.themoviedb.org/3/movie/{movie_id}/watch/providers
  */
 @Data
 public class TmdbWatchProviderResponse {
 
     /**
-     * 国コード（例: "JP", "US"）ごとの配信情報
-     * Key: 国コード
-     * Value: 各国の配信サービス情報
+     * Map of watch providers by country code (e.g., "JP", "US").
+     * Key: Country code
+     * Value: Watch provider info for that country
      */
     @JsonProperty("results")
     private Map<String, CountryWatchInfo> results;
 
     /**
-     * 各国における視聴可能サービス情報
+     * Watch provider info for each country.
      */
     @Data
     public static class CountryWatchInfo {
 
         /**
-         * 定額配信で視聴可能なサービス一覧（例: Netflix, Prime Video）
+         * List of services available via subscription (e.g., Netflix, Prime Video).
          */
         private List<Provider> flatrate;
 
         /**
-         * 配信プロバイダー（サービス）情報
+         * Information for each provider (streaming service).
          */
         @Data
         public static class Provider {
 
-            /** プロバイダー名（例: "Netflix", "U-NEXT"） */
+            /** Provider name (e.g., "Netflix", "U-NEXT") */
             @JsonProperty("provider_name")
             private String providerName;
 
-            /** プロバイダーのロゴ画像パス（例: "/abc123.png"） */
+            /** Path to the provider's logo image (e.g., "/abc123.png") */
             @JsonProperty("logo_path")
             private String logoPath;
         }

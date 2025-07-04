@@ -12,17 +12,17 @@ import org.springframework.context.annotation.Configuration;
 public class JwtConfig {
 
     /**
-     * シークレットキー（Base64エンコード）
+     * Secret key (Base64 encoded)
      */
     private String secret;
 
     /**
-     * アクセストークンの有効期限（ミリ秒）
+     * Access token expiration time (in milliseconds)
      */
     private long expiration;
 
     /**
-     * リフレッシュトークンの有効期限（ミリ秒）
+     * Refresh token expiration time (in milliseconds)
      */
     private long refreshExpiration;
 }

@@ -10,7 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 映画推薦に関するリクエストを受け付けるコントローラー
+ * Controller for handling movie recommendation requests.
  */
 @RestController
 @RequestMapping("/api/recommendations")
@@ -25,42 +25,39 @@ public class MovieRecommendationController {
     }
 
     /**
-     * 映画推薦の取得エンドポイント
+     * Endpoint to get recommended movies.
      *
-     * フロントエンドから送信された質問3つの回答をもとに、
-     * 映画を推薦して返却する。
+     * Based on 3 questions answered by the user from the frontend,
+     * returns a list of recommended movies.
      *
-     * @param requestDto ユーザーの質問回答（mood, tone, after）
-     * @return 推薦映画のリストを含む結果DTO
+     * @param requestDto User's responses to questions (mood, tone, after)
+     * @param authentication Authentication object containing user info
+     * @return DTO containing a list of recommended movies
      */
     @PostMapping
     public ResponseEntity<MovieRecommendationResultDto> getRecommendations(
             @RequestBody MovieRecommendationRequestDto requestDto,
-            Authentication authentication // ← 追加
+            Authentication authentication
     ) {
         String userId = (authentication != null) ? authentication.getName() : null;
-
-        // userId を渡して isSaved 判定を可能にする
         MovieRecommendationResultDto response = recommendationService.recommendMovies(requestDto, userId);
-
         return ResponseEntity.ok(response);
     }
 
     /**
-     * トレンド映画を取得するエンドポイント
+     * Endpoint to get personalized trending movies.
      *
-     * ユーザーの質問回答なしで、システム側でトレンド映画を推薦する
+     * Returns trending movies personalized to the user
+     * without requiring any question responses.
      *
-     * @return トレンド映画のリストを含む結果DTO
+     * @param authentication Authentication object containing user info
+     * @return DTO containing a list of trending movies
      */
     @GetMapping("/personalize")
     public ResponseEntity<MovieRecommendationResultDto> getPersonalizeMovies(Authentication authentication) {
-        // トークンに含まれる userId からユーザー情報を取得
         String userId = authentication.getName();
         UserEntity user = userService.findByUserId(userId);
-
         MovieRecommendationResultDto response = recommendationService.getPersonalizeMovies(user.getId(), userId);
-
         return ResponseEntity.ok(response);
     }
 }

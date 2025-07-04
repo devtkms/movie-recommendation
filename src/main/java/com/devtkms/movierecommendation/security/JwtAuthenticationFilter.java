@@ -1,8 +1,12 @@
 package com.devtkms.movierecommendation.security;
 
-import java.io.IOException;
-
 import com.devtkms.movierecommendation.service.JwtService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -14,37 +18,22 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
 
 /**
- * JWT認証フィルター
+ * JWT authentication filter that validates tokens and sets authentication context.
  */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    /**
-     * ロガー
-     */
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    /**
-     * JWTサービス
-     */
     private final JwtService jwtService;
-
-    /**
-     * ユーザー詳細サービス
-     */
     private final UserDetailsService userDetailsService;
 
     /**
-     * フィルター内部
+     * Filters incoming requests to extract and validate JWT tokens.
      */
     @Override
     protected void doFilterInternal(
@@ -52,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        final String jwt = extractToken(request); // 👈 修正ポイント：トークンの取得を関数化
+        final String jwt = extractToken(request);
         final String userId;
 
         if (jwt == null) {
@@ -67,10 +56,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userId);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
@@ -83,14 +70,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Extracts the JWT token from Authorization header or cookie.
+     *
+     * @param request HTTP request
+     * @return JWT token string or null if not found
+     */
     private String extractToken(HttpServletRequest request) {
-        // Authorizationヘッダーから取得
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7); // "Bearer " を除く
+            return authHeader.substring(7);
         }
 
-        // Cookie から取得
         if (request.getCookies() != null) {
             for (var cookie : request.getCookies()) {
                 if ("token".equals(cookie.getName())) {
@@ -99,6 +90,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        return null; // トークンが見つからなければ null
+        return null;
     }
 }

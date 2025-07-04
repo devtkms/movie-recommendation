@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 指定された映画に対応する配信サービス（Watch Providers）を返すコントローラー
+ * Controller that returns watch providers (streaming services) for a given movie.
  */
 @RestController
 @RequestMapping("/movie")
@@ -20,10 +20,10 @@ public class MovieWatchProviderController {
     }
 
     /**
-     * 指定された映画IDに対して、日本で視聴可能な配信サービス一覧を取得する
+     * Retrieve a list of streaming services available in Japan for the specified movie ID.
      *
-     * @param movieId TMDbの映画ID
-     * @return 対応する配信サービスのDTOリスト（例: Netflix, Prime Videoなど）
+     * @param movieId TMDb movie ID
+     * @return List of DTOs for available watch providers (e.g., Netflix, Prime Video)
      */
     @GetMapping("/{movieId}/watch/providers")
     public List<WatchProviderResponseDto> getWatchProviders(@PathVariable Long movieId) {

@@ -3,11 +3,11 @@ package com.devtkms.movierecommendation.dto;
 import lombok.Data;
 
 /**
- * 配信サービス取得リクエストDTO
+ * DTO for requesting watch provider information for a movie.
  */
 @Data
 public class WatchProviderRequestDto {
 
-    /** 対象となる映画ID（TMDb ID） */
+    /** Target movie ID (TMDb ID) */
     private Long movieId;
 }

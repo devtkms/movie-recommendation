@@ -1,35 +1,34 @@
-# ビルドステージ
+# Build stage
 FROM eclipse-temurin:21-jdk AS builder
 
-# 作業ディレクトリを設定
+# Set working directory
 WORKDIR /app
 
-# Gradleの実行権限を設定
+# Set execute permission for Gradle wrapper
 COPY ../gradlew .
 COPY ../gradle ./gradle
 RUN chmod +x gradlew
 
-# プロジェクトのGradle設定ファイルをコピー（キャッシュを利用するため）
+# Copy Gradle config files (to take advantage of Docker layer caching)
 COPY ../build.gradle settings.gradle ./
 
-# 依存関係の解決（キャッシュを利用してビルド時間を短縮）
+# Download dependencies (using cache to speed up builds)
 RUN ./gradlew dependencies --refresh-dependencies --no-daemon
 
-# ソースコードをコピー
+# Copy all source code
 COPY .. .
 
-# アプリケーションのビルド（テストをスキップ）
+# Build the application (skip tests)
 RUN ./gradlew clean build --refresh-dependencies -x test --no-daemon
 
-# 実行ステージ
+# Runtime stage
 FROM eclipse-temurin:21-jre
 
-# 作業ディレクトリを設定
+# Set working directory
 WORKDIR /app
 
-# ビルドされたJARファイルをコピー
+# Copy the built JAR file from the build stage
 COPY --from=builder /app/build/libs/*.jar /movie-recommendation-sb.jar
 
-# エントリーポイント
+# Set the entrypoint
 ENTRYPOINT ["java", "-jar", "/movie-recommendation-sb.jar"]
-

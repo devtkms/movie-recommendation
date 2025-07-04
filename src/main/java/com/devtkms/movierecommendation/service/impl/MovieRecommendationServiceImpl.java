@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 /**
- * 映画推薦に関するビジネスロジックを担当するサービスクラス
+ * Service class responsible for business logic related to movie recommendations.
  */
 @Service
 public class MovieRecommendationServiceImpl implements MovieRecommendationService {
@@ -47,26 +47,32 @@ public class MovieRecommendationServiceImpl implements MovieRecommendationServic
     }
 
     /**
-     * 3つの質問に基づいて映画を推薦するメイン処理
+     * Main method to recommend movies based on 3-question user input.
      *
-     * @param requestDto ユーザーの質問回答（mood, tone, after）
-     * @return 推薦された映画リストを含む結果DTO
+     * @param requestDto User's answers (mood, tone, after)
+     * @param userId     User identifier (can be null for anonymous)
+     * @return A DTO containing the list of recommended movies
      */
     public MovieRecommendationResultDto recommendMovies(MovieRecommendationRequestDto requestDto, String userId) {
 
-        logger.info("ユーザーID: " + userId + "今の気分: " + requestDto.getMood() + "映画の雰囲気: " + requestDto.getTone()
-                + "観終わった後: " + requestDto.getAfter());
+        logger.info("User ID: " + userId + ", Mood: " + requestDto.getMood()
+                + ", Tone: " + requestDto.getTone() + ", After: " + requestDto.getAfter());
 
+        // Retrieve keyword IDs based on question responses
         List<String> keywordIds = tagMasterMapper.findKeywordIdsByConditions(
                 requestDto.getMood(),
                 requestDto.getTone(),
                 requestDto.getAfter()
         );
 
+        // Fetch movie data from TMDb API
         TmdbResponse response = tmdbApiClient.fetchMoviesByKeywords(keywordIds);
         List<MovieRecommendationResponseDto> allMovies = response.toMovieDtoList();
+
+        // Select 20 unique movies from the results
         List<MovieRecommendationResponseDto> selectedMovies = movieSelector.selectUniqueMovies(allMovies, 20);
 
+        // Mark saved movies for logged-in user
         if (userId != null) {
             Set<Long> savedIds = new HashSet<>(favoriteMapper.selectMovieIdsByUserId(userId));
             for (MovieRecommendationResponseDto movie : selectedMovies) {
@@ -80,38 +86,42 @@ public class MovieRecommendationServiceImpl implements MovieRecommendationServic
     }
 
     /**
+     * Recommend movies based on the user's favorite movie.
+     * If favorite is not set, return trending movies only.
      *
-     *
-     * @return トレンド映画のリストを含む結果DTO
+     * @param userId User's DB ID
+     * @param usrId  User's login ID
+     * @return A DTO containing personalized movie recommendations
      */
     public MovieRecommendationResultDto getPersonalizeMovies(Long userId, String usrId) {
 
-        logger.info("ユーザーID: " + userId + "さんが、レコメンド機能を使用");
+        logger.info("User ID: " + userId + " accessed personalized recommendation.");
 
         UserEntity user = userMapper.findById(userId);
         Long favoriteMovieId = user.getFavoriteMovieId();
 
-        // favoriteMovieId が未設定の場合はトレンドのみ返す
+        // If favorite movie is not set, return only trending movies
         if (favoriteMovieId == null) {
             TmdbResponse trendResponse = tmdbApiClient.fetchRandomTrendingMovies();
             List<MovieRecommendationResponseDto> trending = trendResponse.toMovieDtoList();
             return new MovieRecommendationResultDto(trending);
         }
 
-        // レコメンド取得
+        // Fetch recommendations based on favorite movie
         TmdbResponse recommendResponse = tmdbApiClient.fetchRecommendationsByMovieId(favoriteMovieId);
 
-        // トレンド映画取得
+        // Fetch trending movies
         TmdbResponse trendResponse = tmdbApiClient.fetchRandomTrendingMovies();
 
-        // DTOへ変換
+        // Convert to DTOs
         List<MovieRecommendationResponseDto> recommended = recommendResponse.toMovieDtoList();
         List<MovieRecommendationResponseDto> trending = trendResponse.toMovieDtoList();
 
-        // 合体 & シャッフル
+        // Merge and shuffle
         recommended.addAll(trending);
         Collections.shuffle(recommended);
 
+        // Mark saved movies for logged-in user
         if (userId != null) {
             Set<Long> savedIds = new HashSet<>(favoriteMapper.selectMovieIdsByUserId(usrId));
             for (MovieRecommendationResponseDto recommend : recommended) {

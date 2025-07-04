@@ -3,17 +3,17 @@ package com.devtkms.movierecommendation.dto;
 import lombok.Data;
 
 /**
- * お問い合わせフォームから受け取るリクエスト用DTO
+ * DTO for receiving inquiries from the contact form.
  */
 @Data
 public class ContactRequestDto {
 
-    /** ユーザーのニックネーム（匿名可） */
+    /** User's nickname (can be anonymous) */
     private String nickname;
 
-    /** お問い合わせカテゴリ（例: 不具合報告、機能要望など） */
+    /** Inquiry category (e.g., Bug Report, Feature Request, etc.) */
     private String category;
 
-    /** お問い合わせ本文 */
+    /** Inquiry message body */
     private String message;
 }

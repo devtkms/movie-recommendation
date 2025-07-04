@@ -6,15 +6,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 映画タイトルによる検索を提供するコントローラー。
- * ユーザーが文字列で映画を検索する機能を担う。
+ * Controller that provides search functionality by movie title.
+ * Handles movie search via text input by the user.
  */
 @RestController
 @RequestMapping("/api/search")
 @CrossOrigin
 public class MovieSearchController {
 
-    /** 映画検索サービス */
+    /** Movie search service */
     private final MovieSearchService movieSearchService;
 
     public MovieSearchController(MovieSearchService movieSearchService) {
@@ -22,10 +22,10 @@ public class MovieSearchController {
     }
 
     /**
-     * タイトルに基づいてTMDbから映画を検索するエンドポイント。
+     * Endpoint to search for movies by title from TMDb.
      *
-     * @param query 映画タイトルまたはその一部の検索キーワード
-     * @return TMDbから取得した検索結果
+     * @param query Movie title or partial title as search keyword
+     * @return Search results fetched from TMDb
      */
     @GetMapping("/movies")
     public ResponseEntity<TmdbResponse> searchMovies(@RequestParam("query") String query) {

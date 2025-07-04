@@ -43,7 +43,7 @@ class MovieRecommendationServiceImplTest {
 
     @Test
     void recommendMovies_returnRecommendedList() {
-        // 入力データの準備
+        // Prepare input data
         MovieRecommendationRequestDto requestDto = new MovieRecommendationRequestDto();
         requestDto.setMood("light");
         requestDto.setTone("slow");
@@ -53,7 +53,7 @@ class MovieRecommendationServiceImplTest {
         String userId = "user123";
         List<String> keywordIds = List.of("100", "200");
 
-        // 映画DTOのモックデータ
+        // Mock movie DTOs
         MovieRecommendationResponseDto movie1 = new MovieRecommendationResponseDto();
         movie1.setId(1L);
         movie1.setTitle("Title1");
@@ -66,7 +66,7 @@ class MovieRecommendationServiceImplTest {
 
         List<MovieRecommendationResponseDto> allMovies = List.of(movie1, movie2);
 
-        // 各依存コンポーネントのモックの振る舞いを定義
+        // Define behavior of mock dependencies
         when(tagMasterMapper.findKeywordIdsByConditions("light", "slow", "refresh")).thenReturn(keywordIds);
 
         TmdbResponse mockResponse = org.mockito.Mockito.mock(TmdbResponse.class);
@@ -74,13 +74,13 @@ class MovieRecommendationServiceImplTest {
         when(tmdbApiClient.fetchMoviesByKeywords(keywordIds)).thenReturn(mockResponse);
 
         when(movieSelector.selectUniqueMovies(allMovies, 20)).thenReturn(allMovies);
-        when(favoriteMapper.selectMovieIdsByUserId(userId)).thenReturn(List.of(1L)); // 1Lの映画が保存済み
+        when(favoriteMapper.selectMovieIdsByUserId(userId)).thenReturn(List.of(1L)); // movie with ID 1L is already saved
 
-        // テスト対象メソッドの実行
+        // Execute the method under test
         MovieRecommendationResultDto result = movieRecommendationServiceImpl.recommendMovies(requestDto, userId);
 
-        // 結果の検証
-        assertEquals(2, result.getCombined().size()); // 映画が2件返ってくること
-        assertTrue(result.getCombined().stream().anyMatch(MovieRecommendationResponseDto::getIsSaved)); // 1件は保存済みであること
+        // Assert the result
+        assertEquals(2, result.getCombined().size()); // Expecting 2 movies in the result
+        assertTrue(result.getCombined().stream().anyMatch(MovieRecommendationResponseDto::getIsSaved)); // At least one movie is marked as saved
     }
 }

@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 映画の保存・取得・削除・詳細表示を扱うコントローラー。
- * ログインユーザーごとのお気に入り映画の管理に使用される。
+ * Controller for handling movie save, fetch, delete, and detail retrieval.
+ * Used to manage favorite movies per authenticated user.
  */
 @RestController
 @RequestMapping("/api/movies")
@@ -31,11 +31,11 @@ public class MovieSaveController {
     }
 
     /**
-     * 映画をお気に入りとして保存する。
+     * Saves a movie to the user's favorites.
      *
-     * @param user ログインユーザー情報（認証済み）
-     * @param dto 保存対象映画の情報
-     * @return 保存完了メッセージ
+     * @param user Authenticated user info
+     * @param dto DTO of the movie to save
+     * @return Success message
      */
     @PostMapping("/save")
     public ResponseEntity<MovieSaveResponseDto> saveMovie(
@@ -43,34 +43,32 @@ public class MovieSaveController {
             @RequestBody MovieSaveRequestDto dto
     ) {
         movieSaveService.saveFavorite(user.getUsername(), dto);
-        return ResponseEntity.ok(new MovieSaveResponseDto("保存しました"));
+        return ResponseEntity.ok(new MovieSaveResponseDto("Movie saved successfully"));
     }
 
     /**
-     * 現在ログインしているユーザーのお気に入り映画一覧を取得する。
+     * Retrieves a list of movies saved by the currently logged-in user.
      *
-     * @param user ログインユーザー情報
-     * @return 保存済み映画のリスト
+     * @param user Authenticated user info
+     * @return List of saved movies
      */
     @GetMapping("/saved")
     public ResponseEntity<List<MovieSavedResponseDto>> getSavedMovies(
             @AuthenticationPrincipal CustomUserDetails user
     ) {
         List<FavoriteEntity> favorites = movieSaveService.getFavorites(user.getUsername());
-
         List<MovieSavedResponseDto> result = favorites.stream()
                 .map(fav -> new MovieSavedResponseDto(fav.getMovieId(), fav.getTitle(), fav.getPosterPath()))
                 .toList();
-
         return ResponseEntity.ok(result);
     }
 
     /**
-     * お気に入りから映画を削除する。
+     * Deletes a movie from the user's favorites.
      *
-     * @param user ログインユーザー情報
-     * @param movieId 削除対象の映画ID
-     * @return 204 No Content（削除完了）
+     * @param user Authenticated user info
+     * @param movieId ID of the movie to delete
+     * @return 204 No Content if deletion is successful
      */
     @DeleteMapping("/delete/{movieId}")
     public ResponseEntity<Void> deleteMovie(
@@ -82,10 +80,10 @@ public class MovieSaveController {
     }
 
     /**
-     * 映画IDに基づいて概要および配信サービス情報をまとめて取得する。
+     * Retrieves movie overview and watch provider information for the given movie ID.
      *
-     * @param movieId 対象映画のID
-     * @return 映画の詳細情報（概要 + 配信サービス）
+     * @param movieId Target movie ID
+     * @return Movie detail information (overview + streaming providers)
      */
     @GetMapping("/{movieId}/detail")
     public ResponseEntity<MovieDetailResponseDto> getMovieDetail(@PathVariable Long movieId) {

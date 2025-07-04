@@ -30,16 +30,16 @@ public class TmdbApiClient {
     }
 
     /**
-     * 指定されたキーワードIDのリストを使って映画を検索し、ランダムに2ページ分の結果を取得する。
+     * Searches movies using the specified list of TMDb keyword IDs
+     * and retrieves results from two randomly selected pages.
      *
-     * @param keywordIds TMDbのキーワードIDのリスト
-     * @return 検索結果をまとめた {@link TmdbResponse}
+     * @param keywordIds List of TMDb keyword IDs
+     * @return Combined search results {@link TmdbResponse}
      */
     public TmdbResponse fetchMoviesByKeywords(List<String> keywordIds) {
         String keywordParam = String.join(",", keywordIds);
         List<TmdbResponse.MovieResult> allResults = new java.util.ArrayList<>();
 
-        // 🎲 ランダムに 1〜5ページ目から1つ、6〜10ページ目から1つ選ぶ
         int page1 = java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 6);  // 1〜5
         int page2 = java.util.concurrent.ThreadLocalRandom.current().nextInt(6, 11); // 6〜10
 
@@ -54,7 +54,7 @@ public class TmdbApiClient {
                     .build()
                     .toUriString();
 
-            logger.info("🎲 TMDb メイン画面から取得 (page=" + page + "): " + url);
+            logger.info("TMDb メイン画面から取得 (page=" + page + "): " + url);
 
             ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
             if (response.getBody() != null && response.getBody().getResults() != null) {
@@ -68,10 +68,10 @@ public class TmdbApiClient {
     }
 
     /**
-     * 指定された映画IDに対応する配信サービス情報を取得する。
+     * Retrieves watch provider information for the specified movie ID.
      *
-     * @param movieId TMDbの映画ID
-     * @return 配信サービスの情報を含む {@link TmdbWatchProviderResponse}
+     * @param movieId TMDb movie ID
+     * @return Watch provider information {@link TmdbWatchProviderResponse}
      */
     public TmdbWatchProviderResponse fetchWatchProviders(Long movieId) {
         String url = UriComponentsBuilder
@@ -80,7 +80,7 @@ public class TmdbApiClient {
                 .build()
                 .toUriString();
 
-        logger.info("📺 TMDb 配信情報を取得 URL: " + url);
+        logger.info("TMDb 配信情報を取得 URL: " + url);
 
         ResponseEntity<TmdbWatchProviderResponse> response =
                 restTemplate.getForEntity(url, TmdbWatchProviderResponse.class);
@@ -88,10 +88,10 @@ public class TmdbApiClient {
     }
 
     /**
-     * 指定された映画IDをもとに、TMDbのレコメンドAPIから関連映画の情報を取得する。
+     * Retrieves recommended movies from TMDb using the specified movie ID.
      *
-     * @param movieId TMDbの映画ID
-     * @return レコメンドされた映画のリストを含む {@link TmdbResponse}
+     * @param movieId TMDb movie ID
+     * @return List of recommended movies {@link TmdbResponse}
      */
     public TmdbResponse fetchRecommendationsByMovieId(Long movieId) {
         String url = UriComponentsBuilder
@@ -101,17 +101,17 @@ public class TmdbApiClient {
                 .build()
                 .toUriString();
 
-        logger.info("🎯 TMDb 登録者専用のレコメンド画面から取得 URL: " + url);
+        logger.info("TMDb 登録者専用のレコメンド画面から取得 URL: " + url);
 
         ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
         return response.getBody();
     }
 
     /**
-     * 映画タイトルでTMDbを検索する。
+     * Searches TMDb for movies by title (partial match).
      *
-     * @param title 映画タイトル（部分一致）
-     * @return 該当する映画の検索結果 {@link TmdbResponse}
+     * @param title Movie title (partial match)
+     * @return Search result {@link TmdbResponse}
      */
     public TmdbResponse searchMoviesByTitle(String title) {
         String url = UriComponentsBuilder.fromHttpUrl("https://api.themoviedb.org/3/search/movie")
@@ -121,16 +121,16 @@ public class TmdbApiClient {
                 .build()
                 .toUriString();
 
-        logger.info("🔍 TMDb 会員登録画面の映画タイトル検索 URL: " + url);
+        logger.info("TMDb 会員登録画面の映画タイトル検索 URL: " + url);
 
         ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
         return response.getBody();
     }
 
     /**
-     * ランダムなトレンド映画（day/week × 1〜3ページ目）を取得する。
+     * Retrieves trending movies randomly (day/week × pages 1 to 3).
      *
-     * @return トレンド映画の一覧 {@link TmdbResponse}
+     * @return List of trending movies {@link TmdbResponse}
      */
     public TmdbResponse fetchRandomTrendingMovies() {
         String timeWindow = ThreadLocalRandom.current().nextBoolean() ? "day" : "week";
@@ -144,17 +144,18 @@ public class TmdbApiClient {
                 .build()
                 .toUriString();
 
-        logger.info("🔥 TMDb 登録者専用のレコメンド画面からランダムトレンド取得 URL: " + url);
+        logger.info("TMDb 登録者専用のレコメンド画面からランダムトレンド取得 URL: " + url);
 
         ResponseEntity<TmdbResponse> response = restTemplate.getForEntity(url, TmdbResponse.class);
         return response.getBody();
     }
 
     /**
-     * 指定された映画IDの概要、公開日、上映時間、制作国情報を取得する。
+     * Retrieves movie details such as overview, release date, runtime,
+     * and production countries using the specified movie ID.
      *
-     * @param movieId TMDbの映画ID
-     * @return 映画の概要情報 {@link MovieOverviewResponseDto}
+     * @param movieId TMDb movie ID
+     * @return Movie details {@link MovieOverviewResponseDto}
      */
     @SuppressWarnings("unchecked")
     public MovieOverviewResponseDto fetchMovieOverview(Long movieId) {
@@ -165,7 +166,7 @@ public class TmdbApiClient {
                 .build()
                 .toUriString();
 
-        logger.info("📝 TMDb 概要取得 URL: " + url);
+        logger.info("TMDb 概要取得 URL: " + url);
 
         Map<String, Object> result = restTemplate.getForObject(url, Map.class);
 

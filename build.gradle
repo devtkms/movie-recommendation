@@ -18,39 +18,40 @@ repositories {
 }
 
 dependencies {
-	// Spring Boot 関連
-	implementation 'org.springframework.boot:spring-boot-starter-security' // セキュリティ
-	implementation 'org.springframework.boot:spring-boot-starter-web'      // Web アプリ
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0' // OpenAPI UI
+	// Spring Boot dependencies
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
 
-	// バリデーション
+	// Validation
 	implementation 'jakarta.validation:jakarta.validation-api:3.1.1'
 
-	// HTTP クライアント
-	implementation 'org.apache.httpcomponents.client5:httpclient5:5.4.2'  // HTTP クライアント
-	implementation 'org.apache.httpcomponents.core5:httpcore5:5.3.3'      // HTTP コア
-	implementation 'org.apache.httpcomponents:fluent-hc:4.5.14'           // Fluent API
+	// HTTP Client
+	implementation 'org.apache.httpcomponents.client5:httpclient5:5.4.2'
+	implementation 'org.apache.httpcomponents.core5:httpcore5:5.3.3'
+	implementation 'org.apache.httpcomponents:fluent-hc:4.5.14'
 
-	// 環境変数管理
-	implementation 'io.github.cdimascio:java-dotenv:5.2.2' // `.env` ファイルの管理
+	// Environment variable management
+	implementation 'io.github.cdimascio:java-dotenv:5.2.2'
 
-	// Lombok（アノテーションでボイラープレート削減）
+	// Lombok (for reducing boilerplate code with annotations)
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
-	// 開発支援
-	developmentOnly 'org.springframework.boot:spring-boot-devtools' // 開発用ツール
+	// Development tools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-	// テスト関連
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'  // Spring Boot のテストフレームワーク
-	testImplementation 'org.springframework.security:spring-security-test'  // Spring Security テスト
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher' // JUnit テスト実行用
+	// Testing dependencies
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+	// JWT runtime dependencies
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
-
+	// MyBatis and PostgreSQL
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4'
 	implementation 'org.postgresql:postgresql:42.7.5'
 }

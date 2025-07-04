@@ -4,15 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
- * 配信サービス情報を返却するレスポンスDTO
+ * DTO for response containing watch provider information.
  */
 @Data
 @AllArgsConstructor
 public class WatchProviderResponseDto {
 
-    /** 配信サービス名（例: Netflix, Prime Video） */
+    /** Name of the streaming provider (e.g., Netflix, Prime Video) */
     private String providerName;
 
-    /** サービスロゴ画像パス（TMDbのlogo_path） */
+    /** Logo path of the provider (TMDb logo_path) */
     private String logoPath;
 }

@@ -3,20 +3,20 @@ package com.devtkms.movierecommendation.dto;
 import lombok.Data;
 
 /**
- * 映画推薦リクエストで送信される質問の回答内容を保持するDTO
+ * DTO containing answers to the movie recommendation questions.
  */
 @Data
 public class MovieRecommendationRequestDto {
 
-    /** Q1: 今の気分（例: light, emotional） */
+    /** Q1: Current mood (e.g., light, emotional) */
     private String mood;
 
-    /** Q2: 映画の雰囲気（例: fast, deep） */
+    /** Q2: Desired movie tone (e.g., fast, deep) */
     private String tone;
 
-    /** Q3: 見終わった後の気持ち（例: refresh, think） */
+    /** Q3: Desired feeling after watching (e.g., refresh, think) */
     private String after;
 
-    /** 集計対象外フラグ（true: 開発者自身のリクエスト） */
+    /** Flag to exclude from analytics (true = developer's request) */
     private Boolean isMyData;
 }
